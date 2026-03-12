@@ -2562,109 +2562,7 @@ async function carregarEstatisticas() {
 }
 
 // horas por colaborador (com filtros)
-async function carregarRelatorioHoras() {
-  const container = document.getElementById('relatorioHorasContainer');
-  container.innerHTML = `
-    <div class="loading active">
-      <div class="spinner"></div>
-      <p>A carregar dados...</p>
-    </div>
-  `;
-
-  const anoSelecionado = document.getElementById('relatorioAno')?.value || 'all';
-  const dataInicioStr = document.getElementById('relatorioDataInicio')?.value;
-  const dataFimStr = document.getElementById('relatorioDataFim')?.value;
-
-  let dataInicio = null;
-  let dataFim = null;
-
-  if (anoSelecionado !== 'all') {
-    dataInicio = new Date(`${anoSelecionado}-01-01T00:00:00`);
-    dataFim = new Date(`${anoSelecionado}-12-31T23:59:59`);
-  }
-
-  if (dataInicioStr) {
-    const d = new Date(`${dataInicioStr}T00:00:00`);
-    if (!dataInicio || d > dataInicio) dataInicio = d;
-  }
-  if (dataFimStr) {
-    const d = new Date(`${dataFimStr}T23:59:59`);
-    if (!dataFim || d < dataFim) dataFim = d;
-  }
-
-  try {
-    const usersSnap = await db.collection('users')
-      .where('ativo', '==', true)
-      .orderBy('nome')
-      .get();
-
-    const enrollmentsSnap = await db.collection('enrollments').get();
-    const trainingsSnap = await db.collection('trainings').get();
-
-    const trainingsById = {};
-    trainingsSnap.docs.forEach(doc => {
-      trainingsById[doc.id] = doc.data();
-    });
-
-    const mapa = {};
-
-    enrollmentsSnap.docs.forEach(enrDoc => {
-      const e = enrDoc.data();
-      const training = trainingsById[e.trainingId];
-      if (!training) return;
-
-      // conta só presentes (ajusta se quiseres contar Convocado, etc.)
-      if (e.estadoInscricao !== 'Presente') return;
-
-      const dataTreino = training.data ? new Date(training.data.seconds * 1000) : null;
-      if (!dataTreino) return;
-
-      if (dataInicio && dataTreino < dataInicio) return;
-      if (dataFim && dataTreino > dataFim) return;
-
-      const horas = training.duracaoHoras || 0;
-
-      if (!mapa[e.userId]) {
-        mapa[e.userId] = {
-          totalHoras: 0,
-        };
-      }
-
-      mapa[e.userId].totalHoras += horas;
-    });
-
-    let html = `
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Colaborador</th>
-              <th>Função</th>
-              <th>Horas (período filtrado)</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-
-    usersSnap.docs.forEach(userDoc => {
-      const u = userDoc.data();
-      const dados = mapa[userDoc.id] || { totalHoras: 0 };
-      html += `
-        <tr>
-          <td><strong>${u.nome || 'NA'}</strong></td>
-          <td>${u.funcao || '-'}</td>
-          <td>${dados.totalHoras.toFixed(1)}</td>
-          <td>
-            <button class="btn btn-secondary btn-icon" onclick="verDetalheColaborador('${userDoc.id}')" title="Ver detalhe">
-              🔍
-            </button>
-          </td>
-        </tr>
-      `;
-    });
-
-    html += `
+  html += `
           </tbody>
         </table>
       </div>
@@ -2681,7 +2579,6 @@ async function carregarRelatorioHoras() {
     `;
   }
 }
-
 // detalhe por colaborador (modal)
 async function verDetalheColaborador(userId) {
   try {
@@ -2812,9 +2709,9 @@ async function exportarHorasColaboradores() {
   }
 
   try {
+    // sem orderBy para evitar índice
     const usersSnap = await db.collection('users')
       .where('ativo', '==', true)
-      .orderBy('nome')
       .get();
     const enrollmentsSnap = await db.collection('enrollments').get();
     const trainingsSnap = await db.collection('trainings').get();
@@ -2841,11 +2738,15 @@ async function exportarHorasColaboradores() {
       mapa[e.userId] += horas;
     });
 
+    // ordenar utilizadores por nome em JS
+    const users = usersSnap.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+
     let csv = 'Nome,Email,Função,Horas\n';
 
-    usersSnap.docs.forEach(userDoc => {
-      const u = userDoc.data();
-      const horas = mapa[userDoc.id] || 0;
+    users.forEach(u => {
+      const horas = mapa[u.id] || 0;
       csv += `"${u.nome || ''}","${u.email || ''}","${u.funcao || ''}",${horas.toFixed(1)}\n`;
     });
 
@@ -2948,7 +2849,9 @@ async function exportarHorasColaboradores() {
         }
 
         // Initialize default gestores when app loads
-        initializeDefaultGestores();
+function initializeDefaultGestores() {
+  // já não é necessário; seed feito no onAuthStateChanged
+}
     </script>
 </body>
 </html>
