@@ -1005,52 +1005,69 @@
         let currentUser = null;
         let currentUserData = null;
 
-        // Initialize default gestores if they don't exist
-        async function initializeDefaultGestores() {
-            const gestores = [
-                {
-                    email: 'fligadebora@hotmail.com',
-                    password: '56855',
-                    nome: 'Débora',
-                    funcao: 'Gestor',
-                    role: 'gestorformacao'
-                },
-                {
-                    email: 'fligamarta@hotmail.com',
-                    password: 'F03573',
-                    nome: 'Marta',
-                    funcao: 'Gestor',
-                    role: 'gestorformacao'
-                },
-                {
-                    email: 'farmacia@ligagaia.pt',
-                    password: 'Fliga1',
-                    nome: 'Dra Rita Sá',
-                    funcao: 'Farmacêutico',
-                    role: 'gestorformacao'
-                }
-            ];
+       auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    currentUser = null;
+    currentUserData = null;
+    showLogin();
+    return;
+  }
 
-            for (const gestor of gestores) {
-                try {
-                    // Check if user already exists in Firestore
-                    const userQuery = await db.collection('users')
-                        .where('email', '==', gestor.email)
-                        .limit(1)
-                        .get();
+  currentUser = user;
 
-                    if (userQuery.empty) {
-                        // Create auth user
-                        let userCredential;
-                        try {
-                            userCredential = await auth.createUserWithEmailAndPassword(gestor.email, gestor.password);
-                        } catch (authError) {
-                            if (authError.code === 'auth/email-already-in-use') {
-                                console.log(`Email ${gestor.email} já existe no Auth`);
-                                continue;
-                            }
-                            throw authError;
-                        }
+  // 1) Tenta carregar dados do utilizador
+  await loadUserData(user.uid);
+
+  // 2) Se ainda não existir documento em "users", vamos criar para as 3 gestoras iniciais
+  if (!currentUserData) {
+    const email = user.email?.toLowerCase();
+
+    // Mapa dos gestores iniciais
+    const gestoresSeed = {
+      "fligadebora@hotmail.com": {
+        nome: "Débora",
+        funcao: "Gestão",
+        role: "gestorformacao"
+      },
+      "fligamarta@hotmail.com": {
+        nome: "Marta",
+        funcao: "Gestão",
+        role: "gestorformacao"
+      },
+      "farmacia@ligagaia.pt": {
+        nome: "Dra Rita Sá",
+        funcao: "Gestão",
+        role: "gestorformacao"
+      }
+    };
+
+    const dadosSeed = gestoresSeed[email];
+
+    if (dadosSeed) {
+      try {
+        await db.collection("users").doc(user.uid).set(
+          {
+            nome: dadosSeed.nome,
+            email: user.email,
+            funcao: dadosSeed.funcao,
+            role: dadosSeed.role,
+            ativo: true,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          },
+          { merge: true }
+        );
+
+        // Recarregar currentUserData depois de criar
+        await loadUserData(user.uid);
+      } catch (error) {
+        console.error("Erro ao criar utilizador seed:", error);
+      }
+    }
+  }
+
+  // 3) Mostrar dashboard (já com currentUserData)
+  showDashboard();
+});
 
                         // Create Firestore user document
                         await db.collection('users').doc(userCredential.user.uid).set({
