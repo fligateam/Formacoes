@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmácia da Liga - Sistema de Gestão de Formações</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg-primary: #F7F1E8;
+            --color-bg-secondary: #FFFFFF;
+            --color-accent-blue: #D8EFFF;
+            --color-accent-green: #DFF3E3;
+            --color-text-primary: #4A6572;
+            --color-text-secondary: #6B7F8C;
+            --color-border: #E0D5C7;
+            --color-success: #7BC97F;
+            --color-warning: #FFB84D;
+            --color-error: #E57373;
+            --color-info: #64B5F6;
+            --shadow-sm: 0 2px 4px rgba(74, 101, 114, 0.08);
+            --shadow-md: 0 4px 12px rgba(74, 101, 114, 0.12);
+            --shadow-lg: 0 8px 24px rgba(74, 101, 114, 0.16);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--color-bg-secondary);
+            border-right: 1px solid var(--color-border);
+            padding: 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--color-border);
+            background: linear-gradient(135deg, var(--color-accent-blue), var(--color-accent-green));
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header p {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            font-weight: 400;
+        }
+
+        .sidebar-menu {
+            padding: 16px 0;
+        }
+
+        .menu-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:hover {
+            background: var(--color-accent-blue);
+            border-left-color: var(--color-text-primary);
+            color: var(--color-text-primary);
+        }
+
+        .menu-item.active {
+            background: var(--color-accent-blue);
+            border-left-color: var(--color-text-primary);
+            color: var(--color-text-primary);
+            font-weight: 600;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            background: var(--color-bg-secondary);
+            border-bottom: 1px solid var(--color-border);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-accent-blue), var(--color-accent-green));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            font-size: 16px;
+        }
+
+        .user-details h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .user-details p {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        .content-area {
+            padding: 32px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--color-text-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3a515e;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--color-accent-blue);
+            color: var(--color-text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #c0e3ff;
+        }
+
+        .btn-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #6bb56f;
+        }
+
+        .btn-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--color-error);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d66363;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: var(--color-bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--color-bg-secondary);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--color-text-primary);
+        }
+
+        .stat-card.blue {
+            border-left-color: var(--color-info);
+        }
+
+        .stat-card.green {
+            border-left-color: var(--color-success);
+        }
+
+        .stat-card.warning {
+            border-left-color: var(--color-warning);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            color: var(--color-text-primary);
+            background: var(--color-bg-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-text-primary);
+            box-shadow: 0 0 0 3px rgba(74, 101, 114, 0.1);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--color-bg-secondary);
+        }
+
+        thead {
+            background: var(--color-accent-blue);
+        }
+
+        th {
+            padding: 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px;
+            font-size: 14px;
+            color: var(--color-text-primary);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        tr:hover {
+            background: var(--color-accent-blue);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-success {
+            background: var(--color-accent-green);
+            color: var(--color-success);
+        }
+
+        .badge-warning {
+            background: #FFF4E5;
+            color: var(--color-warning);
+        }
+
+        .badge-info {
+            background: var(--color-accent-blue);
+            color: var(--color-info);
+        }
+
+        .badge-error {
+            background: #FFEBEE;
+            color: var(--color-error);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--color-bg-secondary);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .close-modal:hover {
+            background: var(--color-accent-blue);
+            color: var(--color-text-primary);
+        }
+
+        .rating-group {
+            margin-bottom: 24px;
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .star {
+            font-size: 28px;
+            cursor: pointer;
+            color: #E0D5C7;
+            transition: all 0.2s ease;
+        }
+
+        .star:hover,
+        .star.active {
+            color: #FFB84D;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--color-bg-secondary);
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            align-items: center;
+            gap: 12px;
+            z-index: 2000;
+            border-left: 4px solid var(--color-success);
+        }
+
+        .toast.active {
+            display: flex;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.error {
+            border-left-color: var(--color-error);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .filters-bar {
+            background: var(--color-bg-secondary);
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-item {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            color: var(--color-border);
+            margin-bottom: 16px;
+        }
+
+        .empty-state-text {
+            font-size: 18px;
+            color: var(--color-text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid var(--color-border);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s ease;
+        }
+
+        .tab:hover {
+            color: var(--color-text-primary);
+        }
+
+        .tab.active {
+            color: var(--color-text-primary);
+            border-bottom-color: var(--color-text-primary);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .training-card {
+            background: var(--color-bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--color-info);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .training-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .training-card.completed {
+            border-left-color: var(--color-success);
+        }
+
+        .training-card.pending {
+            border-left-color: var(--color-warning);
+        }
+
+        .training-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .training-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .training-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .training-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--color-bg-secondary);
+            border-radius: 16px;
+            padding: 48px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-item:hover {
+            background: var(--color-accent-blue);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 200;
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-bar {
+                flex-direction: column;
+            }
+
+            .filter-item {
+                min-width: 100%;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid var(--color-border);
+            border-top: 4px solid var(--color-text-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .participants-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="page active">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-logo">💊</div>
+                <h1 class="login-title">Farmácia da Liga</h1>
+                <p class="login-subtitle">Sistema de Gestão de Formações</p>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email</label>
+                        <input type="email" id="email" class="form-control" placeholder="seu.email@farmacialiga.pt" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+                        Entrar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboardPage" class="page">
+        <div class="app-container">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h1>💊 Farmácia da Liga</h1>
+                    <p>Gestão de Formações</p>
+                </div>
+                <nav class="sidebar-menu" id="sidebarMenu"></nav>
+            </aside>
+
+            <div class="main-content">
+                <header class="topbar">
+                    <div>
+                        <h2 id="pageTitle" style="font-size: 20px; font-weight: 700;">Dashboard</h2>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <div class="user-details">
+                            <h3 id="userName">Utilizador</h3>
+                            <p id="userRole">Colaborador</p>
+                        </div>
+                        <button class="btn btn-secondary btn-icon" onclick="logout()" title="Terminar sessão">
+                            🚪
+                        </button>
+                    </div>
+                </header>
+
+                <main class="content-area" id="contentArea"></main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Avaliação -->
+    <div class="modal" id="avaliacaoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Avaliar Formação</h2>
+                <button class="close-modal" onclick="closeModal('avaliacaoModal')">✕</button>
+            </div>
+            <form id="avaliacaoForm" onsubmit="submitAvaliacao(event)">
+                <input type="hidden" id="evalTrainingId">
+
+                <div class="rating-group">
+                    <label class="form-label">Duração da Ação</label>
+                    <div class="rating-stars" id="stars-duracao"></div>
+                    <input type="hidden" id="rating-duracao" required>
+                </div>
+
+                <div class="rating-group">
+                    <label class="form-label">Capacidade Pedagógica do Formador</label>
+                    <div class="rating-stars" id="stars-pedagogica"></div>
+                    <input type="hidden" id="rating-pedagogica" required>
+                </div>
+
+                <div class="rating-group">
+                    <label class="form-label">Domínio do Tema pelo Formador</label>
+                    <div class="rating-stars" id="stars-dominio"></div>
+                    <input type="hidden" id="rating-dominio" required>
+                </div>
+
+                <div class="rating-group">
+                    <label class="form-label">Relevância para as Tarefas que Desempenha</label>
+                    <div class="rating-stars" id="stars-relevancia"></div>
+                    <input type="hidden" id="rating-relevancia" required>
+                </div>
+
+                <div class="rating-group">
+                    <label class="form-label">Avaliação Global da Ação de Formação</label>
+                    <div class="rating-stars" id="stars-global"></div>
+                    <input type="hidden" id="rating-global" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Os temas abordados afastam-se da prática instituda na Farmácia?</label>
+                    <select id="afastamentoPratica" class="form-control" required onchange="toggleAfastamentoDetalhe()">
+                        <option value="">Selecione...</option>
+                        <option value="nao">Não</option>
+                        <option value="sim">Sim</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="detalheAfastamentoGroup" style="display: none;">
+                    <label class="form-label">Por favor justifique</label>
+                    <textarea id="detalheAfastamento" class="form-control"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Observações / Propostas para implementar os conceitos apreendidos</label>
+                    <textarea id="observacoesPropostas" class="form-control"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" class="btn btn-primary">Submeter Avaliação</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('avaliacaoModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Colaborador -->
+    <div class="modal" id="colaboradorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="colaboradorModalTitle">Adicionar Colaborador</h2>
+                <button class="close-modal" onclick="closeModal('colaboradorModal')">✕</button>
+            </div>
+            <form id="colaboradorForm" onsubmit="submitColaborador(event)">
+                <input type="hidden" id="colaboradorId">
+                
+                <div class="form-group">
+                    <label class="form-label" for="colabNome">Nome</label>
+                    <input type="text" id="colabNome" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="colabEmail">Email</label>
+                    <input type="email" id="colabEmail" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="colabFuncao">Função</label>
+                    <select id="colabFuncao" class="form-control" required>
+                        <option value="">Selecione...</option>
+                        <option value="Farmacêutico">Farmacêutico</option>
+                        <option value="Técnico de Farmácia">Técnico de Farmácia</option>
+                        <option value="Auxiliar">Auxiliar</option>
+                        <option value="Gestor">Gestor</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="colabRole">Perfil</label>
+                    <select id="colabRole" class="form-control" required>
+                        <option value="colaborador">Colaborador</option>
+                        <option value="gestorformacao">Gestor de Formação</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="colabAtivo">Estado</label>
+                    <select id="colabAtivo" class="form-control" required>
+                        <option value="true">Ativo</option>
+                        <option value="false">Inativo</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('colaboradorModal')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Participantes -->
+    <div class="modal" id="participantesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Gerir Participantes</h2>
+                <button class="close-modal" onclick="closeModal('participantesModal')">✕</button>
+            </div>
+            <input type="hidden" id="participantesTrainingId">
+            
+            <div class="form-group">
+                <button type="button" class="btn btn-success" onclick="selecionarTodos()">✓ Selecionar Todos</button>
+                <button type="button" class="btn btn-secondary" onclick="desselecionarTodos()">✗ Desselecionar Todos</button>
+            </div>
+
+            <div id="participantesContainer" class="participants-grid"></div>
+
+            <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+                <button type="button" class="btn btn-primary" onclick="salvarParticipantes()">💾 Guardar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('participantesModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastIcon">✓</span>
+        <span id="toastMessage">Operação realizada com sucesso</span>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhBfZ9x8odvenh2x5PTFMDPeGUhD-JvDc",
+            authDomain: "formacoes-liga.firebaseapp.com",
+            projectId: "formacoes-liga",
+            storageBucket: "formacoes-liga.firebasestorage.app",
+            messagingSenderId: "788115326428",
+            appId: "1:788115326428:web:baa086d5622e92440afb19"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let currentUserData = null;
+
+        // Initialize default gestores if they don't exist
+        async function initializeDefaultGestores() {
+            const gestores = [
+                {
+                    email: 'fligadebora@hotmail.com',
+                    password: '56855',
+                    nome: 'Débora',
+                    funcao: 'Gestor',
+                    role: 'gestorformacao'
+                },
+                {
+                    email: 'fligamarta@hotmail.com',
+                    password: 'F03573',
+                    nome: 'Marta',
+                    funcao: 'Gestor',
+                    role: 'gestorformacao'
+                },
+                {
+                    email: 'farmacia@ligagaia.pt',
+                    password: 'Fliga1',
+                    nome: 'Dra Rita Sá',
+                    funcao: 'Farmacêutico',
+                    role: 'gestorformacao'
+                }
+            ];
+
+            for (const gestor of gestores) {
+                try {
+                    // Check if user already exists in Firestore
+                    const userQuery = await db.collection('users')
+                        .where('email', '==', gestor.email)
+                        .limit(1)
+                        .get();
+
+                    if (userQuery.empty) {
+                        // Create auth user
+                        let userCredential;
+                        try {
+                            userCredential = await auth.createUserWithEmailAndPassword(gestor.email, gestor.password);
+                        } catch (authError) {
+                            if (authError.code === 'auth/email-already-in-use') {
+                                console.log(`Email ${gestor.email} já existe no Auth`);
+                                continue;
+                            }
+                            throw authError;
+                        }
+
+                        // Create Firestore user document
+                        await db.collection('users').doc(userCredential.user.uid).set({
+                            nome: gestor.nome,
+                            email: gestor.email,
+                            funcao: gestor.funcao,
+                            role: gestor.role,
+                            ativo: true,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+
+                        console.log(`Gestor ${gestor.nome} criado com sucesso`);
+                    }
+                } catch (error) {
+                    console.error(`Erro ao criar gestor ${gestor.email}:`, error);
+                }
+            }
+        }
+
+        // Auth state observer
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadUserData(user.uid);
+                showDashboard();
+            } else {
+                showLogin();
+            }
+        });
+
+        async function loadUserData(uid) {
+            try {
+                const userDoc = await db.collection('users').doc(uid).get();
+                if (userDoc.exists) {
+                    currentUserData = { id: uid, ...userDoc.data() };
+                    updateUserInterface();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados do utilizador:', error);
+            }
+        }
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                showToast('Login realizado com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro de login:', error);
+                showToast('Erro ao fazer login. Verifique as credenciais.', 'error');
+            }
+        });
+
+        function logout() {
+            auth.signOut();
+        }
+
+        function showLogin() {
+            document.getElementById('loginPage').classList.add('active');
+            document.getElementById('dashboardPage').classList.remove('active');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginPage').classList.remove('active');
+            document.getElementById('dashboardPage').classList.add('active');
+            buildMenu();
+            const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
+            navigateTo(isGestor ? 'todasFormacoes' : 'minhasFormacoes');
+        }
+
+        function updateUserInterface() {
+            if (currentUserData) {
+                document.getElementById('userName').textContent = currentUserData.nome || 'Utilizador';
+                document.getElementById('userRole').textContent = 
+                    currentUserData.role === 'gestorformacao' ? 'Gestor de Formação' : 'Colaborador';
+                
+                const initials = currentUserData.nome 
+                    ? currentUserData.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+                    : 'U';
+                document.getElementById('userAvatar').textContent = initials;
+            }
+        }
+
+        function buildMenu() {
+            const menu = document.getElementById('sidebarMenu');
+            const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
+
+            const menuItems = isGestor ? [
+                { id: 'todasFormacoes', label: 'Todas as Formações', icon: '📚', section: 'gestor' },
+                { id: 'criarFormacao', label: 'Criar Formação', icon: '➕', section: 'gestor' },
+                { id: 'colaboradores', label: 'Colaboradores', icon: '👥', section: 'gestor' },
+                { id: 'necessidadesFormacao', label: 'Necessidades de Formação', icon: '📝', section: 'gestor' },
+                { id: 'relatorios', label: 'Relatórios e Exportação', icon: '📊', section: 'gestor' },
+                { separator: true },
+                { id: 'minhasFormacoes', label: 'As Minhas Formações', icon: '📖', section: 'colaborador' },
+                { id: 'manifestarNecessidade', label: 'Necessidade de Formação', icon: '✍️', section: 'colaborador' },
+                { id: 'historicoAvaliacoes', label: 'Histórico de Avaliações', icon: '⭐', section: 'colaborador' }
+            ] : [
+                { id: 'minhasFormacoes', label: 'As Minhas Formações', icon: '📖' },
+                { id: 'manifestarNecessidade', label: 'Necessidade de Formação', icon: '✍️' },
+                { id: 'historicoAvaliacoes', label: 'Histórico de Avaliações', icon: '⭐' }
+            ];
+
+            menu.innerHTML = menuItems.map(item => {
+                if (item.separator) {
+                    return `<div style="padding: 8px 20px; margin: 8px 0; border-bottom: 1px solid var(--color-border);">
+                        <small style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Área Pessoal
+                        </small>
+                    </div>`;
+                }
+                return `<div class="menu-item" onclick="navigateTo('${item.id}')">
+                    <span>${item.icon}</span>
+                    <span>${item.label}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function navigateTo(pageId) {
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            event?.target?.closest('.menu-item')?.classList.add('active');
+
+            const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
+
+            switch(pageId) {
+                case 'minhasFormacoes':
+                    loadMinhasFormacoes();
+                    break;
+                case 'manifestarNecessidade':
+                    loadManifestarNecessidade();
+                    break;
+                case 'historicoAvaliacoes':
+                    loadHistoricoAvaliacoes();
+                    break;
+                case 'todasFormacoes':
+                    if (isGestor) loadTodasFormacoes();
+                    break;
+                case 'criarFormacao':
+                    if (isGestor) loadCriarFormacao();
+                    break;
+                case 'colaboradores':
+                    if (isGestor) loadColaboradores();
+                    break;
+                case 'necessidadesFormacao':
+                    if (isGestor) loadNecessidadesGestor();
+                    break;
+                case 'relatorios':
+                    if (isGestor) loadRelatorios();
+                    break;
+            }
+        }
+
+        // Colaborador Functions
+        async function loadMinhasFormacoes() {
+            document.getElementById('pageTitle').textContent = 'As Minhas Formações';
+
+            const content = `
+                <div class="stats-grid">
+                    <div class="stat-card blue">
+                        <div class="stat-label">Formações Futuras</div>
+                        <div class="stat-value" id="statFuturas">-</div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-label">Formações Concluídas</div>
+                        <div class="stat-value" id="statConcluidas">-</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-label">Por Avaliar</div>
+                        <div class="stat-value" id="statPorAvaliar">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total de Horas</div>
+                        <div class="stat-value" id="statHoras">-</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Formações</h2>
+                    </div>
+                    <div id="formacoesContainer">
+                        <div class="loading active">
+                            <div class="spinner"></div>
+                            <p>A carregar formações...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = content;
+            await carregarMinhasFormacoes();
+        }
+
+        async function carregarMinhasFormacoes() {
+            try {
+                const enrollmentsSnap = await db.collection('enrollments')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+
+                const trainingIds = enrollmentsSnap.docs.map(doc => doc.data().trainingId);
+
+                if (trainingIds.length === 0) {
+                    document.getElementById('formacoesContainer').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📚</div>
+                            <p class="empty-state-text">Ainda não tem formações atribuídas</p>
+                        </div>
+                    `;
+                    updateStats([]);
+                    return;
+                }
+
+                const trainings = [];
+                for (const trainingId of trainingIds) {
+                    const trainingDoc = await db.collection('trainings').doc(trainingId).get();
+                    if (trainingDoc.exists) {
+                        const enrollment = enrollmentsSnap.docs.find(doc => doc.data().trainingId === trainingId);
+                        trainings.push({
+                            id: trainingDoc.id,
+                            ...trainingDoc.data(),
+                            enrollment: { id: enrollment.id, ...enrollment.data() }
+                        });
+                    }
+                }
+
+                renderFormacoes(trainings);
+                updateStats(trainings);
+            } catch (error) {
+                console.error('Erro ao carregar formações:', error);
+                showToast('Erro ao carregar formações', 'error');
+            }
+        }
+
+        function renderFormacoes(trainings) {
+            const container = document.getElementById('formacoesContainer');
+            
+            if (trainings.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📚</div>
+                        <p class="empty-state-text">Nenhuma formação encontrada</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = trainings.map(training => {
+                const date = training.data ? new Date(training.data.seconds * 1000) : new Date();
+                const isFuture = date > new Date();
+                const canEvaluate = training.avaliacaoAutorizada && 
+                                    training.enrollment.estadoInscricao === 'Presente' && 
+                                    !training.enrollment.avaliado;
+
+                return `
+                    <div class="training-card ${isFuture ? 'pending' : 'completed'}">
+                        <div class="training-header">
+                            <div>
+                                <h3 class="training-title">${training.tema || 'Sem título'}</h3>
+                                <div class="training-meta">
+                                    <div class="training-meta-item">📅 ${date.toLocaleDateString('pt-PT')}</div>
+                                    <div class="training-meta-item">⏱️ ${training.duracaoHoras || 0}h</div>
+                                    <div class="training-meta-item">👤 ${training.formador || 'N/A'}</div>
+                                    ${training.laboratorioMarca ? `<div class="training-meta-item">🏢 ${training.laboratorioMarca}</div>` : ''}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge ${isFuture ? 'badge-info' : 'badge-success'}">
+                                    ${isFuture ? 'Agendada' : 'Concluída'}
+                                </span>
+                                ${canEvaluate ? `
+                                    <button class="btn btn-warning" style="margin-left: 8px;" onclick="abrirAvaliacao('${training.id}')">
+                                        Avaliar
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats(trainings) {
+            const now = new Date();
+            const futuras = trainings.filter(t => new Date(t.data.seconds * 1000) > now).length;
+            const concluidas = trainings.filter(t => new Date(t.data.seconds * 1000) <= now).length;
+            const porAvaliar = trainings.filter(t => 
+                t.avaliacaoAutorizada && 
+                t.enrollment.estadoInscricao === 'Presente' && 
+                !t.enrollment.avaliado
+            ).length;
+            const totalHoras = trainings.reduce((sum, t) => sum + (t.duracaoHoras || 0), 0);
+
+            document.getElementById('statFuturas').textContent = futuras;
+            document.getElementById('statConcluidas').textContent = concluidas;
+            document.getElementById('statPorAvaliar').textContent = porAvaliar;
+            document.getElementById('statHoras').textContent = totalHoras;
+        }
+
+        function abrirAvaliacao(trainingId) {
+            document.getElementById('evalTrainingId').value = trainingId;
+            initRatingStars();
+            openModal('avaliacaoModal');
+        }
+
+        function initRatingStars() {
+            const fields = ['duracao', 'pedagogica', 'dominio', 'relevancia', 'global'];
+            fields.forEach(field => {
+                const container = document.getElementById(`stars-${field}`);
+                container.innerHTML = '';
+                for (let i = 1; i <= 5; i++) {
+                    const star = document.createElement('span');
+                    star.className = 'star';
+                    star.textContent = '★';
+                    star.onclick = () => setRating(field, i);
+                    container.appendChild(star);
+                }
+            });
+        }
+
+        function setRating(field, value) {
+            document.getElementById(`rating-${field}`).value = value;
+            const stars = document.querySelectorAll(`#stars-${field} .star`);
+            stars.forEach((star, index) => {
+                if (index < value) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        function toggleAfastamentoDetalhe() {
+            const select = document.getElementById('afastamentoPratica');
+            const group = document.getElementById('detalheAfastamentoGroup');
+            const textarea = document.getElementById('detalheAfastamento');
+
+            if (select.value === 'sim') {
+                group.style.display = 'block';
+                textarea.required = true;
+            } else {
+                group.style.display = 'none';
+                textarea.required = false;
+                textarea.value = '';
+            }
+        }
+
+        async function submitAvaliacao(event) {
+            event.preventDefault();
+            const trainingId = document.getElementById('evalTrainingId').value;
+            const afastaPratica = document.getElementById('afastamentoPratica').value === 'sim';
+
+            try {
+                await db.collection('evaluations').add({
+                    trainingId: trainingId,
+                    userId: currentUser.uid,
+                    duracaoAcao: parseInt(document.getElementById('rating-duracao').value),
+                    capacidadePedagogicaFormador: parseInt(document.getElementById('rating-pedagogica').value),
+                    dominioTemaFormador: parseInt(document.getElementById('rating-dominio').value),
+                    relevanciaParaTarefas: parseInt(document.getElementById('rating-relevancia').value),
+                    avaliacaoGlobal: parseInt(document.getElementById('rating-global').value),
+                    afastaDaPratica: afastaPratica,
+                    detalheAfastamento: afastaPratica ? document.getElementById('detalheAfastamento').value : '',
+                    observacoesPropostas: document.getElementById('observacoesPropostas').value,
+                    dataSubmissao: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                const enrollmentSnap = await db.collection('enrollments')
+                    .where('trainingId', '==', trainingId)
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+
+                if (!enrollmentSnap.empty) {
+                    await db.collection('enrollments').doc(enrollmentSnap.docs[0].id).update({
+                        avaliado: true
+                    });
+                }
+
+                showToast('Avaliação submetida com sucesso!', 'success');
+                closeModal('avaliacaoModal');
+                document.getElementById('avaliacaoForm').reset();
+                carregarMinhasFormacoes();
+            } catch (error) {
+                console.error('Erro ao submeter avaliação:', error);
+                showToast('Erro ao submeter avaliação', 'error');
+            }
+        }
+
+        function loadManifestarNecessidade() {
+            document.getElementById('pageTitle').textContent = 'Manifestar Necessidade de Formação';
+
+            const content = `
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Nova Necessidade de Formação</h2>
+                    </div>
+                    <form id="necessidadeForm" onsubmit="submitNecessidade(event)">
+                        <div class="form-group">
+                            <label class="form-label" for="temaNecessidade">Tema / Necessidade de Formação</label>
+                            <input type="text" id="temaNecessidade" class="form-control" 
+                                   placeholder="Ex: Gestão de stock de medicamentos" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="urgencia">Urgência</label>
+                            <select id="urgencia" class="form-control" required>
+                                <option value="">Selecione...</option>
+                                <option value="Baixa">Baixa</option>
+                                <option value="Media">Média</option>
+                                <option value="Alta">Alta</option>
+                                <option value="Critica">Crítica</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="laboratorio">Marca ou Laboratório</label>
+                            <input type="text" id="laboratorio" class="form-control" 
+                                   placeholder="Ex: Bayer, Roche, etc.">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="comentarios">Comentários Adicionais</label>
+                            <textarea id="comentarios" class="form-control" 
+                                      placeholder="Informações adicionais sobre a necessidade de formação"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">✓ Submeter Pedido</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Histórico de Pedidos</h2>
+                    </div>
+                    <div id="historicoNecessidades">
+                        <div class="loading active">
+                            <div class="spinner"></div>
+                            <p>A carregar histórico...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = content;
+            carregarHistoricoNecessidades();
+        }
+
+        async function submitNecessidade(event) {
+            event.preventDefault();
+
+            try {
+                await db.collection('trainingNeeds').add({
+                    userId: currentUser.uid,
+                    nomeColaborador: currentUserData.nome,
+                    temaNecessidade: document.getElementById('temaNecessidade').value,
+                    urgencia: document.getElementById('urgencia').value,
+                    laboratorioMarca: document.getElementById('laboratorio').value,
+                    comentariosAdicionais: document.getElementById('comentarios').value,
+                    estado: 'Submetida',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showToast('Pedido submetido com sucesso!', 'success');
+                document.getElementById('necessidadeForm').reset();
+                carregarHistoricoNecessidades();
+            } catch (error) {
+                console.error('Erro ao submeter necessidade:', error);
+                showToast('Erro ao submeter pedido', 'error');
+            }
+        }
+
+        async function carregarHistoricoNecessidades() {
+            try {
+                const snapshot = await db.collection('trainingNeeds')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+
+                const container = document.getElementById('historicoNecessidades');
+
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <p class="empty-state-text">Ainda não submeteu pedidos de formação</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const html = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tema</th>
+                                    <th>Urgência</th>
+                                    <th>Laboratório</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${snapshot.docs.map(doc => {
+                                    const data = doc.data();
+                                    const date = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
+                                    return `
+                                        <tr>
+                                            <td>${date.toLocaleDateString('pt-PT')}</td>
+                                            <td>${data.temaNecessidade}</td>
+                                            <td><span class="badge badge-${getUrgenciaBadge(data.urgencia)}">${data.urgencia}</span></td>
+                                            <td>${data.laboratorioMarca || '-'}</td>
+                                            <td><span class="badge badge-${getEstadoBadge(data.estado)}">${data.estado}</span></td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Erro ao carregar histórico:', error);
+            }
+        }
+
+        function getUrgenciaBadge(urgencia) {
+            const map = {
+                'Baixa': 'info',
+                'Media': 'warning',
+                'Alta': 'warning',
+                'Critica': 'error'
+            };
+            return map[urgencia] || 'info';
+        }
+
+        function getEstadoBadge(estado) {
+            const map = {
+                'Submetida': 'info',
+                'Em análise': 'warning',
+                'Planeada': 'success',
+                'Rejeitada': 'error'
+            };
+            return map[estado] || 'info';
+        }
+
+        function loadHistoricoAvaliacoes() {
+            document.getElementById('pageTitle').textContent = 'Histórico de Avaliações';
+
+            const content = `
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Minhas Avaliações Submetidas</h2>
+                    </div>
+                    <div id="avaliacoesContainer">
+                        <div class="loading active">
+                            <div class="spinner"></div>
+                            <p>A carregar avaliações...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = content;
+            carregarAvaliacoes();
+        }
+
+        async function carregarAvaliacoes() {
+            try {
+                const snapshot = await db.collection('evaluations')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('dataSubmissao', 'desc')
+                    .get();
+
+                const container = document.getElementById('avaliacoesContainer');
+
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⭐</div>
+                            <p class="empty-state-text">Ainda não submeteu avaliações</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const evaluations = await Promise.all(snapshot.docs.map(async doc => {
+                    const evalData = doc.data();
+                    const trainingDoc = await db.collection('trainings').doc(evalData.trainingId).get();
+                    return {
+                        ...evalData,
+                        training: trainingDoc.exists ? trainingDoc.data() : {}
+                    };
+                }));
+
+                const html = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data Avaliação</th>
+                                    <th>Formação</th>
+                                    <th>Formador</th>
+                                    <th>Avaliação Global</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${evaluations.map(eval => {
+                                    const date = eval.dataSubmissao ? new Date(eval.dataSubmissao.seconds * 1000) : new Date();
+                                    return `
+                                        <tr>
+                                            <td>${date.toLocaleDateString('pt-PT')}</td>
+                                            <td>${eval.training.tema || 'N/A'}</td>
+                                            <td>${eval.training.formador || 'N/A'}</td>
+                                            <td>${'★'.repeat(eval.avaliacaoGlobal || 0)}${'☆'.repeat(5 - (eval.avaliacaoGlobal || 0))}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Erro ao carregar avaliações:', error);
+            }
+        }
+
+        // Gestor Functions
+        async function loadTodasFormacoes() {
+            document.getElementById('pageTitle').textContent = 'Gestão de Formações';
+
+            const content = `
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-header">
+                        <h2 class="card-title">Todas as Formações</h2>
+                        <button class="btn btn-primary" onclick="navigateTo('criarFormacao')">
+                            ➕ Nova Formação
+                        </button>
+                    </div>
+                    <div id="todasFormacoesContainer">
+                        <div class="loading active">
+                            <div class="spinner"></div>
+                            <p>A carregar formações...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = content;
+            await carregarTodasFormacoes();
+        }
+
+        async function carregarTodasFormacoes() {
+            try {
+                const snapshot = await db.collection('trainings')
+                    .orderBy('data', 'desc')
+                    .get();
+
+                const container = document.getElementById('todasFormacoesContainer');
+
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📚</div>
+                            <p class="empty-state-text">Nenhuma formação criada ainda</p>
+                            <button class="btn btn-primary" onclick="navigateTo('criarFormacao')">
+                                Criar Primeira Formação
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const trainings = await Promise.all(snapshot.docs.map(async doc => {
+                    const data = doc.data();
+                    const enrollmentsSnap = await db.collection('enrollments')
+                        .where('trainingId', '==', doc.id)
+                        .get();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        numParticipantes: enrollmentsSnap.size
+                    };
+                }));
+
+                renderTodasFormacoes(trainings);
+            } catch (error) {
+                console.error('Erro ao carregar formações:', error);
+                showToast('Erro ao carregar formações', 'error');
+            }
+        }
+
+        function renderTodasFormacoes(trainings) {
+            const container = document.getElementById('todasFormacoesContainer');
+
+            const html = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Tema</th>
+                                <th>Formador</th>
+                                <th>Duração</th>
+                                <th>Participantes</th>
+                                <th>Estado</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${trainings.map(t => {
+                                const date = t.data ? new Date(t.data.seconds * 1000) : new Date();
+                                return `
+                                    <tr>
+                                        <td>${date.toLocaleDateString('pt-PT')}</td>
+                                        <td><strong>${t.tema || 'Sem título'}</strong></td>
+                                        <td>${t.formador || '-'}</td>
+                                        <td>${t.duracaoHoras || 0}h</td>
+                                        <td>${t.numParticipantes}</td>
+                                        <td><span class="badge badge-${getEstadoBadgeClass(t.estado)}">${t.estado}</span></td>
+                                        <td>
+                                            <button class="btn btn-secondary btn-icon" onclick="editarFormacao('${t.id}')" title="Editar">✏️</button>
+                                            <button class="btn btn-warning btn-icon" onclick="gerirParticipantes('${t.id}')" title="Participantes">👥</button>
+                                            ${t.estado === 'Concluida' && !t.avaliacaoAutorizada ? `
+                                                <button class="btn btn-success btn-icon" onclick="autorizarAvaliacao('${t.id}')" title="Autorizar Avaliação">✓</button>
+                                            ` : ''}
+                                            <button class="btn btn-danger btn-icon" onclick="eliminarFormacao('${t.id}')" title="Eliminar">🗑️</button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function getEstadoBadgeClass(estado) {
+            const map = {
+                'Rascunho': 'info',
+                'Agendada': 'info',
+                'Concluida': 'success',
+                'Em avaliação': 'warning',
+                'Cancelada': 'error'
+            };
+            return map[estado] || 'info';
+        }
+
+        let currentEditingTrainingId = null;
+
+        async function editarFormacao(trainingId) {
+            currentEditingTrainingId = trainingId;
+            // For simplicity, just reload and allow editing inline or create edit modal
+            showToast('Funcionalidade de edição em desenvolvimento', 'info');
+        }
+
+        async function autorizarAvaliacao(trainingId) {
+            try {
+                await db.collection('trainings').doc(trainingId).update({
+                    avaliacaoAutorizada: true,
+                    estado: 'Em avaliação'
+                });
+                showToast('Avaliação autorizada! Colaboradores podem agora avaliar.', 'success');
+                carregarTodasFormacoes();
+            } catch (error) {
+                console.error('Erro ao autorizar avaliação:', error);
+                showToast('Erro ao autorizar avaliação', 'error');
+            }
+        }
+
+        async function eliminarFormacao(trainingId) {
+            if (!confirm('Tem certeza que deseja eliminar esta formação? Esta ação não pode ser revertida.')) {
+                return;
+            }
+
+            try {
+                const enrollmentsSnap = await db.collection('enrollments')
+                    .where('trainingId', '==', trainingId)
+                    .get();
+
+                const batch = db.batch();
+                enrollmentsSnap.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                const evaluationsSnap = await db.collection('evaluations')
+                    .where('trainingId', '==', trainingId)
+                    .get();
+
+                evaluationsSnap.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                batch.delete(db.collection('trainings').doc(trainingId));
+                await batch.commit();
+
+                showToast('Formação eliminada com sucesso!', 'success');
+                carregarTodasFormacoes();
+            } catch (error) {
+                console.error('Erro ao eliminar formação:', error);
+                showToast('Erro ao eliminar formação', 'error');
+            }
+        }
+
+        async function gerirParticipantes(trainingId) {
+            document.getElementById('participantesTrainingId').value = trainingId;
+
+            try {
+                const usersSnap = await db.collection('users')
+                    .where('ativo', '==', true)
+                    .orderBy('nome')
+                    .get();
+
+                const enrollmentsSnap = await db.collection('enrollments')
+                    .where('trainingId', '==', trainingId)
+                    .get();
+
+                const enrolledUserIds = enrollmentsSnap.docs.map(doc => doc.data().userId);
+
+                const container = document.getElementById('participantesContainer');
+                container.innerHTML = usersSnap.docs.map(doc => {
+                    const user = doc.data();
+                    const isEnrolled = enrolledUserIds.includes(doc.id);
+                    return `
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="user-${doc.id}" value="${doc.id}" ${isEnrolled ? 'checked' : ''}>
+                            <label for="user-${doc.id}" style="flex: 1; cursor: pointer;">
+                                <strong>${user.nome}</strong><br>
+                                <small style="color: var(--color-text-secondary);">${user.funcao || '-'}</small>
+                            </label>
+                        </div>
+                    `;
+                }).join('');
+
+                openModal('participantesModal');
+            } catch (error) {
+                console.error('Erro ao carregar participantes:', error);
+                showToast('Erro ao carregar participantes', 'error');
+            }
+        }
+
+        function selecionarTodos() {
+            document.querySelectorAll('#participantesContainer input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+            });
+        }
+
+        function desselecionarTodos() {
+            document.querySelectorAll('#participantesContainer input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+        }
+
+        async function salvarParticipantes() {
+            const trainingId = document.getElementById('participantesTrainingId').value;
+            const checkboxes = document.querySelectorAll('#participantesContainer input[type="checkbox"]');
+
+            try {
+                const currentEnrollments = await db.collection('enrollments')
+                    .where('trainingId', '==', trainingId)
+                    .get();
+
+                const batch = db.batch();
+                currentEnrollments.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                checkboxes.forEach(cb => {
+                    if (cb.checked) {
+                        const newEnrollmentRef = db.collection('enrollments').doc();
+                        batch.set(newEnrollmentRef, {
+                            trainingId: trainingId,
+                            userId: cb.value,
+                            estadoInscricao: 'Convocado',
+                            foiConvocadoPeloGestor: true,
+                            validadoPeloGestor: true,
+                            presencaConfirmadaPeloGestor: false,
+                            avaliado: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                });
+
+                await batch.commit();
+                showToast('Participantes atualizados com sucesso!', 'success');
+                closeModal('participantesModal');
+                carregarTodasFormacoes();
+            } catch (error) {
+                console.error('Erro ao salvar participantes:', error);
+                showToast('Erro ao salvar participantes', 'error');
+            }
+        }
+
+        function loadCriarFormacao() {
+            document.getElementById('pageTitle').textContent = 'Criar Nova Formação';
+
+            const content = `
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Nova Formação</h2>
+                    </div>
+                    <form id="formacaoForm" onsubmit="submitFormacao(event)">
+                        <div class="form-group">
+                            <label class="form-label" for="tema">Tema da Formação</label>
+                            <input type="text" id="tema" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="formador">Formador</label>
+                            <input type="text" id="formador" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="data">Data</label>
+                            <input type="date" id="data" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="horaInicio">Hora de Início</label>
+                            <input type="time" id="horaInicio" class="form-control" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="duracaoHoras">Duração (horas)</label>
+                            <input type="number" id="duracaoHoras" class="form-control" step="0.5" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="laboratorioMarca">Laboratório / Marca</label>
+                            <input type="text" id="laboratorioMarca" class="form-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="local">Local</label>
+                            <input type="text" id="local" class="form-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="descricao">Descrição</label>
+                            <textarea id="descricao" class="form-control"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 12px;">
+                            <button type="submit" class="btn btn-primary">💾 Criar Formação</button>
+                            <button type="button" class="btn btn-secondary" onclick="navigateTo('todasFormacoes')">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = content;
+        }
+
+        async function submitFormacao(event) {
+            event.preventDefault();
+
+            try {
+                const dataStr = document.getElementById('data').value;
+                const horaStr = document.getElementById('horaInicio').value;
+                const dataHora = new Date(`${dataStr}T${horaStr}`);
+
+                await db.collection('trainings').add({
+                    tema: document.getElementById('tema').value,
+                    formador: document.getElementById('formador').value,
+                    data: firebase.firestore.Timestamp.fromDate(dataHora),
+                    horaInicio: horaStr,
+                    duracaoHoras: parseFloat(document.getElementById('duracaoHoras').value),
+                    laboratorioMarca: document.getElementById('laboratorioMarca').value,
+                    local: document.getElementById('local').value,
+                    descricao: document.getElementById('descricao').value,
+                    estado: 'Agendada',
+                    avaliacaoAutorizada: false,
+                    criadoPor: currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showToast('Formação criada com sucesso!', 'success');
+                navigateTo('todasFormacoes');
+            } catch (error) {
+                console.error('Erro ao criar formação:', error);
+                showToast('Erro ao criar formação', 'error');
+            }
+        }
+
+        function loadColaboradores() {
+            document.getElementById('pageTitle').textContent = 'Gestão de Colaboradores';
+
+            const content = `
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Colaboradores</h2>
+                        <button class="btn btn-primary" onclick="abrirModalColaborador()">
+                            ➕ Novo Colaborador
+                        </button>
+                    </div>
+                    <div id="colaboradoresContainer">
+                        <div class="loading active">
+                            <div class="spinner"></div>
+                            <p>A carregar colaboradores...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = content;
+            carregarColaboradores();
+        }
+
+        async function carregarColaboradores() {
+            try {
+                const snapshot = await db.collection('users')
+                    .orderBy('nome')
+                    .get();
+
+                const container = document.getElementById('colaboradoresContainer');
+
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👥</div>
+                            <p class="empty-state-text">Nenhum colaborador registado</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const html = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Função</th>
+                                    <th>Role</th>
+                                    <th>Estado</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${snapshot.docs.map(doc => {
+                                    const data = doc.data();
+                                    return `
+                                        <tr>
+                                            <td><strong>${data.nome || 'N/A'}</strong></td>
+                                            <td>${data.email}</td>
+                                            <td>${data.funcao || '-'}</td>
+                                            <td>
+                                                <span class="badge ${data.role === 'gestorformacao' ? 'badge-warning' : 'badge-info'}">
+                                                    ${data.role === 'gestorformacao' ? 'Gestor' : 'Colaborador'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge ${data.ativo ? 'badge-success' : 'badge-error'}">
+                                                    ${data.ativo ? 'Ativo' : 'Inativo'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-secondary btn-icon" onclick="editarColaborador('${doc.id}')" title="Editar">✏️</button>
+                                                <button class="btn btn-danger btn-icon" onclick="eliminarColaborador('${doc.id}')" title="Eliminar" style="margin-left: 4px;">🗑️</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Erro ao carregar colaboradores:', error);
+                showToast('Erro ao carregar colaboradores', 'error');
+            }
+        }
+
+        function abrirModalColaborador() {
+            document.getElementById('colaboradorModalTitle').textContent = 'Adicionar Colaborador';
+            document.getElementById('colaboradorId').value = '';
+            document.getElementById('colaboradorForm').reset();
+            openModal('colaboradorModal');
+        }
+
+        async function editarColaborador(userId) {
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (!doc.exists) {
+                    showToast('Colaborador não encontrado', 'error');
+                    return;
+                }
+
+                const user = doc.data();
+                document.getElementById('colaboradorModalTitle').textContent = 'Editar Colaborador';
+                document.getElementById('colaboradorId').value = userId;
+                document.getElementById('colabNome').value = user.nome;
+                document.getElementById('colabEmail').value = user.email;
+                document.getElementById('colabFuncao').value = user.funcao;
+                document.getElementById('colabRole').value = user.role || 'colaborador';
+                document.getElementById('colabAtivo').value = user.ativo ? 'true' : 'false';
+
+                openModal('colaboradorModal');
+            } catch (error) {
+                console.error('Erro ao carregar colaborador:', error);
+                showToast('Erro ao carregar colaborador', 'error');
+            }
+        }
+
+        async function submitColaborador(event) {
+            event.preventDefault();
+
+            const colaboradorId = document.getElementById('colaboradorId').value;
+            const nome = document.getElementById('colabNome').value.trim();
+            const email = document.getElementById('colabEmail').value.trim();
+            const funcao = document.getElementById('colabFuncao').value;
+            const role = document.getElementById('colabRole').value;
+            const ativo = document.getElementById('colabAtivo').value === 'true';
+
+            if (!nome || !email) {
+                showToast('Nome e email são obrigatórios', 'error');
+                return;
+            }
+
+            try {
+                let uid = colaboradorId;
+
+                if (!colaboradorId) {
+                    try {
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, 'Farmacia123!');
+                        uid = userCredential.user.uid;
+                    } catch (error) {
+                        if (error.code === 'auth/email-already-in-use') {
+                            const snap = await db.collection('users')
+                                .where('email', '==', email)
+                                .limit(1)
+                                .get();
+
+                            if (snap.empty) {
+                                showToast('Email já existe no Auth mas não está registado como utilizador', 'error');
+                                return;
+                            }
+
+                            uid = snap.docs[0].id;
+                            showToast('Email já existe. A atualizar dados...', 'info');
+                        } else {
+                            throw error;
+                        }
+                    }
+                }
+
+                await db.collection('users').doc(uid).set({
+                    nome: nome,
+                    email: email,
+                    funcao: funcao,
+                    role: role,
+                    ativo: ativo,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                showToast(colaboradorId ? 'Colaborador atualizado!' : 'Colaborador criado! Password: Farmacia123!', 'success');
+                closeModal('colaboradorModal');
+                carregarColaboradores();
+            } catch (error) {
+                console.error('Erro ao salvar colaborador:', error);
+                showToast('Erro: ' + error.message, 'error');
+            }
+        }
+
+        async function eliminarColaborador(userId) {
+            if (!confirm('Eliminar este colaborador?')) return;
+
+            try {
+                await db.collection('users').doc(userId).delete();
+                showToast('Colaborador eliminado', 'success');
+                carregarColaboradores();
+            } catch (error) {
+                console.error('Erro ao eliminar:', error);
+                showToast('Erro ao eliminar', 'error');
+            }
+        }
+
+        function loadNecessidadesGestor() {
+            document.getElementById('pageTitle').textContent = 'Necessidades de Formação';
+
+            const content = `
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Pedidos de Necessidades de Formação</h2>
+                    </div>
+                    <div id="necessidadesGestorContainer">
+                        <div class="loading active">
+                            <div class="spinner"></div>
+                            <p>A carregar pedidos...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = content;
+            carregarNecessidadesGestor();
+        }
+
+        async function carregarNecessidadesGestor() {
+            try {
+                const snapshot = await db.collection('trainingNeeds')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+
+                const container = document.getElementById('necessidadesGestorContainer');
+
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <p class="empty-state-text">Nenhum pedido de formação</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const html = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Colaborador</th>
+                                    <th>Tema</th>
+                                    <th>Urgência</th>
+                                    <th>Laboratório</th>
+                                    <th>Estado</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${snapshot.docs.map(doc => {
+                                    const data = doc.data();
+                                    const date = data.createdAt ? new Date(data.createdAt.seconds * 1000) : new Date();
+                                    return `
+                                        <tr>
+                                            <td>${date.toLocaleDateString('pt-PT')}</td>
+                                            <td><strong>${data.nomeColaborador}</strong></td>
+                                            <td>${data.temaNecessidade}</td>
+                                            <td><span class="badge badge-${getUrgenciaBadge(data.urgencia)}">${data.urgencia}</span></td>
+                                            <td>${data.laboratorioMarca || '-'}</td>
+                                            <td><span class="badge badge-${getEstadoBadge(data.estado)}">${data.estado}</span></td>
+                                            <td>
+                                                <select class="form-control" style="width: 150px; padding: 6px;" onchange="atualizarEstadoNecessidade('${doc.id}', this.value)">
+                                                    <option value="">Alterar estado...</option>
+                                                    <option value="Em análise">Em análise</option>
+                                                    <option value="Planeada">Planeada</option>
+                                                    <option value="Rejeitada">Rejeitada</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Erro ao carregar necessidades:', error);
+                showToast('Erro ao carregar necessidades', 'error');
+            }
+        }
+
+        async function atualizarEstadoNecessidade(id, novoEstado) {
+            if (!novoEstado) return;
+
+            try {
+                await db.collection('trainingNeeds').doc(id).update({
+                    estado: novoEstado
+                });
+                showToast('Estado atualizado com sucesso!', 'success');
+                carregarNecessidadesGestor();
+            } catch (error) {
+                console.error('Erro ao atualizar estado:', error);
+                showToast('Erro ao atualizar estado', 'error');
+            }
+        }
+
+        function loadRelatorios() {
+            document.getElementById('pageTitle').textContent = 'Relatórios e Exportação';
+
+            const content = `
+                <div class="stats-grid">
+                    <div class="stat-card blue">
+                        <div class="stat-label">Total Formações</div>
+                        <div class="stat-value" id="statTotalFormacoes">-</div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-label">Colaboradores Ativos</div>
+                        <div class="stat-value" id="statColaboradores">-</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-label">Horas Formação Total</div>
+                        <div class="stat-value" id="statHorasTotal">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avaliações Submetidas</div>
+                        <div class="stat-value" id="statAvaliacoes">-</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Exportar Dados</h2>
+                    </div>
+                    <p style="margin-bottom: 16px;">Exporte todos os dados do sistema para ficheiros CSV.</p>
+                    <button class="btn btn-primary" onclick="exportarTodosDados()">
+                        📥 Exportar Tudo (CSV)
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('contentArea').innerHTML = content;
+            carregarEstatisticas();
+        }
+
+        async function carregarEstatisticas() {
+            try {
+                const trainingsSnap = await db.collection('trainings').get();
+                const usersSnap = await db.collection('users').where('ativo', '==', true).get();
+                const evaluationsSnap = await db.collection('evaluations').get();
+
+                const totalHoras = trainingsSnap.docs.reduce((sum, doc) => sum + (doc.data().duracaoHoras || 0), 0);
+
+                document.getElementById('statTotalFormacoes').textContent = trainingsSnap.size;
+                document.getElementById('statColaboradores').textContent = usersSnap.size;
+                document.getElementById('statHorasTotal').textContent = totalHoras;
+                document.getElementById('statAvaliacoes').textContent = evaluationsSnap.size;
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+
+        async function exportarTodosDados() {
+            showToast('A preparar exportação...', 'info');
+
+            try {
+                const trainingsSnap = await db.collection('trainings').orderBy('data', 'desc').get();
+                const usersSnap = await db.collection('users').orderBy('nome').get();
+                const evaluationsSnap = await db.collection('evaluations').get();
+                const needsSnap = await db.collection('trainingNeeds').orderBy('createdAt', 'desc').get();
+
+                let csvFormacoes = 'Data,Tema,Formador,Duração (h),Laboratório,Local,Estado\n';
+                for (const doc of trainingsSnap.docs) {
+                    const t = doc.data();
+                    const date = t.data ? new Date(t.data.seconds * 1000).toLocaleDateString('pt-PT') : '';
+                    csvFormacoes += `${date},${t.tema},${t.formador},${t.duracaoHoras},${t.laboratorioMarca || ''},${t.local || ''},${t.estado}\n`;
+                }
+
+                let csvColaboradores = 'Nome,Email,Função,Role,Estado\n';
+                usersSnap.docs.forEach(doc => {
+                    const u = doc.data();
+                    csvColaboradores += `${u.nome},${u.email},${u.funcao || ''},${u.role},${u.ativo ? 'Ativo' : 'Inativo'}\n`;
+                });
+
+                let csvAvaliacoes = 'Data,Formação ID,User ID,Duração,Pedagógica,Domínio,Relevância,Global,Afasta Prática\n';
+                evaluationsSnap.docs.forEach(doc => {
+                    const e = doc.data();
+                    const date = e.dataSubmissao ? new Date(e.dataSubmissao.seconds * 1000).toLocaleDateString('pt-PT') : '';
+                    csvAvaliacoes += `${date},${e.trainingId},${e.userId},${e.duracaoAcao},${e.capacidadePedagogicaFormador},${e.dominioTemaFormador},${e.relevanciaParaTarefas},${e.avaliacaoGlobal},${e.afastaDaPratica ? 'Sim' : 'Não'}\n`;
+                });
+
+                let csvNecessidades = 'Data,Colaborador,Tema,Urgência,Laboratório,Estado\n';
+                needsSnap.docs.forEach(doc => {
+                    const n = doc.data();
+                    const date = n.createdAt ? new Date(n.createdAt.seconds * 1000).toLocaleDateString('pt-PT') : '';
+                    csvNecessidades += `${date},${n.nomeColaborador},${n.temaNecessidade},${n.urgencia},${n.laboratorioMarca || ''},${n.estado}\n`;
+                });
+
+                downloadCSV(csvFormacoes, 'formacoes.csv');
+                setTimeout(() => downloadCSV(csvColaboradores, 'colaboradores.csv'), 500);
+                setTimeout(() => downloadCSV(csvAvaliacoes, 'avaliacoes.csv'), 1000);
+                setTimeout(() => downloadCSV(csvNecessidades, 'necessidades.csv'), 1500);
+
+                showToast('Ficheiros CSV exportados com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro ao exportar:', error);
+                showToast('Erro ao exportar dados', 'error');
+            }
+        }
+
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Utility Functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const messageEl = document.getElementById('toastMessage');
+
+            toast.className = 'toast active';
+            if (type === 'error') {
+                toast.classList.add('error');
+                icon.textContent = '✕';
+            } else {
+                icon.textContent = '✓';
+            }
+
+            messageEl.textContent = message;
+
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 3000);
+        }
+
+        // Initialize default gestores when app loads
+        initializeDefaultGestores();
+    </script>
+</body>
+</html>
+
