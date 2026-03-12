@@ -998,14 +998,15 @@
             appId: "1:788115326428:web:baa086d5622e92440afb19"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-        let currentUser = null;
-        let currentUserData = null;
+let currentUser = null;
+let currentUserData = null;
 
-       auth.onAuthStateChanged(async (user) => {
+// OBSERVADOR ÚNICO DE AUTH + SEED DAS 3 GESTORAS
+auth.onAuthStateChanged(async (user) => {
   if (!user) {
     currentUser = null;
     currentUserData = null;
@@ -1022,7 +1023,6 @@
   if (!currentUserData) {
     const email = user.email?.toLowerCase();
 
-    // Mapa dos gestores iniciais
     const gestoresSeed = {
       "fligadebora@hotmail.com": {
         nome: "Débora",
@@ -1069,34 +1069,143 @@
   showDashboard();
 });
 
-                        // Create Firestore user document
-                        await db.collection('users').doc(userCredential.user.uid).set({
-                            nome: gestor.nome,
-                            email: gestor.email,
-                            funcao: gestor.funcao,
-                            role: gestor.role,
-                            ativo: true,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
+// Carregar dados do utilizador
+async function loadUserData(uid) {
+  try {
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (userDoc.exists) {
+      currentUserData = { id: uid, ...userDoc.data() };
+      updateUserInterface();
+    } else {
+      currentUserData = null;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar dados do utilizador:', error);
+  }
+}
 
-                        console.log(`Gestor ${gestor.nome} criado com sucesso`);
-                    }
-                } catch (error) {
-                    console.error(`Erro ao criar gestor ${gestor.email}:`, error);
-                }
-            }
-        }
+// Login form handler
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
 
-        // Auth state observer
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                currentUser = user;
-                await loadUserData(user.uid);
-                showDashboard();
-            } else {
-                showLogin();
-            }
-        });
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    showToast('Login realizado com sucesso!', 'success');
+  } catch (error) {
+    console.error('Erro de login:', error);
+    showToast('Erro ao fazer login. Verifique as credenciais.', 'error');
+  }
+});
+
+function logout() {
+  auth.signOut();
+}
+
+function showLogin() {
+  document.getElementById('loginPage').classList.add('active');
+  document.getElementById('dashboardPage').classList.remove('active');
+}
+
+function showDashboard() {
+  document.getElementById('loginPage').classList.remove('active');
+  document.getElementById('dashboardPage').classList.add('active');
+  buildMenu();
+  const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
+  navigateTo(isGestor ? 'todasFormacoes' : 'minhasFormacoes');
+}
+
+function updateUserInterface() {
+  if (currentUserData) {
+    document.getElementById('userName').textContent = currentUserData.nome || 'Utilizador';
+    document.getElementById('userRole').textContent =
+      currentUserData.role === 'gestorformacao' ? 'Gestor de Formação' : 'Colaborador';
+
+    const initials = currentUserData.nome
+      ? currentUserData.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+      : 'U';
+    document.getElementById('userAvatar').textContent = initials;
+  }
+}
+
+function buildMenu() {
+  const menu = document.getElementById('sidebarMenu');
+  const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
+
+  const menuItems = isGestor
+    ? [
+        { id: 'todasFormacoes', label: 'Todas as Formações', section: 'gestor' },
+        { id: 'criarFormacao', label: 'Criar Formação', section: 'gestor' },
+        { id: 'colaboradores', label: 'Colaboradores', section: 'gestor' },
+        { id: 'necessidadesFormacao', label: 'Necessidades de Formação', section: 'gestor' },
+        { id: 'relatorios', label: 'Relatórios e Exportação', section: 'gestor' },
+        { separator: true },
+        { id: 'minhasFormacoes', label: 'As Minhas Formações', section: 'colaborador' },
+        { id: 'manifestarNecessidade', label: 'Necessidade de Formação', section: 'colaborador' },
+        { id: 'historicoAvaliacoes', label: 'Histórico de Avaliações', section: 'colaborador' }
+      ]
+    : [
+        { id: 'minhasFormacoes', label: 'As Minhas Formações', section: 'colaborador' },
+        { id: 'manifestarNecessidade', label: 'Necessidade de Formação', section: 'colaborador' },
+        { id: 'historicoAvaliacoes', label: 'Histórico de Avaliações', section: 'colaborador' }
+      ];
+
+  menu.innerHTML = menuItems
+    .map(item => {
+      if (item.separator) {
+        return `
+          <div style="padding: 8px 20px; margin: 8px 0; border-bottom: 1px solid var(--color-border);">
+            <small style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+              Área Pessoal
+            </small>
+          </div>
+        `;
+      }
+      return `
+        <div class="menu-item" onclick="navigateTo('${item.id}')">
+          <span>${item.label}</span>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+function navigateTo(pageId) {
+  document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+  const activeItem = Array.from(document.querySelectorAll('.menu-item'))
+    .find(item => item.getAttribute('onclick') === `navigateTo('${pageId}')`);
+  if (activeItem) activeItem.classList.add('active');
+
+  const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
+
+  switch (pageId) {
+    case 'minhasFormacoes':
+      loadMinhasFormacoes();
+      break;
+    case 'manifestarNecessidade':
+      loadManifestarNecessidade();
+      break;
+    case 'historicoAvaliacoes':
+      loadHistoricoAvaliacoes();
+      break;
+    case 'todasFormacoes':
+      if (isGestor) loadTodasFormacoes();
+      break;
+    case 'criarFormacao':
+      if (isGestor) loadCriarFormacao();
+      break;
+    case 'colaboradores':
+      if (isGestor) loadColaboradores();
+      break;
+    case 'necessidadesFormacao':
+      if (isGestor) loadNecessidadesGestor();
+      break;
+    case 'relatorios':
+      if (isGestor) loadRelatorios();
+      break;
+  }
+}
 
         async function loadUserData(uid) {
             try {
