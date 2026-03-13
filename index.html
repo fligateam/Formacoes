@@ -1206,6 +1206,12 @@ function navigateTo(pageId) {
       break;
   }
 }
+
+        async function loadUserData(uid) {
+            try {
+                const userDoc = await db.collection('users').doc(uid).get();
+                if (userDoc.exists) {
+                    currentUserData = { id: uid, ...userDoc.data() };
                     updateUserInterface();
                 }
             } catch (error) {
@@ -2842,6 +2848,7 @@ async function exportarHorasColaboradores() {
             }, 3000);
         }
 
+        // Initialize default gestores when app loads
 }
     </script>
 </body>
