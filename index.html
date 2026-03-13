@@ -1207,8 +1207,8 @@ function navigateTo(pageId) {
   }
 }
                     updateUserInterface();
-            
-        } catch (error) {
+                }
+            } catch (error) {
                 console.error('Erro ao carregar dados do utilizador:', error);
             }
         }
@@ -2572,7 +2572,7 @@ async function carregarEstatisticas() {
       </div>
     `;
   }
-        
+}
 // detalhe por colaborador (modal)
 async function verDetalheColaborador(userId) {
   try {
@@ -2846,4 +2846,3 @@ async function exportarHorasColaboradores() {
     </script>
 </body>
 </html>
-
