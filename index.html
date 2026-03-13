@@ -998,214 +998,77 @@
             appId: "1:788115326428:web:baa086d5622e92440afb19"
         };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-let currentUser = null;
-let currentUserData = null;
+        let currentUser = null;
+        let currentUserData = null;
 
-// OBSERVADOR ÚNICO DE AUTH + SEED DAS 3 GESTORAS
-auth.onAuthStateChanged(async (user) => {
-  if (!user) {
-    currentUser = null;
-    currentUserData = null;
-    showLogin();
-    return;
-  }
+        // Auth state observer with seed for 3 default gestoras
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                currentUser = null;
+                currentUserData = null;
+                showLogin();
+                return;
+            }
 
-  currentUser = user;
+            currentUser = user;
 
-  // 1) Tenta carregar dados do utilizador
-  await loadUserData(user.uid);
+            // 1) Try to load user data
+            await loadUserData(user.uid);
 
-  // 2) Se ainda não existir documento em "users", vamos criar para as 3 gestoras iniciais
-  if (!currentUserData) {
-    const email = user.email?.toLowerCase();
+            // 2) If user document doesn't exist, create it for the 3 default gestoras
+            if (!currentUserData) {
+                const email = user.email?.toLowerCase();
 
-    const gestoresSeed = {
-      "fligadebora@hotmail.com": {
-        nome: "Débora",
-        funcao: "Gestão",
-        role: "gestorformacao"
-      },
-      "fligamarta@hotmail.com": {
-        nome: "Marta",
-        funcao: "Gestão",
-        role: "gestorformacao"
-      },
-      "farmacia@ligagaia.pt": {
-        nome: "Dra Rita Sá",
-        funcao: "Gestão",
-        role: "gestorformacao"
-      }
-    };
+                const gestoresSeed = {
+                    "fligadebora@hotmail.com": {
+                        nome: "Débora",
+                        funcao: "Gestão",
+                        role: "gestorformacao"
+                    },
+                    "fligamarta@hotmail.com": {
+                        nome: "Marta",
+                        funcao: "Gestão",
+                        role: "gestorformacao"
+                    },
+                    "farmacia@ligagaia.pt": {
+                        nome: "Dra Rita Sá",
+                        funcao: "Gestão",
+                        role: "gestorformacao"
+                    }
+                };
 
-    const dadosSeed = gestoresSeed[email];
+                const dadosSeed = gestoresSeed[email];
 
-    if (dadosSeed) {
-      try {
-        await db.collection("users").doc(user.uid).set(
-          {
-            nome: dadosSeed.nome,
-            email: user.email,
-            funcao: dadosSeed.funcao,
-            role: dadosSeed.role,
-            ativo: true,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          },
-          { merge: true }
-        );
+                if (dadosSeed) {
+                    try {
+                        await db.collection("users").doc(user.uid).set(
+                            {
+                                nome: dadosSeed.nome,
+                                email: user.email,
+                                funcao: dadosSeed.funcao,
+                                role: dadosSeed.role,
+                                ativo: true,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            },
+                            { merge: true }
+                        );
 
-        // Recarregar currentUserData depois de criar
-        await loadUserData(user.uid);
-      } catch (error) {
-        console.error("Erro ao criar utilizador seed:", error);
-      }
-    }
-  }
+                        // Reload currentUserData after creating
+                        await loadUserData(user.uid);
+                        console.log(`Gestor ${dadosSeed.nome} criado automaticamente`);
+                    } catch (error) {
+                        console.error("Erro ao criar utilizador seed:", error);
+                    }
+                }
+            }
 
-  // 3) Mostrar dashboard (já com currentUserData)
-  showDashboard();
-});
-
-// Carregar dados do utilizador
-async function loadUserData(uid) {
-  try {
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (userDoc.exists) {
-      currentUserData = { id: uid, ...userDoc.data() };
-      updateUserInterface();
-    } else {
-      currentUserData = null;
-    }
-  } catch (error) {
-    console.error('Erro ao carregar dados do utilizador:', error);
-  }
-}
-
-// Login form handler
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-    showToast('Login realizado com sucesso!', 'success');
-  } catch (error) {
-    console.error('Erro de login:', error);
-    showToast('Erro ao fazer login. Verifique as credenciais.', 'error');
-  }
-});
-
-function logout() {
-  auth.signOut();
-}
-
-function showLogin() {
-  document.getElementById('loginPage').classList.add('active');
-  document.getElementById('dashboardPage').classList.remove('active');
-}
-
-function showDashboard() {
-  document.getElementById('loginPage').classList.remove('active');
-  document.getElementById('dashboardPage').classList.add('active');
-  buildMenu();
-  const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
-  navigateTo(isGestor ? 'todasFormacoes' : 'minhasFormacoes');
-}
-
-function updateUserInterface() {
-  if (currentUserData) {
-    document.getElementById('userName').textContent = currentUserData.nome || 'Utilizador';
-    document.getElementById('userRole').textContent =
-      currentUserData.role === 'gestorformacao' ? 'Gestor de Formação' : 'Colaborador';
-
-    const initials = currentUserData.nome
-      ? currentUserData.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-      : 'U';
-    document.getElementById('userAvatar').textContent = initials;
-  }
-}
-
-function buildMenu() {
-  const menu = document.getElementById('sidebarMenu');
-  const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
-
-  const menuItems = isGestor
-    ? [
-        { id: 'todasFormacoes', label: 'Todas as Formações', section: 'gestor' },
-        { id: 'criarFormacao', label: 'Criar Formação', section: 'gestor' },
-        { id: 'colaboradores', label: 'Colaboradores', section: 'gestor' },
-        { id: 'necessidadesFormacao', label: 'Necessidades de Formação', section: 'gestor' },
-        { id: 'relatorios', label: 'Relatórios e Exportação', section: 'gestor' },
-        { separator: true },
-        { id: 'minhasFormacoes', label: 'As Minhas Formações', section: 'colaborador' },
-        { id: 'manifestarNecessidade', label: 'Necessidade de Formação', section: 'colaborador' },
-        { id: 'historicoAvaliacoes', label: 'Histórico de Avaliações', section: 'colaborador' }
-      ]
-    : [
-        { id: 'minhasFormacoes', label: 'As Minhas Formações', section: 'colaborador' },
-        { id: 'manifestarNecessidade', label: 'Necessidade de Formação', section: 'colaborador' },
-        { id: 'historicoAvaliacoes', label: 'Histórico de Avaliações', section: 'colaborador' }
-      ];
-
-  menu.innerHTML = menuItems
-    .map(item => {
-      if (item.separator) {
-        return `
-          <div style="padding: 8px 20px; margin: 8px 0; border-bottom: 1px solid var(--color-border);">
-            <small style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-              Área Pessoal
-            </small>
-          </div>
-        `;
-      }
-      return `
-        <div class="menu-item" onclick="navigateTo('${item.id}')">
-          <span>${item.label}</span>
-        </div>
-      `;
-    })
-    .join('');
-}
-
-function navigateTo(pageId) {
-  document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-  const activeItem = Array.from(document.querySelectorAll('.menu-item'))
-    .find(item => item.getAttribute('onclick') === `navigateTo('${pageId}')`);
-  if (activeItem) activeItem.classList.add('active');
-
-  const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
-
-  switch (pageId) {
-    case 'minhasFormacoes':
-      loadMinhasFormacoes();
-      break;
-    case 'manifestarNecessidade':
-      loadManifestarNecessidade();
-      break;
-    case 'historicoAvaliacoes':
-      loadHistoricoAvaliacoes();
-      break;
-    case 'todasFormacoes':
-      if (isGestor) loadTodasFormacoes();
-      break;
-    case 'criarFormacao':
-      if (isGestor) loadCriarFormacao();
-      break;
-    case 'colaboradores':
-      if (isGestor) loadColaboradores();
-      break;
-    case 'necessidadesFormacao':
-      if (isGestor) loadNecessidadesGestor();
-      break;
-    case 'relatorios':
-      if (isGestor) loadRelatorios();
-      break;
-  }
-}
+            // 3) Show dashboard (with currentUserData loaded)
+            showDashboard();
+        });
 
         async function loadUserData(uid) {
             try {
@@ -2463,301 +2326,60 @@ function navigateTo(pageId) {
             }
         }
 
-       // =========================
-// RELATÓRIOS E EXPORTAÇÃO
-// =========================
+        function loadRelatorios() {
+            document.getElementById('pageTitle').textContent = 'Relatórios e Exportação';
 
-function loadRelatorios() {
-  document.getElementById('pageTitle').textContent = 'Relatórios e Exportação';
+            const content = `
+                <div class="stats-grid">
+                    <div class="stat-card blue">
+                        <div class="stat-label">Total Formações</div>
+                        <div class="stat-value" id="statTotalFormacoes">-</div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-label">Colaboradores Ativos</div>
+                        <div class="stat-value" id="statColaboradores">-</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-label">Horas Formação Total</div>
+                        <div class="stat-value" id="statHorasTotal">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avaliações Submetidas</div>
+                        <div class="stat-value" id="statAvaliacoes">-</div>
+                    </div>
+                </div>
 
-  const content = `
-    <div class="stats-grid">
-      <div class="stat-card blue">
-        <div class="stat-label">Total Formações</div>
-        <div class="stat-value" id="statTotalFormacoes">-</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-label">Colaboradores Ativos</div>
-        <div class="stat-value" id="statColaboradores">-</div>
-      </div>
-      <div class="stat-card warning">
-        <div class="stat-label">Horas Formação Total</div>
-        <div class="stat-value" id="statHorasTotal">-</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Avaliações Submetidas</div>
-        <div class="stat-value" id="statAvaliacoes">-</div>
-      </div>
-    </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Exportar Dados</h2>
+                    </div>
+                    <p style="margin-bottom: 16px;">Exporte todos os dados do sistema para ficheiros CSV.</p>
+                    <button class="btn btn-primary" onclick="exportarTodosDados()">
+                        📥 Exportar Tudo (CSV)
+                    </button>
+                </div>
+            `;
 
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Filtros de Tempo</h2>
-      </div>
-      <div class="filters-bar">
-        <div class="filter-item">
-          <label class="form-label" for="relatorioAno">Ano</label>
-          <select id="relatorioAno" class="form-control">
-            <option value="all">Todos</option>
-            <option value="2026">2026</option>
-            <option value="2027">2027</option>
-            <option value="2028">2028</option>
-          </select>
-        </div>
-        <div class="filter-item">
-          <label class="form-label" for="relatorioDataInicio">Data início</label>
-          <input type="date" id="relatorioDataInicio" class="form-control">
-        </div>
-        <div class="filter-item">
-          <label class="form-label" for="relatorioDataFim">Data fim</label>
-          <input type="date" id="relatorioDataFim" class="form-control">
-        </div>
-        <div class="filter-item" style="align-self:flex-end;">
-          <button class="btn btn-primary" onclick="carregarRelatorioHoras()">Aplicar filtros</button>
-        </div>
-      </div>
-    </div>
+            document.getElementById('contentArea').innerHTML = content;
+            carregarEstatisticas();
+        }
 
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Horas de Formação por Colaborador</h2>
-        <button class="btn btn-secondary" onclick="exportarHorasColaboradores()">Exportar CSV</button>
-      </div>
-      <div id="relatorioHorasContainer">
-        <div class="loading active">
-          <div class="spinner"></div>
-          <p>A carregar dados...</p>
-        </div>
-      </div>
-    </div>
-  `;
+        async function carregarEstatisticas() {
+            try {
+                const trainingsSnap = await db.collection('trainings').get();
+                const usersSnap = await db.collection('users').where('ativo', '==', true).get();
+                const evaluationsSnap = await db.collection('evaluations').get();
 
-  document.getElementById('contentArea').innerHTML = content;
+                const totalHoras = trainingsSnap.docs.reduce((sum, doc) => sum + (doc.data().duracaoHoras || 0), 0);
 
-  carregarEstatisticas();
-  carregarRelatorioHoras();
-}
-
-// estatísticas globais (se já tinhas uma versão, mantém a tua se quiseres)
-async function carregarEstatisticas() {
-  try {
-    const trainingsSnap = await db.collection('trainings').get();
-    const usersSnap = await db.collection('users').where('ativo', '==', true).get();
-    const enrollmentsSnap = await db.collection('enrollments').get();
-    const evalSnap = await db.collection('evaluations').get();
-
-    let totalHoras = 0;
-    trainingsSnap.docs.forEach(doc => {
-      const t = doc.data();
-      totalHoras += t.duracaoHoras || 0;
-    });
-
-    document.getElementById('statTotalFormacoes').textContent = trainingsSnap.size;
-    document.getElementById('statColaboradores').textContent = usersSnap.size;
-    document.getElementById('statHorasTotal').textContent = totalHoras.toFixed(1);
-    document.getElementById('statAvaliacoes').textContent = evalSnap.size;
-  } catch (error) {
-    console.error('Erro ao carregar estatísticas:', error);
-  }
-}
-
-// horas por colaborador (com filtros)
-  html += `
-          </tbody>
-        </table>
-      </div>
-    `;
-
-    container.innerHTML = html;
-  } catch (error) {
-    console.error('Erro ao carregar relatório de horas:', error);
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">⚠️</div>
-        <p class="empty-state-text">Erro ao carregar relatório de horas.</p>
-      </div>
-    `;
-  }
-}
-// detalhe por colaborador (modal)
-async function verDetalheColaborador(userId) {
-  try {
-    const userDoc = await db.collection('users').doc(userId).get();
-    if (!userDoc.exists) {
-      showToast('Colaborador não encontrado', 'error');
-      return;
-    }
-    const u = userDoc.data();
-
-    const enrollmentsSnap = await db.collection('enrollments')
-      .where('userId', '==', userId)
-      .get();
-
-    if (enrollmentsSnap.empty) {
-      showToast('Colaborador sem formações registadas', 'info');
-      return;
-    }
-
-    const trainingIds = enrollmentsSnap.docs.map(doc => doc.data().trainingId);
-    const trainings = [];
-    for (const tId of trainingIds) {
-      const tDoc = await db.collection('trainings').doc(tId).get();
-      if (tDoc.exists) {
-        trainings.push({ id: tDoc.id, ...tDoc.data() });
-      }
-    }
-
-    const evalSnap = await db.collection('evaluations')
-      .where('userId', '==', userId)
-      .get();
-    const avaliacoesByTraining = {};
-    evalSnap.docs.forEach(doc => {
-      const e = doc.data();
-      avaliacoesByTraining[e.trainingId] = e;
-    });
-
-    let html = `
-      <div class="modal active" id="detalheColaboradorModal">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2 class="modal-title">Formações de ${u.nome}</h2>
-            <button class="close-modal" onclick="fecharDetalheColaborador()">&times;</button>
-          </div>
-          <div>
-            <p><strong>Função:</strong> ${u.funcao || '-'}</p>
-            <p><strong>Email:</strong> ${u.email || '-'}</p>
-          </div>
-          <div style="margin-top:20px;">
-            <div class="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Formação</th>
-                    <th>Horas</th>
-                    <th>Avaliação Global</th>
-                  </tr>
-                </thead>
-                <tbody>
-    `;
-
-    trainings.forEach(t => {
-      const data = t.data ? new Date(t.data.seconds * 1000) : null;
-      const dataStr = data ? data.toLocaleDateString('pt-PT') : '-';
-      const avaliacao = avaliacoesByTraining[t.id];
-      const global = avaliacao ? (avaliacao.avaliacaoGlobal || '-') : '-';
-
-      html += `
-        <tr>
-          <td>${dataStr}</td>
-          <td>${t.tema || 'Sem título'}</td>
-          <td>${(t.duracaoHoras || 0).toFixed(1)}</td>
-          <td>${global}</td>
-        </tr>
-      `;
-    });
-
-    html += `
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div style="margin-top:16px; text-align:right;">
-            <button class="btn btn-secondary" onclick="fecharDetalheColaborador()">Fechar</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const old = document.getElementById('detalheColaboradorModal');
-    if (old) old.remove();
-    document.body.insertAdjacentHTML('beforeend', html);
-  } catch (error) {
-    console.error('Erro ao carregar detalhe do colaborador:', error);
-    showToast('Erro ao carregar detalhe do colaborador', 'error');
-  }
-}
-
-function fecharDetalheColaborador() {
-  const modal = document.getElementById('detalheColaboradorModal');
-  if (modal) modal.remove();
-}
-
-// exportar CSV das horas por colaborador (com filtros)
-async function exportarHorasColaboradores() {
-  showToast('A preparar exportação...', 'info');
-
-  const anoSelecionado = document.getElementById('relatorioAno')?.value || 'all';
-  const dataInicioStr = document.getElementById('relatorioDataInicio')?.value;
-  const dataFimStr = document.getElementById('relatorioDataFim')?.value;
-
-  let dataInicio = null;
-  let dataFim = null;
-
-  if (anoSelecionado !== 'all') {
-    dataInicio = new Date(`${anoSelecionado}-01-01T00:00:00`);
-    dataFim = new Date(`${anoSelecionado}-12-31T23:59:59`);
-  }
-
-  if (dataInicioStr) {
-    const d = new Date(`${dataInicioStr}T00:00:00`);
-    if (!dataInicio || d > dataInicio) dataInicio = d;
-  }
-  if (dataFimStr) {
-    const d = new Date(`${dataFimStr}T23:59:59`);
-    if (!dataFim || d < dataFim) dataFim = d;
-  }
-
-  try {
-    // sem orderBy para evitar índice
-    const usersSnap = await db.collection('users')
-      .where('ativo', '==', true)
-      .get();
-    const enrollmentsSnap = await db.collection('enrollments').get();
-    const trainingsSnap = await db.collection('trainings').get();
-
-    const trainingsById = {};
-    trainingsSnap.docs.forEach(doc => trainingsById[doc.id] = doc.data());
-
-    const mapa = {};
-
-    enrollmentsSnap.docs.forEach(enrDoc => {
-      const e = enrDoc.data();
-      const training = trainingsById[e.trainingId];
-      if (!training) return;
-      if (e.estadoInscricao !== 'Presente') return;
-
-      const dataTreino = training.data ? new Date(training.data.seconds * 1000) : null;
-      if (!dataTreino) return;
-
-      if (dataInicio && dataTreino < dataInicio) return;
-      if (dataFim && dataTreino > dataFim) return;
-
-      const horas = training.duracaoHoras || 0;
-      if (!mapa[e.userId]) mapa[e.userId] = 0;
-      mapa[e.userId] += horas;
-    });
-
-    // ordenar utilizadores por nome em JS
-    const users = usersSnap.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-
-    let csv = 'Nome,Email,Função,Horas\n';
-
-    users.forEach(u => {
-      const horas = mapa[u.id] || 0;
-      csv += `"${u.nome || ''}","${u.email || ''}","${u.funcao || ''}",${horas.toFixed(1)}\n`;
-    });
-
-    downloadCSV(csv, 'horas_colaboradores.csv');
-    showToast('CSV de horas exportado com sucesso!', 'success');
-  } catch (error) {
-    console.error('Erro ao exportar horas por colaborador:', error);
-    showToast('Erro ao exportar horas por colaborador', 'error');
-  }
-}
-
+                document.getElementById('statTotalFormacoes').textContent = trainingsSnap.size;
+                document.getElementById('statColaboradores').textContent = usersSnap.size;
+                document.getElementById('statHorasTotal').textContent = totalHoras;
+                document.getElementById('statAvaliacoes').textContent = evaluationsSnap.size;
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
 
         async function exportarTodosDados() {
             showToast('A preparar exportação...', 'info');
@@ -2848,8 +2470,6 @@ async function exportarHorasColaboradores() {
             }, 3000);
         }
 
-        // Initialize default gestores when app loads
-}
     </script>
 </body>
 </html>
