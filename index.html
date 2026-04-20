@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farmácia da Liga - Sistema de Gestão de Formações</title>
+
+    <meta name="theme-color" content="#4A6572">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FormaLiga">
+    <link rel="manifest" href="manifest.json">
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234A6572'/><rect x='28' y='18' width='44' height='64' rx='8' fill='%23FFFFFF'/><rect x='36' y='32' width='28' height='4' rx='2' fill='%23D8EFFF'/><rect x='36' y='42' width='20' height='4' rx='2' fill='%23D8EFFF'/><rect x='36' y='52' width='24' height='4' rx='2' fill='%23DFF3E3'/><circle cx='68' cy='72' r='14' fill='%237BC97F'/><rect x='64' y='66' width='8' height='12' rx='2' fill='white'/><rect x='62' y='70' width='12' height='4' rx='2' fill='white'/></svg>">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -771,6 +782,24 @@
             gap: 12px;
             margin-top: 16px;
         }
+    
+        .section-subtitle { font-size: 13px; color: var(--color-text-secondary); margin-top: -8px; margin-bottom: 16px; }
+        .alert-list { display: grid; gap: 12px; }
+        .alert-item { background: #FFF7E8; border: 1px solid #FFE1AE; border-radius: 12px; padding: 14px 16px; }
+        .kpi-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+        .kpi-pill { background: var(--color-accent-blue); color: var(--color-text-primary); padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+        .month-group { margin-bottom: 28px; }
+        .month-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; color: var(--color-text-primary); }
+        .actions-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+        .small-text { font-size: 12px; color: var(--color-text-secondary); }
+        .inline-badge { display:inline-flex; align-items:center; gap:6px; }
+        .proof-upload-box { border: 1px dashed var(--color-border); border-radius: 12px; padding: 12px; background: #fafafa; }
+        .dashboard-split { display:grid; grid-template-columns: 1.1fr 0.9fr; gap:20px; }
+        .rank-list { display:grid; gap:10px; }
+        .rank-item { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border:1px solid var(--color-border); border-radius:10px; background:#fff; }
+        .muted-box { background:#F7F9FA; border:1px solid var(--color-border); border-radius:12px; padding:14px; }
+        @media (max-width: 980px) { .dashboard-split { grid-template-columns: 1fr; } }
+
     </style>
 </head>
 <body>
@@ -986,6 +1015,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
     <script>
         // Firebase Configuration
@@ -1345,6 +1375,7 @@
         function abrirAvaliacao(trainingId) {
             document.getElementById('evalTrainingId').value = trainingId;
             initRatingStars();
+            if (typeof injectProofField === 'function') injectProofField();
             openModal('avaliacaoModal');
         }
 
@@ -2104,6 +2135,7 @@
                                             </td>
                                             <td>
                                                 <button class="btn btn-secondary btn-icon" onclick="editarColaborador('${doc.id}')" title="Editar">✏️</button>
+                                                <button class="btn btn-primary btn-icon" onclick="loadColaboradorDetail('${doc.id}')" title="Ver histórico" style="margin-left: 4px;">📋</button>
                                                 <button class="btn btn-danger btn-icon" onclick="eliminarColaborador('${doc.id}')" title="Eliminar" style="margin-left: 4px;">🗑️</button>
                                             </td>
                                         </tr>
@@ -2471,5 +2503,795 @@
         }
 
     </script>
+
+<script>
+(function(){
+    const storage = firebase.storage();
+    const PRO = {
+        backupEmail: 'fligadebora@gmail.com',
+        driveFolderUrl: 'https://drive.google.com/drive/folders/1iV8mAHgu1OGpXMdVwW18zjsnIB8HmtKB?usp=drive_link',
+        civilYear: new Date().getFullYear()
+    };
+
+    let activeUnsubscribe = null;
+
+    function stopLive(){ if (typeof activeUnsubscribe === 'function') { activeUnsubscribe(); activeUnsubscribe = null; } }
+    function asDate(v){
+        if (!v) return null;
+        if (v.toDate) return v.toDate();
+        if (typeof v === 'string') {
+            const d = new Date(v);
+            return isNaN(d) ? null : d;
+        }
+        if (v.seconds) return new Date(v.seconds * 1000);
+        try { const d = new Date(v); return isNaN(d) ? null : d; } catch(e){ return null; }
+    }
+    function startOfDay(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
+    function endOfDay(d){ const x = new Date(d); x.setHours(23,59,59,999); return x; }
+    function monthKey(d){ return new Intl.DateTimeFormat('pt-PT', { month:'long', year:'numeric' }).format(d); }
+    function dateText(d){ return d ? new Intl.DateTimeFormat('pt-PT', { dateStyle:'medium', timeStyle:'short' }).format(d) : 'Sem data'; }
+    function csvEscape(v){ return '"' + String(v ?? '').replaceAll('"', '""') + '"'; }
+    function hoursLabelFromMinutes(min){ return (Number(min || 0) / 60).toFixed(2).replace('.', ',') + ' h'; }
+    function normalizeDurationMinutes(training){
+        if (training.durationMinutes != null) return Number(training.durationMinutes) || 0;
+        if (training.duracaoMinutos != null) return Number(training.duracaoMinutos) || 0;
+        if (training.duracao != null) {
+            const n = Number(training.duracao);
+            if (!isNaN(n)) return n > 24 ? n : Math.round(n * 60);
+        }
+        return 0;
+    }
+    function trainingTitle(t){ return t.tema || t.titulo || t.nome || 'Formação sem título'; }
+    function trainingTrainer(t){ return t.formador || t.formadorNome || t.orador || '—'; }
+    function trainingType(t){ return t.tipo || t.modalidade || '—'; }
+    function trainingDate(t){ return asDate(t.data || t.date || t.dataFormacao || t.scheduledAt); }
+    function participantIds(t){
+        const arr = t.participantes || t.participants || t.inscritos || [];
+        return (Array.isArray(arr) ? arr : []).map(p => {
+            if (typeof p === 'string') return p;
+            return p.userId || p.id || p.uid || null;
+        }).filter(Boolean);
+    }
+    function isParticipant(t, userId){ return participantIds(t).includes(userId); }
+    function resolvedStatus(t){
+        const manual = (t.estadoManual || t.manualStatus || '').toLowerCase();
+        if (manual) return manual;
+        const estado = (t.estado || '').toLowerCase();
+        if (['cancelada','adiada'].includes(estado)) return estado;
+        const d = trainingDate(t);
+        if (!d) return estado || 'agendada';
+        return startOfDay(d) <= startOfDay(new Date()) ? 'realizada' : 'agendada';
+    }
+    function statusBadge(status){
+        const map = {
+            agendada: 'badge badge-info',
+            realizada: 'badge badge-success',
+            cancelada: 'badge badge-error',
+            adiada: 'badge badge-warning'
+        };
+        return `<span class="${map[status] || 'badge badge-info'}">${status}</span>`;
+    }
+    function canEditEvaluation(evalDoc){
+        if (!evalDoc || !evalDoc.firstSubmittedAt) return true;
+        const first = asDate(evalDoc.firstSubmittedAt);
+        if (!first) return true;
+        return (Date.now() - first.getTime()) <= 24 * 60 * 60 * 1000;
+    }
+    async function getUsersMap(){
+        const snap = await db.collection('users').get();
+        const map = {};
+        snap.forEach(doc => map[doc.id] = { id: doc.id, ...doc.data() });
+        return map;
+    }
+    async function getAllTrainings(){
+        const snap = await db.collection('trainings').get();
+        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+    async function getAttendanceMap(){
+        const snap = await db.collection('attendance').get();
+        const map = {};
+        snap.forEach(doc => {
+            const d = doc.data();
+            map[`${d.trainingId}_${d.userId}`] = { id: doc.id, ...d };
+        });
+        return map;
+    }
+    async function getEvaluationsMap(){
+        const snap = await db.collection('evaluations').get();
+        const map = {};
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.trainingId && d.userId) map[`${d.trainingId}_${d.userId}`] = { id: doc.id, ...d };
+        });
+        return map;
+    }
+    function downloadCSV(filename, rows){
+        const csv = rows.map(r => r.map(csvEscape).join(';')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    function rangeFilter(date, start, end){
+        if (!date) return false;
+        if (start && date < startOfDay(start)) return false;
+        if (end && date > endOfDay(end)) return false;
+        return true;
+    }
+    async function ensureAutoStatus(){
+        if (!currentUserData || currentUserData.role !== 'gestorformacao') return;
+        const snap = await db.collection('trainings').get();
+        const batch = db.batch();
+        let count = 0;
+        snap.forEach(doc => {
+            const d = doc.data();
+            const date = trainingDate(d);
+            if (!date) return;
+            const manual = (d.estadoManual || d.manualStatus || '').toLowerCase();
+            const estado = (d.estado || '').toLowerCase();
+            if (!manual && startOfDay(date) <= startOfDay(new Date()) && estado !== 'realizada' && estado !== 'cancelada' && estado !== 'adiada') {
+                batch.set(doc.ref, { estado: 'realizada', autoStatusUpdatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+                count++;
+            }
+        });
+        if (count) await batch.commit();
+    }
+    async function setAttendance(trainingId, status){
+        const existingAttDoc = await db.collection('attendance').doc(`${trainingId}_${currentUser.uid}`).get();
+        if (existingAttDoc.exists) {
+            const d = existingAttDoc.data();
+            const confirmed = asDate(d.confirmedAt);
+            if (confirmed && (Date.now() - confirmed.getTime()) > 24 * 60 * 60 * 1000) {
+                return showToast('O prazo de 24h para alterar a presença já terminou.', 'error');
+            }
+        }
+        const firstConfirm = (existingAttDoc.exists && existingAttDoc.data().confirmedAt)
+            ? existingAttDoc.data().confirmedAt
+            : firebase.firestore.FieldValue.serverTimestamp();
+        const ref = db.collection('attendance').doc(`${trainingId}_${currentUser.uid}`);
+        await ref.set({
+            trainingId,
+            userId: currentUser.uid,
+            status,
+            confirmedAt: firstConfirm,
+            confirmedByUser: true
+        }, { merge: true });
+        showToast(status === 'present' ? 'Presença confirmada. Tem 24h para avaliar e alterar a presença.' : 'Falta registada.', 'success');
+        loadMinhasFormacoes();
+    }
+    window.setAttendance = setAttendance;
+
+    async function uploadProof(trainingId, file){
+        if (!file) return null;
+        const safeName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+        const path = `comprovativos/${currentUser.uid}/${trainingId}/${safeName}`;
+        const ref = storage.ref().child(path);
+        await ref.put(file, {
+            customMetadata: {
+                trainingId,
+                userId: currentUser.uid,
+                driveFolderUrl: PRO.driveFolderUrl
+            }
+        });
+        const url = await ref.getDownloadURL();
+        await db.collection('proofs').add({
+            trainingId,
+            userId: currentUser.uid,
+            fileName: file.name,
+            storagePath: path,
+            downloadURL: url,
+            driveFolderUrl: PRO.driveFolderUrl,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        return { url, path, fileName: file.name };
+    }
+
+    function injectProofField(){
+        const form = document.getElementById('avaliacaoForm');
+        if (!form || document.getElementById('proofUploadField')) return;
+        const html = `
+            <div class="form-group" id="proofUploadField">
+                <label class="form-label">Comprovativo da formação (facultativo)</label>
+                <div class="proof-upload-box">
+                    <input type="file" id="comprovativoFile" class="form-control" accept="application/pdf,image/*" capture="environment">
+                    <div class="small-text" style="margin-top:8px;">No telemóvel pode tirar fotografia; em desktop pode anexar PDF ou imagem. O ficheiro fica associado à formação.</div>
+                </div>
+            </div>`;
+        form.insertAdjacentHTML('beforeend', html);
+    }
+
+    async function openEvaluationForTraining(trainingId){
+        injectProofField();
+        if (typeof initRatingStars === 'function') initRatingStars();
+        document.getElementById('evalTrainingId').value = trainingId;
+        const existingSnap = await db.collection('evaluations').where('trainingId','==',trainingId).where('userId','==',currentUser.uid).limit(1).get();
+        if (!existingSnap.empty) {
+            const ev = existingSnap.docs[0].data();
+            ['duracao','pedagogica','dominio','relevancia','global'].forEach(key => {
+                const map = {
+                    duracao: ev.duracaoAcao,
+                    pedagogica: ev.capacidadePedagogicaFormador,
+                    dominio: ev.dominioTemaFormador,
+                    relevancia: ev.relevanciaTarefasDesempenha,
+                    global: ev.avaliacaoGlobal
+                };
+                const val = map[key] || '';
+                const input = document.getElementById(`rating-${key}`);
+                if (input) input.value = val;
+                document.querySelectorAll(`#stars-${key} .star`).forEach((s, idx) => s.classList.toggle('active', idx < val));
+            });
+            document.getElementById('afastamentoPratica').value = ev.temasAfastamPraticaInstituida ? 'sim' : 'nao';
+            document.getElementById('detalheAfastamento').value = ev.justificacaoAfastamentoPratica || '';
+            document.getElementById('observacoesPropostas').value = ev.observacoesPropostasImplementacao || '';
+            toggleAfastamentoDetalhe();
+        } else {
+            document.getElementById('avaliacaoForm').reset();
+            document.getElementById('evalTrainingId').value = trainingId;
+            ['duracao','pedagogica','dominio','relevancia','global'].forEach(key => {
+                document.querySelectorAll(`#stars-${key} .star`).forEach(s => s.classList.remove('active'));
+            });
+        }
+        document.getElementById('avaliacaoModal').classList.add('active');
+    }
+    window.openEvaluationForTraining = openEvaluationForTraining;
+
+    window.submitAvaliacao = async function(event){
+        event.preventDefault();
+        const trainingId = document.getElementById('evalTrainingId').value;
+        const trainingDoc = await db.collection('trainings').doc(trainingId).get();
+        if (!trainingDoc.exists) return showToast('Formação não encontrada.', 'error');
+        const training = { id: trainingDoc.id, ...trainingDoc.data() };
+        if (!isParticipant(training, currentUser.uid)) return showToast('Só pode avaliar formações onde está inscrito.', 'error');
+        if (resolvedStatus(training) !== 'realizada') return showToast('A avaliação só fica disponível após a formação ser realizada.', 'error');
+
+        const attendanceDoc = await db.collection('attendance').doc(`${trainingId}_${currentUser.uid}`).get();
+        const attendance = attendanceDoc.exists ? attendanceDoc.data() : null;
+        if (!attendance || attendance.status !== 'present') return showToast('Só pode avaliar após confirmar presença.', 'error');
+
+        const existingSnap = await db.collection('evaluations').where('trainingId','==',trainingId).where('userId','==',currentUser.uid).limit(1).get();
+        const existing = existingSnap.empty ? null : { id: existingSnap.docs[0].id, ...existingSnap.docs[0].data() };
+        if (existing && !canEditEvaluation(existing)) return showToast('O prazo de edição de 24h terminou.', 'error');
+
+        const file = document.getElementById('comprovativoFile')?.files?.[0] || null;
+        let proof = null;
+        if (file) proof = await uploadProof(trainingId, file);
+
+        const payload = {
+            trainingId,
+            userId: currentUser.uid,
+            duracaoAcao: parseInt(document.getElementById('rating-duracao').value || 0),
+            capacidadePedagogicaFormador: parseInt(document.getElementById('rating-pedagogica').value || 0),
+            dominioTemaFormador: parseInt(document.getElementById('rating-dominio').value || 0),
+            relevanciaTarefasDesempenha: parseInt(document.getElementById('rating-relevancia').value || 0),
+            avaliacaoGlobal: parseInt(document.getElementById('rating-global').value || 0),
+            temasAfastamPraticaInstituida: document.getElementById('afastamentoPratica').value === 'sim',
+            justificacaoAfastamentoPratica: document.getElementById('detalheAfastamento').value || '',
+            observacoesPropostasImplementacao: document.getElementById('observacoesPropostas').value || '',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (proof) payload.proof = proof;
+        if (!existing) payload.firstSubmittedAt = firebase.firestore.FieldValue.serverTimestamp();
+        const ref = existing ? db.collection('evaluations').doc(existing.id) : db.collection('evaluations').doc(`${trainingId}_${currentUser.uid}`);
+        await ref.set(payload, { merge: true });
+        closeModal('avaliacaoModal');
+        showToast(existing ? 'Avaliação atualizada.' : 'Avaliação registada.', 'success');
+        loadMinhasFormacoes();
+    };
+
+    window.buildMenu = function(){
+        const menu = document.getElementById('sidebarMenu');
+        const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
+        const items = isGestor ? [
+            ['dashboardGestao', 'Dashboard Gestão', '🏠'],
+            ['todasFormacoes', 'Todas as Formações', '📚'],
+            ['criarFormacao', 'Criar Formação', '➕'],
+            ['colaboradores', 'Colaboradores', '👥'],
+            ['necessidadesFormacao', 'Necessidades de Formação', '📝'],
+            ['relatorios', 'Relatórios e Exportação', '📊'],
+            ['sep', 'Área Pessoal', ''],
+            ['minhasFormacoes', 'As Minhas Formações', '📖'],
+            ['manifestarNecessidade', 'Necessidade de Formação', '✍️'],
+            ['historicoAvaliacoes', 'Histórico de Avaliações', '⭐']
+        ] : [
+            ['minhasFormacoes', 'As Minhas Formações', '📖'],
+            ['manifestarNecessidade', 'Necessidade de Formação', '✍️'],
+            ['historicoAvaliacoes', 'Histórico de Avaliações', '⭐']
+        ];
+        menu.innerHTML = items.map(([id, label, icon]) => id === 'sep'
+            ? `<div style="padding:8px 20px; margin:8px 0; border-bottom:1px solid var(--color-border);"><small style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${label}</small></div>`
+            : `<div class="menu-item" data-page="${id}" onclick="navigateTo('${id}', this)"><span>${icon}</span><span>${label}</span></div>`
+        ).join('');
+    };
+
+    window.showDashboard = function(){
+        document.getElementById('loginPage').classList.remove('active');
+        document.getElementById('dashboardPage').classList.add('active');
+        buildMenu();
+        const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
+        if (isGestor && typeof ensureAutoStatus === 'function') ensureAutoStatus().catch(()=>{});
+        navigateTo(isGestor ? 'dashboardGestao' : 'minhasFormacoes');
+    };
+
+    window.navigateTo = function(pageId, el){
+        stopLive();
+        document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+        if (el) el.classList.add('active');
+        else document.querySelector(`.menu-item[data-page="${pageId}"]`)?.classList.add('active');
+        const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
+        switch(pageId){
+            case 'dashboardGestao': if (isGestor) loadDashboardGestao(); break;
+            case 'todasFormacoes': if (isGestor) loadTodasFormacoes(); break;
+            case 'criarFormacao': if (isGestor) loadCriarFormacao(); break;
+            case 'colaboradores': if (isGestor && window.loadColaboradores) window.loadColaboradores(); break;
+            case 'necessidadesFormacao': if (isGestor && window.loadNecessidadesGestor) window.loadNecessidadesGestor(); break;
+            case 'relatorios': if (isGestor) loadRelatorios(); break;
+            case 'manifestarNecessidade': if (window.loadManifestarNecessidade) window.loadManifestarNecessidade(); break;
+            case 'historicoAvaliacoes': if (window.loadHistoricoAvaliacoes) window.loadHistoricoAvaliacoes(); break;
+            default: loadMinhasFormacoes();
+        }
+    };
+
+    window.loadDashboardGestao = async function(){
+        document.getElementById('pageTitle').textContent = 'Dashboard Gestão';
+        document.getElementById('contentArea').innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card blue"><div class="stat-label">Formações este ano</div><div class="stat-value" id="kpiFormacoesAno">-</div></div>
+                <div class="stat-card green"><div class="stat-label">Horas frequentadas</div><div class="stat-value" id="kpiHorasAno">-</div></div>
+                <div class="stat-card warning"><div class="stat-label">Avaliações pendentes</div><div class="stat-value" id="kpiPendentes">-</div></div>
+                <div class="stat-card"><div class="stat-label">Colaboradores ativos</div><div class="stat-value" id="kpiColabsAtivos">-</div></div>
+            </div>
+            <div class="dashboard-split">
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">Formandos com formações por avaliar</h2></div>
+                    <div class="section-subtitle">Só entram colaboradores inscritos, com presença confirmada e sem avaliação submetida.</div>
+                    <div id="pendingEvalList" class="alert-list"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">Horas por colaborador no ano civil</h2></div>
+                    <div id="hoursByUserList" class="rank-list"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Automação e controlo</h2></div>
+                <div class="muted-box">
+                    <div class="kpi-row">
+                        <span class="kpi-pill">Estados automáticos ativos</span>
+                        <span class="kpi-pill">Tempo registado em minutos</span>
+                        <span class="kpi-pill">Horas visíveis por colaborador</span>
+                        <span class="kpi-pill">Backup semanal configurável para ${PRO.backupEmail}</span>
+                    </div>
+                    <div class="small-text" style="margin-top:12px;">A automação de backup semanal por email e a sincronização direta para a pasta Drive exigem uma Cloud Function ou Google Apps Script. A interface já fica preparada para essa integração.</div>
+                </div>
+            </div>`;
+
+        await ensureAutoStatus();
+        const render = async () => {
+            const [usersMap, trainings, attendanceMap, evalMap] = await Promise.all([getUsersMap(), getAllTrainings(), getAttendanceMap(), getEvaluationsMap()]);
+            const year = new Date().getFullYear();
+            const realized = trainings.filter(t => resolvedStatus(t) === 'realizada');
+            const trainingsYear = trainings.filter(t => trainingDate(t)?.getFullYear() === year);
+
+            const hoursByUser = {};
+            Object.values(usersMap).forEach(u => hoursByUser[u.id] = 0);
+            const pendingRows = [];
+            realized.forEach(t => {
+                const dt = trainingDate(t);
+                const mins = normalizeDurationMinutes(t);
+                participantIds(t).forEach(uid => {
+                    const att = attendanceMap[`${t.id}_${uid}`];
+                    const ev = evalMap[`${t.id}_${uid}`];
+                    if (att?.status === 'present') {
+                        if (dt && dt.getFullYear() === year) hoursByUser[uid] = (hoursByUser[uid] || 0) + mins;
+                        if (!ev) pendingRows.push({ uid, trainingId: t.id, training: trainingTitle(t), date: dt });
+                    }
+                });
+            });
+
+            document.getElementById('kpiFormacoesAno').textContent = trainingsYear.length;
+            document.getElementById('kpiHorasAno').textContent = hoursLabelFromMinutes(Object.values(hoursByUser).reduce((a,b)=>a+b,0));
+            document.getElementById('kpiPendentes').textContent = pendingRows.length;
+            document.getElementById('kpiColabsAtivos').textContent = Object.values(usersMap).filter(u => u.ativo !== false).length;
+
+            const pendingList = document.getElementById('pendingEvalList');
+            if (!pendingRows.length) pendingList.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">Não existem avaliações pendentes com presença confirmada.</div></div>`;
+            else pendingList.innerHTML = pendingRows
+                .sort((a,b) => (a.date?.getTime()||0) - (b.date?.getTime()||0))
+                .map(r => `<div class="alert-item"><strong>${usersMap[r.uid]?.nome || 'Colaborador'}</strong><div class="small-text">${r.training} · ${dateText(r.date)}</div></div>`)
+                .join('');
+
+            const ranked = Object.entries(hoursByUser)
+                .map(([uid, mins]) => ({ uid, mins, nome: usersMap[uid]?.nome || uid }))
+                .filter(x => usersMap[x.uid]?.ativo !== false)
+                .sort((a,b) => b.mins - a.mins || a.nome.localeCompare(b.nome, 'pt'));
+            const rankList = document.getElementById('hoursByUserList');
+            rankList.innerHTML = ranked.map(r => `<div class="rank-item"><span>${r.nome}</span><strong>${hoursLabelFromMinutes(r.mins)}</strong></div>`).join('') || `<div class="small-text">Sem horas registadas.</div>`;
+        };
+        await render();
+        activeUnsubscribe = db.collection('trainings').onSnapshot(render);
+    };
+
+    window.loadCriarFormacao = async function(editId = null){
+        const isEdit = !!editId;
+        document.getElementById('pageTitle').textContent = isEdit ? 'Editar Formação' : 'Criar Nova Formação';
+        const usersMap = await getUsersMap();
+        let record = null;
+        if (isEdit) {
+            const doc = await db.collection('trainings').doc(editId).get();
+            if (doc.exists) record = { id: doc.id, ...doc.data() };
+        }
+        const selected = new Set(record ? participantIds(record) : []);
+        const dateValue = (() => {
+            const d = record ? trainingDate(record) : null;
+            if (!d) return '';
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        })();
+        document.getElementById('contentArea').innerHTML = `
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">${isEdit ? 'Editar formação' : 'Nova Formação'}</h2></div>
+                <form id="formacaoFormPro">
+                    <div class="form-group"><label class="form-label">Tema da Formação</label><input id="temaPro" class="form-control" required value="${record ? (trainingTitle(record).replace(/"/g,'&quot;')) : ''}"></div>
+                    <div class="form-group"><label class="form-label">Data e hora</label><input id="dataPro" type="datetime-local" class="form-control" required value="${dateValue}"></div>
+                    <div class="form-group"><label class="form-label">Duração (minutos)</label><input id="duracaoMinutosPro" type="number" min="1" class="form-control" required value="${record ? normalizeDurationMinutes(record) : 60}"></div>
+                    <div class="form-group"><label class="form-label">Formador</label><input id="formadorPro" class="form-control" value="${record ? ((trainingTrainer(record) || '').replace(/"/g,'&quot;')) : ''}"></div>
+                    <div class="form-group"><label class="form-label">Tipo / modalidade</label><input id="tipoPro" class="form-control" value="${record ? ((trainingType(record) || '').replace(/"/g,'&quot;')) : ''}"></div>
+                    <div class="form-group"><label class="form-label">Estado</label>
+                        <select id="estadoPro" class="form-control">
+                            ${['agendada','realizada','adiada','cancelada'].map(s => `<option value="${s}" ${record && resolvedStatus(record)===s?'selected':''}>${s}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group"><label class="form-label">Descrição / notas</label><textarea id="descricaoPro" class="form-control">${record ? ((record.descricao || record.notas || '').replace(/</g,'&lt;')) : ''}</textarea></div>
+                    <div class="form-group"><label class="form-label">Participantes inscritos</label><div class="participants-grid">${Object.values(usersMap).filter(u => u.ativo !== false).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'', 'pt')).map(u => `<label class="checkbox-item"><input type="checkbox" value="${u.id}" ${selected.has(u.id)?'checked':''}><span><strong>${u.nome || u.email}</strong><br><small>${u.funcao || ''}${u.role === 'gestorformacao' ? ' · Gestor de Formação' : ''}</small></span></label>`).join('')}</div></div>
+                    <div class="actions-row">
+                        <button class="btn btn-primary" type="submit">${isEdit ? 'Guardar Alterações' : 'Criar Formação'}</button>
+                        <button class="btn btn-secondary" type="button" onclick="navigateTo('todasFormacoes')">Cancelar</button>
+                    </div>
+                </form>
+            </div>`;
+
+        document.getElementById('formacaoFormPro').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const participantes = Array.from(document.querySelectorAll('.participants-grid input[type="checkbox"]:checked')).map(i => i.value);
+            const payload = {
+                tema: document.getElementById('temaPro').value.trim(),
+                data: new Date(document.getElementById('dataPro').value),
+                durationMinutes: parseInt(document.getElementById('duracaoMinutosPro').value || 0),
+                formador: document.getElementById('formadorPro').value.trim(),
+                tipo: document.getElementById('tipoPro').value.trim(),
+                descricao: document.getElementById('descricaoPro').value.trim(),
+                participantes,
+                estado: document.getElementById('estadoPro').value,
+                estadoManual: document.getElementById('estadoPro').value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedBy: currentUser.uid
+            };
+            if (!isEdit) {
+                payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                payload.createdBy = currentUser.uid;
+            }
+            const ref = isEdit ? db.collection('trainings').doc(editId) : db.collection('trainings').doc();
+            await ref.set(payload, { merge: true });
+            showToast(isEdit ? 'Formação atualizada.' : 'Formação criada.', 'success');
+            navigateTo('todasFormacoes');
+        });
+    };
+
+    window.editTraining = function(trainingId){ loadCriarFormacao(trainingId); };
+
+    window.loadTodasFormacoes = async function(){
+        document.getElementById('pageTitle').textContent = 'Gestão de Formações';
+        document.getElementById('contentArea').innerHTML = `
+            <div class="card" style="margin-bottom:24px;">
+                <div class="card-header"><h2 class="card-title">Todas as Formações</h2><button class="btn btn-primary" onclick="navigateTo('criarFormacao')">➕ Nova Formação</button></div>
+                <div id="todasFormacoesContainer"></div>
+            </div>`;
+        await ensureAutoStatus();
+        const render = async () => {
+            const [usersMap, attendanceMap, evalMap, trainings] = await Promise.all([getUsersMap(), getAttendanceMap(), getEvaluationsMap(), getAllTrainings()]);
+            const container = document.getElementById('todasFormacoesContainer');
+            const cards = trainings.sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0)).map(t => {
+                const ids = participantIds(t);
+                const presentCount = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'present').length;
+                const absentCount = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'absent').length;
+                const evalCount = ids.filter(uid => !!evalMap[`${t.id}_${uid}`]).length;
+                return `
+                    <div class="training-card ${resolvedStatus(t)==='realizada'?'completed':'pending'}">
+                        <div class="training-header">
+                            <div>
+                                <div class="training-title">${trainingTitle(t)}</div>
+                                <div class="training-meta">
+                                    <div class="training-meta-item">📅 ${dateText(trainingDate(t))}</div>
+                                    <div class="training-meta-item">⏱️ ${normalizeDurationMinutes(t)} min</div>
+                                    <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
+                                    <div class="training-meta-item">👥 ${ids.length} inscritos</div>
+                                </div>
+                            </div>
+                            <div>${statusBadge(resolvedStatus(t))}</div>
+                        </div>
+                        <div class="kpi-row">
+                            <span class="kpi-pill">Presentes: ${presentCount}</span>
+                            <span class="kpi-pill">Faltas: ${absentCount}</span>
+                            <span class="kpi-pill">Avaliações: ${evalCount}</span>
+                        </div>
+                        <div class="small-text" style="margin-top:10px;">${ids.map(uid => usersMap[uid]?.nome || uid).join(', ') || 'Sem participantes.'}</div>
+                        <div class="actions-row">
+                            <button class="btn btn-secondary" onclick="editTraining('${t.id}')">✏️ Editar</button>
+                        </div>
+                    </div>`;
+            }).join('');
+            container.innerHTML = cards || `<div class="empty-state"><div class="empty-state-icon">📚</div><div class="empty-state-text">Ainda não existem formações.</div></div>`;
+        };
+        await render();
+        activeUnsubscribe = db.collection('trainings').onSnapshot(render);
+    };
+
+    window.loadMinhasFormacoes = async function(){
+        document.getElementById('pageTitle').textContent = 'As Minhas Formações';
+        document.getElementById('contentArea').innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card blue"><div class="stat-label">Formações Futuras</div><div class="stat-value" id="statFuturas">-</div></div>
+                <div class="stat-card green"><div class="stat-label">Horas frequentadas</div><div class="stat-value" id="statHoras">-</div></div>
+                <div class="stat-card warning"><div class="stat-label">Por avaliar</div><div class="stat-value" id="statAvaliar">-</div></div>
+            </div>
+            <div class="card"><div class="card-header"><h2 class="card-title">Formações organizadas por mês</h2></div><div id="minhasFormacoesContainer"></div></div>`;
+
+        const render = async () => {
+            const [trainings, attendanceMap, evalMap] = await Promise.all([getAllTrainings(), getAttendanceMap(), getEvaluationsMap()]);
+            const my = trainings.filter(t => isParticipant(t, currentUser.uid)).sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0));
+            const grouped = {};
+            let futuras = 0, avaliar = 0, minutes = 0;
+            my.forEach(t => {
+                const dt = trainingDate(t) || new Date();
+                const key = monthKey(dt);
+                grouped[key] ||= [];
+                const att = attendanceMap[`${t.id}_${currentUser.uid}`];
+                const ev = evalMap[`${t.id}_${currentUser.uid}`];
+                const status = resolvedStatus(t);
+                if (status === 'agendada') futuras++;
+                if (att?.status === 'present') minutes += normalizeDurationMinutes(t);
+                if (status === 'realizada' && att?.status === 'present' && !ev) avaliar++;
+                grouped[key].push({ t, dt, att, ev, status });
+            });
+            document.getElementById('statFuturas').textContent = futuras;
+            document.getElementById('statHoras').textContent = hoursLabelFromMinutes(minutes);
+            document.getElementById('statAvaliar').textContent = avaliar;
+
+            const container = document.getElementById('minhasFormacoesContainer');
+            const html = Object.entries(grouped).map(([month, rows]) => `
+                <div class="month-group">
+                    <div class="month-title">${month}</div>
+                    ${rows.map(({ t, dt, att, ev, status }) => {
+                        const canEvaluate = status === 'realizada' && att?.status === 'present';
+                        const canEditEval = ev && canEditEvaluation(ev);
+                        return `
+                            <div class="training-card ${status==='realizada'?'completed':'pending'}">
+                                <div class="training-header">
+                                    <div>
+                                        <div class="training-title">${trainingTitle(t)}</div>
+                                        <div class="training-meta">
+                                            <div class="training-meta-item">📅 ${dateText(dt)}</div>
+                                            <div class="training-meta-item">⏱️ ${normalizeDurationMinutes(t)} min (${hoursLabelFromMinutes(normalizeDurationMinutes(t))})</div>
+                                            <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
+                                        </div>
+                                    </div>
+                                    <div>${statusBadge(status)}</div>
+                                </div>
+                                <div class="kpi-row">
+                                    <span class="kpi-pill">Presença: ${att?.status === 'present' ? 'Confirmada' : att?.status === 'absent' ? 'Não compareceu' : 'Pendente'}</span>
+                                    <span class="kpi-pill">Avaliação: ${ev ? 'Submetida' : 'Por fazer'}</span>
+                                </div>
+                                <div class="actions-row">
+                                    ${status === 'realizada' ? `<button class="btn btn-success" onclick="setAttendance('${t.id}','present')">✅ Presente</button><button class="btn btn-warning" onclick="setAttendance('${t.id}','absent')">❌ Não compareceu</button>` : ''}
+                                    ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${t.id}')">${ev ? 'Editar Avaliação' : 'Avaliar Formação'}</button>` : ''}
+                                    ${ev && !canEditEval ? `<span class="small-text">Janela de edição da avaliação encerrada.</span>` : ''}
+                                    <label class="btn btn-secondary" style="cursor:pointer;">📎 Carregar comprovativo<input type="file" style="display:none" accept="application/pdf,image/*" capture="environment" onchange="window.quickProofUpload('${t.id}', this)"></label>
+                                </div>
+                            </div>`;
+                    }).join('')}
+                </div>`).join('');
+            container.innerHTML = html || `<div class="empty-state"><div class="empty-state-icon">📖</div><div class="empty-state-text">Ainda não está inscrito em formações.</div></div>`;
+        };
+        window.quickProofUpload = async function(trainingId, input){
+            const file = input.files?.[0];
+            if (!file) return;
+            await uploadProof(trainingId, file);
+            showToast('Comprovativo carregado com sucesso.', 'success');
+        };
+        await render();
+        activeUnsubscribe = db.collection('trainings').onSnapshot(render);
+    };
+
+    window.loadRelatorios = function(){
+        document.getElementById('pageTitle').textContent = 'Relatórios e Exportação';
+        document.getElementById('contentArea').innerHTML = `
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Exportação com intervalo temporal</h2></div>
+                <div class="filters-bar">
+                    <div class="filter-item"><label class="form-label">Data inicial</label><input id="reportStart" type="date" class="form-control"></div>
+                    <div class="filter-item"><label class="form-label">Data final</label><input id="reportEnd" type="date" class="form-control"></div>
+                </div>
+                <div class="actions-row">
+                    <button class="btn btn-primary" onclick="exportCollaboratorHours()">1) Exportar por colaborador</button>
+                    <button class="btn btn-secondary" onclick="exportAllEvaluations()">2) Exportar avaliações</button>
+                    <button class="btn btn-success" onclick="exportTrainingSummary()">3) Exportar resumo das formações</button>
+                </div>
+                <div class="small-text" style="margin-top:14px;">Os totais por colaborador são calculados em horas frequentadas, mas a formação continua a ser registada em minutos.</div>
+            </div>`;
+    };
+
+    async function reportDataset(){
+        const start = document.getElementById('reportStart')?.value ? new Date(document.getElementById('reportStart').value) : null;
+        const end = document.getElementById('reportEnd')?.value ? new Date(document.getElementById('reportEnd').value) : null;
+        const [usersMap, trainings, attendanceMap, evalMap] = await Promise.all([getUsersMap(), getAllTrainings(), getAttendanceMap(), getEvaluationsMap()]);
+        return { start, end, usersMap, trainings, attendanceMap, evalMap };
+    }
+
+
+    window.loadColaboradorDetail = async function(uid){
+        document.getElementById('pageTitle').textContent = 'Histórico do Colaborador';
+        document.getElementById('contentArea').innerHTML = `<div class="card"><div class="loading active"><div class="spinner"></div><p>A carregar...</p></div></div>`;
+        const [usersMap, trainings, attendanceMap, evalMap] = await Promise.all([
+            getUsersMap(), getAllTrainings(), getAttendanceMap(), getEvaluationsMap()
+        ]);
+        const u = usersMap[uid];
+        if (!u) return;
+        const myT = trainings
+            .filter(t => participantIds(t).includes(uid))
+            .sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0));
+        let totalMins = 0;
+        const rows = myT.map(t => {
+            const att = attendanceMap[`${t.id}_${uid}`];
+            const ev = evalMap[`${t.id}_${uid}`];
+            const mins = att?.status === 'present' ? normalizeDurationMinutes(t) : 0;
+            totalMins += mins;
+            const presenca = att?.status === 'present'
+                ? '<span class="badge badge-success">✅ Presente</span>'
+                : att?.status === 'absent'
+                ? '<span class="badge badge-error">❌ Falta</span>'
+                : '<span class="badge badge-warning">⏳ Pendente</span>';
+            const aval = ev
+                ? `<span class="badge badge-success">⭐ ${ev.avaliacaoGlobal||'?'}/5</span>`
+                : '<span class="badge badge-warning">Por fazer</span>';
+            return `<tr>
+                <td><strong>${trainingTitle(t)}</strong></td>
+                <td>${dateText(trainingDate(t))}</td>
+                <td>${statusBadge(resolvedStatus(t))}</td>
+                <td>${presenca}</td>
+                <td>${mins ? hoursLabelFromMinutes(mins) : '—'}</td>
+                <td>${aval}</td>
+                <td style="font-size:12px;max-width:200px;">${ev?.observacoesPropostasImplementacao || '—'}</td>
+            </tr>`;
+        }).join('');
+        document.getElementById('contentArea').innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">📋 ${u.nome || u.email}</h2>
+                        <div class="section-subtitle">${u.funcao || ''} · ${u.role === 'gestorformacao' ? 'Gestor de Formação' : 'Colaborador'} · ${u.email || ''}</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="navigateTo('colaboradores')">← Voltar à lista</button>
+                </div>
+                <div class="kpi-row" style="margin-bottom:20px;">
+                    <span class="kpi-pill">🕐 Total horas frequentadas: ${hoursLabelFromMinutes(totalMins)}</span>
+                    <span class="kpi-pill">📚 Formações inscritas: ${myT.length}</span>
+                    <span class="kpi-pill">✅ Com presença: ${myT.filter(t => attendanceMap[t.id+'_'+uid]?.status === 'present').length}</span>
+                    <span class="kpi-pill">⭐ Avaliações: ${Object.values(evalMap).filter(e => e.userId === uid).length}</span>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr>
+                            <th>Formação</th><th>Data</th><th>Estado</th>
+                            <th>Presença</th><th>Horas</th><th>Avaliação</th><th>Observações</th>
+                        </tr></thead>
+                        <tbody>${rows || '<tr><td colspan="7" style="text-align:center;padding:32px;color:#999;">Nenhuma formação encontrada.</td></tr>'}</tbody>
+                    </table>
+                </div>
+                <div class="actions-row" style="margin-top:20px;">
+                    <button class="btn btn-primary" onclick="exportColabSingle('${uid}')">📥 Exportar CSV deste colaborador</button>
+                </div>
+            </div>`;
+    };
+
+    window.exportColabSingle = async function(uid){
+        const [usersMap, trainings, attendanceMap, evalMap] = await Promise.all([
+            getUsersMap(), getAllTrainings(), getAttendanceMap(), getEvaluationsMap()
+        ]);
+        const u = usersMap[uid] || { nome: uid };
+        const myT = trainings.filter(t => participantIds(t).includes(uid))
+            .sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0));
+        const rows = [['Formação','Data','Estado','Presença','Horas frequentadas','Avaliação Global','Pedagógica','Domínio','Relevância','Observações']];
+        myT.forEach(t => {
+            const att = attendanceMap[`${t.id}_${uid}`];
+            const ev = evalMap[`${t.id}_${uid}`];
+            const mins = att?.status === 'present' ? normalizeDurationMinutes(t) : 0;
+            rows.push([
+                trainingTitle(t), dateText(trainingDate(t)), resolvedStatus(t),
+                att?.status || 'pendente', hoursLabelFromMinutes(mins),
+                ev?.avaliacaoGlobal || '', ev?.capacidadePedagogicaFormador || '',
+                ev?.dominioTemaFormador || '', ev?.relevanciaTarefasDesempenha || '',
+                ev?.observacoesPropostasImplementacao || ''
+            ]);
+        });
+        const nome = (u.nome || uid).replace(/[^a-zA-Z0-9_-]/g, '_');
+        downloadCSV(`historico_${nome}.csv`, rows);
+    };
+
+    window.exportCollaboratorHours = async function(){
+        const { start, end, usersMap, trainings, attendanceMap } = await reportDataset();
+        const rows = [['Colaborador','Email','Função','Horas frequentadas','Minutos frequentados','Formações frequentadas']];
+        Object.values(usersMap).filter(u => u.ativo !== false).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'', 'pt')).forEach(u => {
+            let mins = 0, count = 0;
+            trainings.forEach(t => {
+                const dt = trainingDate(t);
+                if (!rangeFilter(dt, start, end)) return;
+                const att = attendanceMap[`${t.id}_${u.id}`];
+                if (att?.status === 'present') {
+                    mins += normalizeDurationMinutes(t);
+                    count++;
+                }
+            });
+            rows.push([u.nome || '', u.email || '', u.funcao || '', (mins/60).toFixed(2), String(mins), String(count)]);
+        });
+        downloadCSV('relatorio_colaboradores.csv', rows);
+    };
+
+    window.exportAllEvaluations = async function(){
+        const { start, end, usersMap, trainings, evalMap } = await reportDataset();
+        const trainMap = Object.fromEntries(trainings.map(t => [t.id, t]));
+        const rows = [['Colaborador','Formação','Data Formação','Avaliação Global','Duração','Pedagógica','Domínio','Relevância','Observações']];
+        Object.values(evalMap).forEach(ev => {
+            const t = trainMap[ev.trainingId];
+            const dt = t ? trainingDate(t) : null;
+            if (!rangeFilter(dt, start, end)) return;
+            rows.push([
+                usersMap[ev.userId]?.nome || ev.userId,
+                t ? trainingTitle(t) : ev.trainingId,
+                dt ? dateText(dt) : '',
+                ev.avaliacaoGlobal || '',
+                ev.duracaoAcao || '',
+                ev.capacidadePedagogicaFormador || '',
+                ev.dominioTemaFormador || '',
+                ev.relevanciaTarefasDesempenha || '',
+                ev.observacoesPropostasImplementacao || ''
+            ]);
+        });
+        downloadCSV('avaliacoes_colaboradores.csv', rows);
+    };
+
+    window.exportTrainingSummary = async function(){
+        const { start, end, usersMap, trainings, attendanceMap, evalMap } = await reportDataset();
+        const rows = [['Formação','Data','Estado','Formador','Tipo','Duração minutos','Duração horas','Inscritos','Presentes','Faltas','Média avaliação']];
+        trainings.filter(t => rangeFilter(trainingDate(t), start, end)).forEach(t => {
+            const ids = participantIds(t);
+            const present = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'present').length;
+            const absent = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'absent').length;
+            const globals = ids.map(uid => evalMap[`${t.id}_${uid}`]?.avaliacaoGlobal).filter(v => typeof v === 'number');
+            const avg = globals.length ? (globals.reduce((a,b)=>a+b,0) / globals.length).toFixed(2) : '';
+            rows.push([
+                trainingTitle(t),
+                dateText(trainingDate(t)),
+                resolvedStatus(t),
+                trainingTrainer(t),
+                trainingType(t),
+                String(normalizeDurationMinutes(t)),
+                (normalizeDurationMinutes(t)/60).toFixed(2),
+                String(ids.length),
+                String(present),
+                String(absent),
+                avg
+            ]);
+        });
+        downloadCSV('resumo_formacoes.csv', rows);
+    };
+
+    window.addEventListener('load', () => {
+        setTimeout(() => { try { injectProofField(); } catch(e){} }, 400);
+    });
+})();
+</script>
+
 </body>
 </html>
