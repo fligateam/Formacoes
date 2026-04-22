@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESTE - Farmácia da Liga</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #F7F1E8; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .box { background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { color: #4A6572; }
+        p { color: #6B7F8C; }
+        .ok { color: #7BC97F; font-weight: bold; font-size: 48px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="ok">✓</div>
+        <h1>💊 Farmácia da Liga</h1>
+        <p>HTML está a funcionar corretamente.</p>
+        <p id="jsTest" style="color:#E57373;">JavaScript: A testar...</p>
+        <p id="fbTest" style="color:#E57373;">Firebase: A testar...</p>
+    </div>
+    <script>
+        document.getElementById('jsTest').textContent = '✓ JavaScript: OK';
+        document.getElementById('jsTest').style.color = '#7BC97F';
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script>
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyAhBfZ9x8odvenh2x5PTFMDPeGUhD-JvDc",
+                authDomain: "formacoes-liga.firebaseapp.com",
+                projectId: "formacoes-liga",
+                storageBucket: "formacoes-liga.firebasestorage.app",
+                messagingSenderId: "788115326428",
+                appId: "1:788115326428:web:baa086d5622e92440afb19"
+            };
+            firebase.initializeApp(firebaseConfig);
+            document.getElementById('fbTest').textContent = '✓ Firebase: OK';
+            document.getElementById('fbTest').style.color = '#7BC97F';
+        } catch(e) {
+            document.getElementById('fbTest').textContent = '✗ Firebase ERRO: ' + e.message;
+        }
+    </script>
+</body>
+</html>
