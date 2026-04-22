@@ -1021,6 +1021,17 @@
         </div>
     </div>
 
+    <!-- Modal Detalhe Formação (Colaborador) -->
+    <div class="modal" id="detalheFormacaoModal">
+        <div class="modal-content" style="max-width:700px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="detalheModalTitulo">Detalhe da Formação</h2>
+                <button class="close-modal" onclick="closeModal('detalheFormacaoModal')">✕</button>
+            </div>
+            <div id="detalheModalBody"></div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <span id="toastIcon">✓</span>
@@ -1479,7 +1490,7 @@
                 showToast('Avaliação submetida com sucesso!', 'success');
                 closeModal('avaliacaoModal');
                 document.getElementById('avaliacaoForm').reset();
-                carregarMinhasFormacoes();
+                if (typeof loadMinhasFormacoes === 'function') loadMinhasFormacoes();
             } catch (error) {
                 console.error('Erro ao submeter avaliação:', error);
                 showToast('Erro ao submeter avaliação', 'error');
@@ -2800,7 +2811,7 @@
 
         const attendanceDoc = await db.collection('attendance').doc(`${trainingId}_${currentUser.uid}`).get();
         const attendance = attendanceDoc.exists ? attendanceDoc.data() : null;
-        if (!attendance || attendance.status !== 'present') return showToast('Só pode avaliar após confirmar presença.', 'error');
+        if (attendance && attendance.status === 'absent') return showToast('Não pode avaliar uma formação em que não compareceu.', 'error');
 
         const existingSnap = await db.collection('evaluations').where('trainingId','==',trainingId).where('userId','==',currentUser.uid).limit(1).get();
         const existing = existingSnap.empty ? null : { id: existingSnap.docs[0].id, ...existingSnap.docs[0].data() };
@@ -3091,7 +3102,7 @@
                         <div class="small-text" style="margin-top:10px;">${ids.map(uid => usersMap[uid]?.nome || uid).join(', ') || 'Sem participantes.'}</div>
                         <div class="actions-row">
                             <button class="btn btn-secondary" onclick="editTraining('${t.id}')">✏️ Editar</button>
-                            ${resolvedStatus(t)==='realizada' ? `<button class="btn btn-success" onclick="abrirConfirmarPresencas('${t.id}')">✓ Confirmar Presenças</button>` : ''}
+                            <button class="btn btn-danger btn-icon" onclick="anularFormacao('${t.id}')" title="Anular Formação">🚫</button>
                         </div>
                     </div>`;
             }).join('');
@@ -3133,41 +3144,60 @@
             document.getElementById('statAvaliar').textContent = avaliar;
 
             const container = document.getElementById('minhasFormacoesContainer');
-            const html = Object.entries(grouped).map(([month, rows]) => `
-                <div class="month-group">
-                    <div class="month-title">${month}</div>
-                    ${rows.map(({ t, dt, att, ev, status }) => {
-                        const canEvaluate = status === 'realizada' && att?.status === 'present';
-                        const canEditEval = ev && canEditEvaluation(ev);
-                        return `
-                            <div class="training-card ${status==='realizada'?'completed':'pending'}">
+            // Group month keys sorted descending
+            const monthEntries = Object.entries(grouped).sort((a,b) => b[0].localeCompare(a[0]));
+            const html = monthEntries.map(([month, rows], mIdx) => {
+                const monthId = 'colabmes-' + month.replace(/\s/g,'-');
+                const isCurrentMonth = month === monthKey(new Date());
+                return `
+                <div class="training-card" style="margin-bottom:12px;cursor:pointer;border-left:4px solid var(--color-info);" onclick="toggleMesDetail('${monthId}')">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <h3 style="font-size:16px;font-weight:700;">${month}</h3>
+                            <p style="color:var(--color-text-secondary);font-size:12px;margin-top:2px;">${rows.length} formação(ões) · clique para ${isCurrentMonth?'ver':'expandir'}</p>
+                        </div>
+                        <span id="${monthId}-arrow" style="font-size:20px;transition:transform 0.2s;">${isCurrentMonth?'🔽':'▶️'}</span>
+                    </div>
+                    <div id="${monthId}" style="display:${isCurrentMonth?'block':'none'};margin-top:14px;border-top:1px solid var(--color-border);padding-top:12px;" onclick="event.stopPropagation()">
+                        ${rows.map(({ t, dt, att, ev, status }) => {
+                            const canEvaluate = status === 'realizada' && att?.status !== 'absent';
+                            const canEditEval = ev && canEditEvaluation(ev);
+                            const mins = normalizeDurationMinutes(t);
+                            return `
+                            <div class="training-card ${status==='realizada'?'completed':'pending'}" style="cursor:pointer;margin-bottom:10px;" onclick="abrirDetalheFormacao('${t.id}')">
                                 <div class="training-header">
-                                    <div>
-                                        <div class="training-title">${trainingTitle(t)}</div>
-                                        <div class="training-meta">
+                                    <div style="flex:1;">
+                                        <div class="training-title" style="font-size:15px;">${trainingTitle(t)}</div>
+                                        <div class="training-meta" style="margin-top:6px;">
                                             <div class="training-meta-item">📅 ${dateText(dt)}</div>
-                                            <div class="training-meta-item">⏱️ ${normalizeDurationMinutes(t)} min (${hoursLabelFromMinutes(normalizeDurationMinutes(t))})</div>
+                                            <div class="training-meta-item">⏱️ ${hoursLabelFromMinutes(mins)}</div>
                                             <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
+                                            ${t.entidadeFormadora ? `<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>` : ''}
                                         </div>
                                     </div>
                                     <div>${statusBadge(status)}</div>
                                 </div>
                                 <div class="kpi-row">
-                                    <span class="kpi-pill">Presença: ${att?.status === 'present' ? 'Confirmada' : att?.status === 'absent' ? 'Não compareceu' : 'Pendente'}</span>
-                                    <span class="kpi-pill">Avaliação: ${ev ? 'Submetida' : 'Por fazer'}</span>
+                                    <span class="kpi-pill ${att?.status==='present'?'':''}">Presença: ${att?.status === 'present' ? '✓ Confirmada' : att?.status === 'absent' ? '✗ Não compareceu' : '⏳ Pendente'}</span>
+                                    <span class="kpi-pill">Avaliação: ${ev ? '✓ Submetida' : 'Por fazer'}</span>
+                                    ${t.creditosOF ? `<span class="kpi-pill">🏅 ${t.creditosOF} créd. OF</span>` : ''}
                                 </div>
-                                <div class="actions-row">
+                                <div class="actions-row" onclick="event.stopPropagation()">
                                     ${status === 'realizada' && att?.status !== 'absent' && att?.status !== 'present' ? `<button class="btn btn-danger" onclick="setAttendance('${t.id}','absent')" style="font-size:13px;">✗ Não compareci</button>` : ''}
                                     ${att?.status === 'absent' ? `<span class="badge badge-error">✗ Não compareceu</span>` : ''}
                                     ${att?.status === 'present' ? `<span class="badge badge-success">✓ Presença confirmada pelo gestor</span>` : ''}
-                                    ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${t.id}')">${ev ? 'Editar Avaliação' : 'Avaliar Formação'}</button>` : ''}
+                                    ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${t.id}')">${ev ? 'Editar Avaliação' : '⭐ Avaliar Formação'}</button>` : ''}
                                     ${ev && !canEditEval ? `<span class="small-text">Janela de edição da avaliação encerrada.</span>` : ''}
-                                    <label class="btn btn-secondary" style="cursor:pointer;">📎 Carregar comprovativo<input type="file" style="display:none" accept="application/pdf,image/*" capture="environment" onchange="window.quickProofUpload('${t.id}', this)"></label>
+                                    <label class="btn btn-secondary" style="cursor:pointer;">📎 Comprovativo<input type="file" style="display:none" accept="application/pdf,image/*" capture="environment" onchange="window.quickProofUpload('${t.id}', this)"></label>
+                                    <button class="btn btn-secondary" style="font-size:12px;" onclick="abrirDetalheFormacao('${t.id}')">🔍 Ver detalhes</button>
                                 </div>
                             </div>`;
-                    }).join('')}
-                </div>`).join('');
-            container.innerHTML = html || `<div class="empty-state"><div class="empty-state-icon">📖</div><div class="empty-state-text">Ainda não está inscrito em formações.</div></div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+            }).join('');
+
+container.innerHTML = html || `<div class="empty-state"><div class="empty-state-icon">📖</div><div class="empty-state-text">Ainda não está inscrito em formações.</div></div>`;
         };
         window.quickProofUpload = async function(trainingId, input){
             const file = input.files?.[0];
@@ -3424,7 +3454,11 @@
 
     window.toggleMesDetail = function(id) {
         const el = document.getElementById(id);
-        if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        if (!el) return;
+        const isOpen = el.style.display !== 'none';
+        el.style.display = isOpen ? 'none' : 'block';
+        const arrow = document.getElementById(id + '-arrow');
+        if (arrow) arrow.textContent = isOpen ? '▶️' : '🔽';
     };
 
     // Objetivos Gerais do Plano
@@ -3540,30 +3574,29 @@
     };
 
     window.gravarPresencas = async function(trainingId, creditosOF) {
-        const checks = document.querySelectorAll('[id^="pres-"]');
-        const batch = db.batch();
+        const checks = Array.from(document.querySelectorAll('[id^="pres-"]'));
         const usersMap = await getUsersMap();
-        for (const cb of checks) {
-            const uid = cb.value;
-            const ref = db.collection('attendance').doc(`${trainingId}_${uid}`);
-            if (cb.checked) {
-                batch.set(ref, { trainingId, userId: uid, status: 'present', confirmedAt: firebase.firestore.FieldValue.serverTimestamp(), confirmedByGestor: true }, { merge: true });
-                // Atribuir créditos OF a Farmacêuticos
-                if (creditosOF > 0 && usersMap[uid]?.funcao === 'Farmacêutico') {
-                    const tDoc = await db.collection('trainings').doc(trainingId).get();
-                    const existing = await db.collection('creditosOF').where('trainingId','==',trainingId).where('userId','==',uid).get();
-                    if (existing.empty) {
-                        const cRef = db.collection('creditosOF').doc();
-                        batch.set(cRef, { userId: uid, trainingId, tema: tDoc.data()?.tema||'', entidadeFormadora: tDoc.data()?.entidadeFormadora||'', creditos: creditosOF, data: tDoc.data()?.data||null, atribuidoEm: firebase.firestore.FieldValue.serverTimestamp() });
+        const tDoc = await db.collection('trainings').doc(trainingId).get();
+        const tData = tDoc.data() || {};
+        try {
+            await Promise.all(checks.map(async cb => {
+                const uid = cb.value;
+                const ref = db.collection('attendance').doc(`${trainingId}_${uid}`);
+                if (cb.checked) {
+                    await ref.set({ trainingId, userId: uid, status: 'present', confirmedAt: firebase.firestore.FieldValue.serverTimestamp(), confirmedByGestor: true }, { merge: true });
+                    if (creditosOF > 0 && usersMap[uid]?.funcao === 'Farmacêutico') {
+                        const existing = await db.collection('creditosOF').where('trainingId','==',trainingId).where('userId','==',uid).get();
+                        if (existing.empty) {
+                            await db.collection('creditosOF').add({ userId: uid, trainingId, tema: tData.tema||'', entidadeFormadora: tData.entidadeFormadora||'', creditos: creditosOF, data: tData.data||null, atribuidoEm: firebase.firestore.FieldValue.serverTimestamp() });
+                        }
                     }
+                } else {
+                    await ref.set({ trainingId, userId: uid, status: 'absent', confirmedAt: firebase.firestore.FieldValue.serverTimestamp(), confirmedByGestor: true }, { merge: true });
                 }
-            } else {
-                batch.set(ref, { trainingId, userId: uid, status: 'absent', confirmedAt: firebase.firestore.FieldValue.serverTimestamp(), confirmedByGestor: true }, { merge: true });
-            }
-        }
-        await batch.commit();
-        showToast('Presenças confirmadas com sucesso!','success');
-        navigateTo('todasFormacoes');
+            }));
+            showToast('Presenças confirmadas com sucesso!','success');
+            navigateTo('todasFormacoes');
+        } catch(e) { console.error(e); showToast('Erro ao guardar presenças','error'); }
     };
 
     // Exportar Plano de Formações com filtros
@@ -3621,7 +3654,7 @@
         } catch(e) { console.error(e); showToast('Erro ao exportar plano','error'); }
     };
 
-    // Ver Plano de Formações (janela imprimível)
+    // Ver Plano de Formações (janela imprimível) - FIXED v3
     window.verPlanoFormacoes = async function() {
         showToast('A gerar plano...','info');
         try {
@@ -3632,66 +3665,134 @@
                 if (!os.empty) objTexto = os.docs[0].data().texto||'';
             } catch(e){}
             const usersMap = await getUsersMap();
-            const rows = await Promise.all(snap.docs.map(async doc => {
+            const rows = [];
+            for (const doc of snap.docs) {
                 const t = { id: doc.id, ...doc.data() };
                 let dt = t.data ? (t.data.toDate ? t.data.toDate() : new Date(t.data.seconds*1000)) : null;
                 const attSnap = await db.collection('attendance').where('trainingId','==',doc.id).get();
                 const presentes = attSnap.docs.filter(a=>a.data().status==='present').length;
                 const total = (t.participantes||[]).length;
-                return { ...t, dt, presentes, total };
-            }));
-            const estadoCor = { 'realizada':'#DFF3E3','agendada':'#D8EFFF','adiada':'#FFF4E5','cancelada':'#FFEBEE' };
+                rows.push({ ...t, dt, presentes, total });
+            }
+            const estadoCores = { 'realizada':'#DFF3E3','agendada':'#D8EFFF','adiada':'#FFF4E5','cancelada':'#FFEBEE' };
+            const estadoTexto = { 'realizada':'Realizada','agendada':'Agendada','adiada':'Adiada','cancelada':'Cancelada' };
             const w = window.open('','_blank');
             w.document.write(`<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
             <title>Plano de Formações ${new Date().getFullYear()}</title>
             <style>
                 body{font-family:Arial,sans-serif;padding:40px;color:#333;max-width:1100px;margin:0 auto;}
-                h1{color:#4A6572;} h2{color:#4A6572;margin-top:32px;border-bottom:2px solid #eee;padding-bottom:8px;}
+                h1{color:#4A6572;margin-bottom:4px;} .sub{color:#888;font-size:15px;}
+                h2{color:#4A6572;margin-top:32px;border-bottom:2px solid #eee;padding-bottom:8px;}
                 table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px;}
-                th{background:#4A6572;color:white;padding:10px 8px;text-align:left;font-size:11px;}
-                td{padding:8px;border-bottom:1px solid #eee;vertical-align:top;}
-                tr:nth-child(even){background:#f9f9f9;}
+                th{background:#4A6572;color:white;padding:10px 8px;text-align:left;font-size:11px;text-transform:uppercase;}
+                td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top;}
                 .obj{background:#f0f7ff;padding:16px;border-radius:8px;white-space:pre-wrap;line-height:1.8;font-size:13px;}
                 .footer{margin-top:40px;font-size:11px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:16px;}
+                .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
                 @media print{.no-print{display:none!important;}}
             </style></head><body>
             <div style="text-align:center;margin-bottom:32px;">
                 <div style="font-size:40px;">💊</div>
-                <h1 style="margin:8px 0;">Farmácia da Liga</h1>
-                <div style="font-size:16px;color:#666;">Plano de Formações ${new Date().getFullYear()}</div>
-                <div style="font-size:12px;color:#999;margin-top:4px;">Gerado em ${new Date().toLocaleString('pt-PT')}</div>
+                <h1>Farmácia da Liga</h1>
+                <div class="sub">Plano de Formações ${new Date().getFullYear()}</div>
+                <div style="font-size:11px;color:#bbb;margin-top:4px;">Gerado em ${new Date().toLocaleString('pt-PT')}</div>
             </div>
-            ${objTexto ? `<h2>🎯 Objetivos Gerais do Plano</h2><div class="obj">${objTexto.replace(/</g,'&lt;')}</div>` : ''}
-            <h2>📚 Formações</h2>
+            ${objTexto ? `<h2>🎯 Objetivos Gerais do Plano</h2><div class="obj">${objTexto.replace(/</g,'&lt;').replace(/\n/g,'\n')}</div>` : ''}
+            <h2>📚 Formações (${rows.length} total)</h2>
             <table><thead><tr>
                 <th>Data</th><th>Tema</th><th>Entidade Formadora</th><th>Formador</th>
-                <th>Local</th><th>Duração</th><th>Créditos OF</th><th>Estado</th>
-                <th>Objetivos</th><th>Participantes</th>
+                <th>Local</th><th>Duração</th><th>Créd. OF</th><th>Estado</th>
+                <th>Objetivos</th><th>Inscritos/Presentes</th>
             </tr></thead><tbody>
             ${rows.map(t => {
-                const cor = estadoCor[t.estadoManual||t.estado||'agendada']||'#fff';
-                const mins = t.durationMinutes||((t.duracaoHoras||0)*60)||0;
-                const hLabel = mins >= 60 ? Math.floor(mins/60)+'h'+(mins%60?String(mins%60).padStart(2,'0'):'') : mins+'min';
-                return `<tr style="background:${cor}">
-                    <td style="white-space:nowrap;">${t.dt?t.dt.toLocaleDateString('pt-PT'):'-'}</td>
-                    <td><strong>${t.tema||'-'}</strong></td>
-                    <td>${t.entidadeFormadora||'-'}</td>
-                    <td>${t.formador||'-'}</td>
-                    <td>${t.local||'-'}</td>
+                const estado = t.estadoManual || t.estado || 'agendada';
+                const cor = estadoCores[estado] || '#fff';
+                const mins = t.durationMinutes || ((t.duracaoHoras||0)*60) || 0;
+                const hLabel = mins >= 60 ? Math.floor(mins/60)+'h'+(mins%60 ? String(mins%60).padStart(2,'0') : '') : (mins||'-')+'min';
+                return `<tr>
+                    <td style="white-space:nowrap;">${t.dt ? t.dt.toLocaleDateString('pt-PT') : '-'}</td>
+                    <td><strong>${(t.tema||'-').replace(/</g,'&lt;')}</strong></td>
+                    <td>${(t.entidadeFormadora||'-').replace(/</g,'&lt;')}</td>
+                    <td>${(t.formador||'-').replace(/</g,'&lt;')}</td>
+                    <td>${(t.local||'-').replace(/</g,'&lt;')}</td>
                     <td style="white-space:nowrap;">${hLabel}</td>
                     <td style="text-align:center;">${t.creditosOF||'-'}</td>
-                    <td><span style="background:${cor};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">${t.estadoManual||t.estado||'-'}</span></td>
-                    <td style="font-size:11px;max-width:200px;">${(t.objetivos||'-').replace(/</g,'&lt;')}</td>
+                    <td><span class="badge" style="background:${cor};">${estadoTexto[estado]||estado}</span></td>
+                    <td style="font-size:11px;max-width:180px;">${(t.objetivos||'-').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</td>
                     <td style="text-align:center;">${t.presentes}/${t.total}</td>
                 </tr>`;
             }).join('')}
             </tbody></table>
             <div class="footer">Farmácia da Liga · Vila Nova de Gaia · ${new Date().getFullYear()}</div>
             <br class="no-print">
-            <button class="no-print" onclick="window.print()" style="padding:12px 28px;background:#4A6572;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;">🖨️ Imprimir / Guardar PDF</button>
+            <button class="no-print" onclick="window.print()" style="margin-top:16px;padding:12px 28px;background:#4A6572;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;">🖨️ Imprimir / Guardar PDF</button>
             </body></html>`);
             w.document.close();
-        } catch(e) { console.error(e); showToast('Erro ao gerar plano','error'); }
+        } catch(e) { console.error('verPlanoFormacoes error:', e); showToast('Erro ao gerar plano: ' + e.message,'error'); }
+    };
+
+
+    // Abrir detalhe de formação (colaborador)
+    window.abrirDetalheFormacao = async function(trainingId) {
+        try {
+            const tDoc = await db.collection('trainings').doc(trainingId).get();
+            if (!tDoc.exists) { showToast('Formação não encontrada','error'); return; }
+            const t = { id: tDoc.id, ...tDoc.data() };
+            let dt = t.data ? (t.data.toDate ? t.data.toDate() : new Date(t.data.seconds*1000)) : null;
+            const mins = t.durationMinutes || ((t.duracaoHoras||0)*60) || 0;
+            const hLabel = mins >= 60 ? Math.floor(mins/60)+'h'+(mins%60 ? String(mins%60).padStart(2,'0') : '') : mins+'min';
+            const att = await db.collection('attendance').doc(`${trainingId}_${currentUser.uid}`).get();
+            const attStatus = att.exists ? att.data().status : null;
+            const evalSnap = await db.collection('evaluations').where('trainingId','==',trainingId).where('userId','==',currentUser.uid).get();
+            const hasEval = !evalSnap.empty;
+            const status = t.estadoManual || t.estado || 'agendada';
+            const canEvaluate = status === 'realizada' && attStatus !== 'absent';
+
+            document.getElementById('detalheModalTitulo').textContent = t.tema || 'Formação';
+            document.getElementById('detalheModalBody').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                    <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Data</div><div style="font-weight:600;">${dt ? dt.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : '-'}</div></div>
+                    <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Duração</div><div style="font-weight:600;">${hLabel}</div></div>
+                    <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Formador</div><div style="font-weight:600;">${t.formador || '-'}</div></div>
+                    <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Entidade Formadora</div><div style="font-weight:600;">${t.entidadeFormadora || '-'}</div></div>
+                    <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Local</div><div style="font-weight:600;">${t.local || '-'}</div></div>
+                    <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Tipo / Modalidade</div><div style="font-weight:600;">${t.tipo || '-'}</div></div>
+                    ${t.creditosOF ? `<div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Créditos OF</div><div style="font-weight:600;">🏅 ${t.creditosOF}</div></div>` : ''}
+                    <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Estado</div><div>${statusBadge(status)}</div></div>
+                </div>
+                ${t.objetivos ? `<div style="margin-bottom:16px;"><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:6px;">Objetivos da Formação</div><div style="background:var(--color-accent-blue);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;">${t.objetivos.replace(/\n/g,'<br>')}</div></div>` : ''}
+                ${t.descricao ? `<div style="margin-bottom:16px;"><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:6px;">Descrição / Notas</div><div style="background:var(--color-accent-green);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;">${t.descricao.replace(/\n/g,'<br>')}</div></div>` : ''}
+                <div style="background:var(--color-bg-primary);border-radius:10px;padding:16px;margin-bottom:16px;">
+                    <div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:10px;">A minha participação</div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <span class="kpi-pill">Presença: ${attStatus === 'present' ? '✓ Confirmada' : attStatus === 'absent' ? '✗ Não compareceu' : '⏳ Pendente'}</span>
+                        <span class="kpi-pill">Avaliação: ${hasEval ? '✓ Submetida' : 'Por fazer'}</span>
+                        ${t.creditosOF && attStatus === 'present' && currentUserData?.funcao === 'Farmacêutico' ? `<span class="kpi-pill">🏅 ${t.creditosOF} créditos OF atribuídos</span>` : ''}
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    ${status === 'realizada' && !attStatus ? `<button class="btn btn-danger" onclick="setAttendance('${trainingId}','absent');closeModal('detalheFormacaoModal')">✗ Não compareci</button>` : ''}
+                    ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${trainingId}');closeModal('detalheFormacaoModal')">${hasEval ? '✏️ Editar Avaliação' : '⭐ Avaliar Formação'}</button>` : ''}
+                    <button class="btn btn-secondary" onclick="closeModal('detalheFormacaoModal')">Fechar</button>
+                </div>`;
+            openModal('detalheFormacaoModal');
+        } catch(e) { console.error(e); showToast('Erro ao carregar detalhe','error'); }
+    };
+
+
+    // Anular formação (gestor)
+    window.anularFormacao = async function(trainingId) {
+        if (!confirm('Tem a certeza que pretende anular esta formação? O estado será alterado para "cancelada".')) return;
+        try {
+            await db.collection('trainings').doc(trainingId).update({
+                estado: 'cancelada',
+                estadoManual: 'cancelada',
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedBy: currentUser.uid
+            });
+            showToast('Formação anulada com sucesso.','success');
+            if (typeof loadTodasFormacoes === 'function') loadTodasFormacoes();
+        } catch(e) { console.error(e); showToast('Erro ao anular formação','error'); }
     };
 
 </script>
