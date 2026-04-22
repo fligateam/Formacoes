@@ -2170,11 +2170,14 @@
                 const user = doc.data();
                 document.getElementById('colaboradorModalTitle').textContent = 'Editar Colaborador';
                 document.getElementById('colaboradorId').value = userId;
-                document.getElementById('colabNome').value = user.nome;
-                document.getElementById('colabEmail').value = user.email;
-                document.getElementById('colabFuncao').value = user.funcao;
+                document.getElementById('colabNome').value = user.nome || '';
+                document.getElementById('colabEmail').value = user.email || '';
+                document.getElementById('colabFuncao').value = user.funcao || '';
                 document.getElementById('colabRole').value = user.role || 'colaborador';
                 document.getElementById('colabAtivo').value = user.ativo ? 'true' : 'false';
+                document.getElementById('colabNIF').value = user.nif || '';
+                document.getElementById('colabCodOperador').value = user.codOperador || '';
+                document.getElementById('colabCedula').value = user.cedula || '';
 
                 openModal('colaboradorModal');
             } catch (error) {
@@ -2192,6 +2195,9 @@
             const funcao = document.getElementById('colabFuncao').value;
             const role = document.getElementById('colabRole').value;
             const ativo = document.getElementById('colabAtivo').value === 'true';
+            const nif = document.getElementById('colabNIF').value.trim();
+            const codOperador = document.getElementById('colabCodOperador').value.trim();
+            const cedula = document.getElementById('colabCedula').value.trim();
 
             if (!nome || !email) {
                 showToast('Nome e email são obrigatórios', 'error');
@@ -2231,6 +2237,9 @@
                     funcao: funcao,
                     role: role,
                     ativo: ativo,
+                    nif: nif,
+                    codOperador: codOperador,
+                    cedula: cedula,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
 
@@ -2740,6 +2749,16 @@
 
     window.submitAvaliacao = async function(event){
         event.preventDefault();
+        const ratingFields = ['duracao','pedagogica','dominio','relevancia','global'];
+        for (const f of ratingFields){ const val = document.getElementById(`rating-${f}`)?.value; if (!val || parseInt(val) < 1){ showToast('Por favor preencha todos os campos de avaliação por estrelas.', 'error'); return; } }
+        const ratingFields = ['duracao','pedagogica','dominio','relevancia','global'];
+        for (const f of ratingFields) {
+            const val = document.getElementById(`rating-${f}`)?.value;
+            if (!val || parseInt(val) < 1) {
+                showToast('Por favor preencha todos os campos de avaliação por estrelas.', 'error');
+                return;
+            }
+        }
         const trainingId = document.getElementById('evalTrainingId').value;
         const trainingDoc = await db.collection('trainings').doc(trainingId).get();
         if (!trainingDoc.exists) return showToast('Formação não encontrada.', 'error');
@@ -2776,8 +2795,15 @@
         if (!existing) payload.firstSubmittedAt = firebase.firestore.FieldValue.serverTimestamp();
         const ref = existing ? db.collection('evaluations').doc(existing.id) : db.collection('evaluations').doc(`${trainingId}_${currentUser.uid}`);
         await ref.set(payload, { merge: true });
+        await db.collection('attendance').doc(`${trainingId}_${currentUser.uid}`).set({
+            trainingId,
+            userId: currentUser.uid,
+            status: 'present',
+            confirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            confirmedByEvaluation: true
+        }, { merge: true });
         closeModal('avaliacaoModal');
-        showToast(existing ? 'Avaliação atualizada.' : 'Avaliação registada.', 'success');
+        showToast(existing ? '✅ Avaliação atualizada e presença confirmada.' : '✅ Avaliação registada e presença confirmada.', 'success');
         loadMinhasFormacoes();
     };
 
@@ -2850,7 +2876,7 @@
                     <div id="pendingEvalList" class="alert-list"></div>
                 </div>
                 <div class="card">
-                    <div class="card-header"><h2 class="card-title">Horas por colaborador</h2></div>
+                    <div class="card-header"><h2 class="card-title">Horas por colaborador no ano civil</h2></div>
                     <div id="hoursByUserList" class="rank-list"></div>
                 </div>
             </div>
@@ -2937,13 +2963,16 @@
                     <div class="form-group"><label class="form-label">Data e hora</label><input id="dataPro" type="datetime-local" class="form-control" required value="${dateValue}"></div>
                     <div class="form-group"><label class="form-label">Duração (minutos)</label><input id="duracaoMinutosPro" type="number" min="1" class="form-control" required value="${record ? normalizeDurationMinutes(record) : 60}"></div>
                     <div class="form-group"><label class="form-label">Formador</label><input id="formadorPro" class="form-control" value="${record ? ((trainingTrainer(record) || '').replace(/"/g,'&quot;')) : ''}"></div>
-                    <div class="form-group"><label class="form-label">Tipo / modalidade</label><input id="tipoPro" class="form-control" value="${record ? ((trainingType(record) || '').replace(/"/g,'&quot;')) : ''}"></div>
+                    <div class="form-group"><label class="form-label">Entidade Formadora</label><input id="entidadeFormadoraPro" class="form-control" placeholder="ex: ANF, Ordem dos Farmacêuticos, interna..." value="${record ? ((record.entidadeFormadora||'').replace(/"/g,'&quot;')) : ''}"></div>
+                    <div class="form-group"><label class="form-label">Tipo / Modalidade</label><input id="tipoPro" class="form-control" value="${record ? ((trainingType(record) || '').replace(/"/g,'&quot;')) : ''}"></div>
+                    <div class="form-group"><label class="form-label">Créditos (aplicável a Farmacêuticos)</label><input id="creditosPro" type="number" min="0" step="0.5" class="form-control" placeholder="0" value="${record ? (record.creditos||0) : 0}"></div>
                     <div class="form-group"><label class="form-label">Estado</label>
                         <select id="estadoPro" class="form-control">
                             ${['agendada','realizada','adiada','cancelada'].map(s => `<option value="${s}" ${record && resolvedStatus(record)===s?'selected':''}>${s}</option>`).join('')}
                         </select>
                     </div>
-                    <div class="form-group"><label class="form-label">Descrição / notas</label><textarea id="descricaoPro" class="form-control">${record ? ((record.descricao || record.notas || '').replace(/</g,'&lt;')) : ''}</textarea></div>
+                    <div class="form-group"><label class="form-label">Objetivos de Formação</label><textarea id="objetivosPro" class="form-control" placeholder="Descreva os objetivos da formação...">${record ? ((record.objetivos||'').replace(/</g,'&lt;')) : ''}</textarea></div>
+                    <div class="form-group"><label class="form-label">Descrição / Notas</label><textarea id="descricaoPro" class="form-control">${record ? ((record.descricao || record.notas || '').replace(/</g,'&lt;')) : ''}</textarea></div>
                     <div class="form-group"><label class="form-label">Participantes inscritos</label><div class="participants-grid">${Object.values(usersMap).filter(u => u.ativo !== false).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'', 'pt')).map(u => `<label class="checkbox-item"><input type="checkbox" value="${u.id}" ${selected.has(u.id)?'checked':''}><span><strong>${u.nome || u.email}</strong><br><small>${u.funcao || ''}${u.role === 'gestorformacao' ? ' · Gestor de Formação' : ''}</small></span></label>`).join('')}</div></div>
                     <div class="actions-row">
                         <button class="btn btn-primary" type="submit">${isEdit ? 'Guardar Alterações' : 'Criar Formação'}</button>
@@ -2961,6 +2990,9 @@
                 durationMinutes: parseInt(document.getElementById('duracaoMinutosPro').value || 0),
                 formador: document.getElementById('formadorPro').value.trim(),
                 tipo: document.getElementById('tipoPro').value.trim(),
+                entidadeFormadora: document.getElementById('entidadeFormadoraPro').value.trim(),
+                creditos: parseFloat(document.getElementById('creditosPro').value || 0),
+                objetivos: document.getElementById('objetivosPro').value.trim(),
                 descricao: document.getElementById('descricaoPro').value.trim(),
                 participantes,
                 estado: document.getElementById('estadoPro').value,
@@ -3107,18 +3139,29 @@
     window.loadRelatorios = function(){
         document.getElementById('pageTitle').textContent = 'Relatórios e Exportação';
         document.getElementById('contentArea').innerHTML = `
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">Exportação com intervalo temporal</h2></div>
-                <div class="filters-bar">
-                    <div class="filter-item"><label class="form-label">Data inicial</label><input id="reportStart" type="date" class="form-control"></div>
-                    <div class="filter-item"><label class="form-label">Data final</label><input id="reportEnd" type="date" class="form-control"></div>
+            <div class="filters-bar" style="margin-bottom:0">
+                <div class="filter-item"><label class="form-label">Data inicial</label><input id="reportStart" type="date" class="form-control"></div>
+                <div class="filter-item"><label class="form-label">Data final</label><input id="reportEnd" type="date" class="form-control"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+                <div class="card" style="margin-bottom:0">
+                    <div class="card-header" style="padding-bottom:12px;margin-bottom:12px;"><h2 class="card-title">📥 Exportações CSV</h2></div>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <button class="btn btn-primary" onclick="exportCollaboratorHours()">👤 Por colaborador — horas frequentadas</button>
+                        <button class="btn btn-secondary" onclick="exportAllEvaluations()">⭐ Avaliações de todos os colaboradores</button>
+                        <button class="btn btn-success" onclick="exportTrainingSummary()">📚 Resumo das formações (com média)</button>
+                        <button class="btn btn-warning" style="color:white;" onclick="exportFormacoesFull()">🖨️ Formações detalhadas (para impressão)</button>
+                        <button class="btn btn-secondary" onclick="exportCreditosFarma()">🎓 Créditos — Farmacêuticos</button>
+                    </div>
                 </div>
-                <div class="actions-row">
-                    <button class="btn btn-primary" onclick="exportCollaboratorHours()">1) Exportar por colaborador</button>
-                    <button class="btn btn-secondary" onclick="exportAllEvaluations()">2) Exportar avaliações</button>
-                    <button class="btn btn-success" onclick="exportTrainingSummary()">3) Exportar resumo das formações</button>
+                <div class="card" style="margin-bottom:0">
+                    <div class="card-header" style="padding-bottom:12px;margin-bottom:12px;"><h2 class="card-title">🎯 Plano de Formação</h2></div>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <button class="btn btn-primary" onclick="loadPlanoFormacao(2026)">📋 Plano 2026</button>
+                        <button class="btn btn-secondary" onclick="loadPlanoFormacao(2027)">📋 Plano 2027</button>
+                        <button class="btn btn-secondary" onclick="loadPlanoFormacao(new Date().getFullYear())">📋 Plano Ano Atual</button>
+                    </div>
                 </div>
-                <div class="small-text" style="margin-top:14px;">Os totais por colaborador são calculados em horas frequentadas, mas a formação continua a ser registada em minutos.</div>
             </div>`;
     };
 
@@ -3170,7 +3213,7 @@
                 <div class="card-header">
                     <div>
                         <h2 class="card-title">📋 ${u.nome || u.email}</h2>
-                        <div class="section-subtitle">${u.funcao || ''} · ${u.role === 'gestorformacao' ? 'Gestor de Formação' : 'Colaborador'} · ${u.email || ''}</div>
+                        <div class="section-subtitle">${u.funcao || ''} · ${u.role === 'gestorformacao' ? 'Gestor de Formação' : 'Colaborador'} · ${u.email || ''}${u.nif ? ' · NIF: '+u.nif : ''}${u.cedula ? ' · Cédula: '+u.cedula : ''}${u.codOperador ? ' · Op: '+u.codOperador : ''}</div>
                     </div>
                     <button class="btn btn-secondary" onclick="navigateTo('colaboradores')">← Voltar à lista</button>
                 </div>
@@ -3184,7 +3227,7 @@
                     <table>
                         <thead><tr>
                             <th>Formação</th><th>Data</th><th>Estado</th>
-                            <th>Presença</th><th>Horas</th><th>Avaliação</th><th>Observações</th>
+                            <th>Presença</th><th>Horas</th><th>Créditos</th><th>Avaliação</th><th>Observações</th>
                         </tr></thead>
                         <tbody>${rows || '<tr><td colspan="7" style="text-align:center;padding:32px;color:#999;">Nenhuma formação encontrada.</td></tr>'}</tbody>
                     </table>
