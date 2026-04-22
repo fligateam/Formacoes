@@ -2615,15 +2615,16 @@
         }).filter(Boolean);
     }
     function isParticipant(t, userId){ return participantIds(t).includes(userId); }
-    function resolvedStatus(t){
-        const manual = (t.estadoManual || t.manualStatus || '').toLowerCase();
-        if (manual) return manual;
-        const estado = (t.estado || '').toLowerCase();
-        if (['cancelada','adiada'].includes(estado)) return estado;
-        const d = trainingDate(t);
-        if (!d) return estado || 'agendada';
-        return startOfDay(d) <= startOfDay(new Date()) ? 'realizada' : 'agendada';
-    }
+  function resolvedStatus(t){
+    const manual = (t.estadoManual || t.manualStatus || '').toLowerCase();
+    if (['cancelada','adiada'].includes(manual)) return manual;
+    const estado = (t.estado || '').toLowerCase();
+    if (['cancelada','adiada'].includes(estado)) return estado;
+    if (manual === 'realizada' || estado === 'realizada') return 'realizada';
+    const d = trainingDate(t);
+    if (!d) return estado || 'agendada';
+    return startOfDay(d) <= startOfDay(new Date()) ? 'realizada' : 'agendada';
+}
     function statusBadge(status){
         const map = {
             agendada: 'badge badge-info',
