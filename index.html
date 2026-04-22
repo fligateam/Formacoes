@@ -938,8 +938,24 @@
                 <input type="hidden" id="colaboradorId">
                 
                 <div class="form-group">
-                    <label class="form-label" for="colabNome">Nome</label>
-                    <input type="text" id="colabNome" class="form-control" required>
+                    <label class="form-label" for="colabNome">Nome (Display)</label>
+                    <input type="text" id="colabNome" class="form-control" required placeholder="Ex: Dra. Ana Silva">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="colabNomeCompleto">Nome Completo</label>
+                    <input type="text" id="colabNomeCompleto" class="form-control" placeholder="Nome completo legal">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="colabCodigoOperador">Código de Operador</label>
+                    <input type="text" id="colabCodigoOperador" class="form-control" placeholder="Ex: OP001">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="colabNIF">NIF</label>
+                    <input type="text" id="colabNIF" class="form-control" placeholder="Ex: 123456789" maxlength="9">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="colabCedula">Nº Cédula / Carteira Profissional</label>
+                    <input type="text" id="colabCedula" class="form-control" placeholder="Ex: C-12345">
                 </div>
 
                 <div class="form-group">
@@ -1424,6 +1440,14 @@
         async function submitAvaliacao(event) {
             event.preventDefault();
             const trainingId = document.getElementById('evalTrainingId').value;
+            // Validação obrigatória de todas as estrelas
+            const camposEstrelas = ['duracao', 'pedagogica', 'dominio', 'relevancia', 'global'];
+            for (const campo of camposEstrelas) {
+                if (!document.getElementById(`rating-${campo}`).value) {
+                    showToast('Por favor classifique todos os critérios com estrelas antes de submeter.', 'error');
+                    return;
+                }
+            }
             const afastaPratica = document.getElementById('afastamentoPratica').value === 'sim';
 
             try {
@@ -2171,6 +2195,10 @@
                 document.getElementById('colaboradorModalTitle').textContent = 'Editar Colaborador';
                 document.getElementById('colaboradorId').value = userId;
                 document.getElementById('colabNome').value = user.nome;
+                document.getElementById('colabNomeCompleto').value = user.nomeCompleto || '';
+                document.getElementById('colabCodigoOperador').value = user.codigoOperador || '';
+                document.getElementById('colabNIF').value = user.nif || '';
+                document.getElementById('colabCedula').value = user.cedula || '';
                 document.getElementById('colabEmail').value = user.email;
                 document.getElementById('colabFuncao').value = user.funcao;
                 document.getElementById('colabRole').value = user.role || 'colaborador';
@@ -2188,6 +2216,10 @@
 
             const colaboradorId = document.getElementById('colaboradorId').value;
             const nome = document.getElementById('colabNome').value.trim();
+            const nomeCompleto = document.getElementById('colabNomeCompleto').value.trim();
+            const codigoOperador = document.getElementById('colabCodigoOperador').value.trim();
+            const nif = document.getElementById('colabNIF').value.trim();
+            const cedula = document.getElementById('colabCedula').value.trim();
             const email = document.getElementById('colabEmail').value.trim();
             const funcao = document.getElementById('colabFuncao').value;
             const role = document.getElementById('colabRole').value;
@@ -2227,6 +2259,10 @@
 
                 await db.collection('users').doc(uid).set({
                     nome: nome,
+                    nomeCompleto: nomeCompleto,
+                    codigoOperador: codigoOperador,
+                    nif: nif,
+                    cedula: cedula,
                     email: email,
                     funcao: funcao,
                     role: role,
@@ -2385,10 +2421,25 @@
                     <div class="card-header">
                         <h2 class="card-title">Exportar Dados</h2>
                     </div>
-                    <p style="margin-bottom: 16px;">Exporte todos os dados do sistema para ficheiros CSV.</p>
-                    <button class="btn btn-primary" onclick="exportarTodosDados()">
-                        📥 Exportar Tudo (CSV)
-                    </button>
+                    <p style="margin-bottom: 16px;">Exporte os dados do sistema com filtros avançados.</p>
+                    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+                        <div class="form-group" style="flex:1;min-width:160px;">
+                            <label class="form-label">Data Início</label>
+                            <input type="date" id="exportDataInicio" class="form-control">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:160px;">
+                            <label class="form-label">Data Fim</label>
+                            <input type="date" id="exportDataFim" class="form-control">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:200px;">
+                            <label class="form-label">Entidade Formadora</label>
+                            <input type="text" id="exportEntidade" class="form-control" placeholder="Todas">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <button class="btn btn-primary" onclick="exportarPlanoFormacoes()">📊 Exportar Plano (CSV/Excel)</button>
+                        <button class="btn btn-secondary" onclick="exportarTodosDados()">📥 Exportar Tudo (CSV)</button>
+                    </div>
                 </div>
             `;
 
@@ -2791,6 +2842,8 @@
             ['colaboradores', 'Colaboradores', '👥'],
             ['necessidadesFormacao', 'Necessidades de Formação', '📝'],
             ['relatorios', 'Relatórios e Exportação', '📊'],
+            ['formacoesMes', 'Formações por Mês', '📅'],
+            ['objetivosPlano', 'Objetivos do Plano', '🎯'],
             ['sep', 'Área Pessoal', ''],
             ['minhasFormacoes', 'As Minhas Formações', '📖'],
             ['manifestarNecessidade', 'Necessidade de Formação', '✍️'],
@@ -2798,7 +2851,8 @@
         ] : [
             ['minhasFormacoes', 'As Minhas Formações', '📖'],
             ['manifestarNecessidade', 'Necessidade de Formação', '✍️'],
-            ['historicoAvaliacoes', 'Histórico de Avaliações', '⭐']
+            ['historicoAvaliacoes', 'Histórico de Avaliações', '⭐'],
+            ...(currentUserData?.funcao === 'Farmacêutico' ? [['meusCreditos', 'Os Meus Créditos OF', '🏅']] : [])
         ];
         menu.innerHTML = items.map(([id, label, icon]) => id === 'sep'
             ? `<div style="padding:8px 20px; margin:8px 0; border-bottom:1px solid var(--color-border);"><small style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${label}</small></div>`
@@ -2828,6 +2882,9 @@
             case 'colaboradores': if (isGestor && window.loadColaboradores) window.loadColaboradores(); break;
             case 'necessidadesFormacao': if (isGestor && window.loadNecessidadesGestor) window.loadNecessidadesGestor(); break;
             case 'relatorios': if (isGestor) loadRelatorios(); break;
+            case 'formacoesMes': if (isGestor) loadFormacoesMes(); break;
+            case 'objetivosPlano': if (isGestor) loadObjetivosPlano(); break;
+            case 'meusCreditos': loadMeusCreditos(); break;
             case 'manifestarNecessidade': if (window.loadManifestarNecessidade) window.loadManifestarNecessidade(); break;
             case 'historicoAvaliacoes': if (window.loadHistoricoAvaliacoes) window.loadHistoricoAvaliacoes(); break;
             default: loadMinhasFormacoes();
@@ -2837,6 +2894,13 @@
     window.loadDashboardGestao = async function(){
         document.getElementById('pageTitle').textContent = 'Dashboard Gestão';
         document.getElementById('contentArea').innerHTML = `
+            <div style="background:linear-gradient(135deg,var(--color-accent-blue),var(--color-accent-green));border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow-md);">
+                <div>
+                    <h3 style="font-size:18px;font-weight:700;color:var(--color-text-primary);">📋 Plano de Formações Anual</h3>
+                    <p style="color:var(--color-text-secondary);font-size:13px;margin-top:4px;">Visualize e imprima o plano completo com todos os dados</p>
+                </div>
+                <button class="btn btn-primary" onclick="verPlanoFormacoes()">Ver Plano</button>
+            </div>
             <div class="stats-grid">
                 <div class="stat-card blue"><div class="stat-label">Formações este ano</div><div class="stat-value" id="kpiFormacoesAno">-</div></div>
                 <div class="stat-card green"><div class="stat-label">Horas frequentadas</div><div class="stat-value" id="kpiHorasAno">-</div></div>
@@ -2944,6 +3008,9 @@
                         </select>
                     </div>
                     <div class="form-group"><label class="form-label">Descrição / notas</label><textarea id="descricaoPro" class="form-control">${record ? ((record.descricao || record.notas || '').replace(/</g,'&lt;')) : ''}</textarea></div>
+                    <div class="form-group"><label class="form-label">Objetivos da Formação</label><textarea id="objetivosPro" class="form-control" rows="3" placeholder="Descreva os objetivos desta formação...">${record ? ((record.objetivos || '').replace(/</g,'&lt;')) : ''}</textarea></div>
+                    <div class="form-group"><label class="form-label">Entidade Formadora</label><input id="entidadeFormadoraPro" class="form-control" placeholder="Ex: Ordem dos Farmacêuticos, ANF..." value="${record ? ((record.entidadeFormadora || '').replace(/\"/g,'&quot;')) : ''}"></div>
+                    <div class="form-group"><label class="form-label">Créditos OF <small style="color:var(--color-text-secondary)">(atribuídos automaticamente a Farmacêuticos após confirmação de presença)</small></label><input id="creditosOFPro" type="number" min="0" step="0.5" class="form-control" placeholder="Ex: 2.5" value="${record ? (record.creditosOF || 0) : 0}"></div>
                     <div class="form-group"><label class="form-label">Participantes inscritos</label><div class="participants-grid">${Object.values(usersMap).filter(u => u.ativo !== false).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'', 'pt')).map(u => `<label class="checkbox-item"><input type="checkbox" value="${u.id}" ${selected.has(u.id)?'checked':''}><span><strong>${u.nome || u.email}</strong><br><small>${u.funcao || ''}${u.role === 'gestorformacao' ? ' · Gestor de Formação' : ''}</small></span></label>`).join('')}</div></div>
                     <div class="actions-row">
                         <button class="btn btn-primary" type="submit">${isEdit ? 'Guardar Alterações' : 'Criar Formação'}</button>
@@ -2965,6 +3032,9 @@
                 participantes,
                 estado: document.getElementById('estadoPro').value,
                 estadoManual: document.getElementById('estadoPro').value,
+                objetivos: document.getElementById('objetivosPro').value.trim(),
+                entidadeFormadora: document.getElementById('entidadeFormadoraPro').value.trim(),
+                creditosOF: parseFloat(document.getElementById('creditosOFPro').value) || 0,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedBy: currentUser.uid
             };
@@ -3007,6 +3077,8 @@
                                     <div class="training-meta-item">⏱️ ${normalizeDurationMinutes(t)} min</div>
                                     <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
                                     <div class="training-meta-item">👥 ${ids.length} inscritos</div>
+                                    ${t.entidadeFormadora ? `<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>` : ''}
+                                    ${t.creditosOF ? `<div class="training-meta-item">🏅 ${t.creditosOF} créditos OF</div>` : ''}
                                 </div>
                             </div>
                             <div>${statusBadge(resolvedStatus(t))}</div>
@@ -3019,6 +3091,7 @@
                         <div class="small-text" style="margin-top:10px;">${ids.map(uid => usersMap[uid]?.nome || uid).join(', ') || 'Sem participantes.'}</div>
                         <div class="actions-row">
                             <button class="btn btn-secondary" onclick="editTraining('${t.id}')">✏️ Editar</button>
+                            ${resolvedStatus(t)==='realizada' ? `<button class="btn btn-success" onclick="abrirConfirmarPresencas('${t.id}')">✓ Confirmar Presenças</button>` : ''}
                         </div>
                     </div>`;
             }).join('');
@@ -3084,7 +3157,9 @@
                                     <span class="kpi-pill">Avaliação: ${ev ? 'Submetida' : 'Por fazer'}</span>
                                 </div>
                                 <div class="actions-row">
-                                    ${status === 'realizada' ? `<button class="btn btn-success" onclick="setAttendance('${t.id}','present')">✅ Presente</button><button class="btn btn-warning" onclick="setAttendance('${t.id}','absent')">❌ Não compareceu</button>` : ''}
+                                    ${status === 'realizada' && att?.status !== 'absent' && att?.status !== 'present' ? `<button class="btn btn-danger" onclick="setAttendance('${t.id}','absent')" style="font-size:13px;">✗ Não compareci</button>` : ''}
+                                    ${att?.status === 'absent' ? `<span class="badge badge-error">✗ Não compareceu</span>` : ''}
+                                    ${att?.status === 'present' ? `<span class="badge badge-success">✓ Presença confirmada pelo gestor</span>` : ''}
                                     ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${t.id}')">${ev ? 'Editar Avaliação' : 'Avaliar Formação'}</button>` : ''}
                                     ${ev && !canEditEval ? `<span class="small-text">Janela de edição da avaliação encerrada.</span>` : ''}
                                     <label class="btn btn-secondary" style="cursor:pointer;">📎 Carregar comprovativo<input type="file" style="display:none" accept="application/pdf,image/*" capture="environment" onchange="window.quickProofUpload('${t.id}', this)"></label>
@@ -3291,6 +3366,334 @@
         setTimeout(() => { try { injectProofField(); } catch(e){} }, 400);
     });
 })();
+
+    // ============================================================
+    // NOVAS FUNÇÕES v3
+    // ============================================================
+
+    // Formações por Mês (cards clicáveis)
+    window.loadFormacoesMes = async function() {
+        document.getElementById('pageTitle').textContent = 'Formações por Mês';
+        document.getElementById('contentArea').innerHTML = `<div class="card"><div class="card-header"><h2 class="card-title">📅 Formações por Mês</h2></div><div id="formacoesMesContainer"><div class="loading active"><div class="spinner"></div><p>A carregar...</p></div></div></div>`;
+        try {
+            const snap = await db.collection('trainings').orderBy('data','asc').get();
+            const byMonth = {};
+            snap.docs.forEach(doc => {
+                const t = { id: doc.id, ...doc.data() };
+                let dt = t.data ? (t.data.toDate ? t.data.toDate() : new Date(t.data.seconds*1000)) : null;
+                if (!dt) return;
+                const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
+                const label = dt.toLocaleString('pt-PT',{month:'long',year:'numeric'});
+                if (!byMonth[key]) byMonth[key] = { label, trainings: [] };
+                byMonth[key].trainings.push({ ...t, _dt: dt });
+            });
+            const sorted = Object.entries(byMonth).sort((a,b) => b[0].localeCompare(a[0]));
+            if (!sorted.length) {
+                document.getElementById('formacoesMesContainer').innerHTML = `<div class="empty-state"><div class="empty-state-icon">📅</div><p class="empty-state-text">Nenhuma formação encontrada</p></div>`;
+                return;
+            }
+            const estadoColor = { 'realizada':'badge-success','agendada':'badge-info','adiada':'badge-warning','cancelada':'badge-error' };
+            document.getElementById('formacoesMesContainer').innerHTML = sorted.map(([key, val]) => `
+                <div class="training-card" onclick="toggleMesDetail('mes-${key}')" style="cursor:pointer;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <h3 style="font-size:17px;font-weight:700;text-transform:capitalize;">${val.label}</h3>
+                            <p style="color:var(--color-text-secondary);font-size:13px;margin-top:2px;">${val.trainings.length} formação(ões)</p>
+                        </div>
+                        <span style="font-size:22px;">📅</span>
+                    </div>
+                    <div id="mes-${key}" style="display:none;margin-top:14px;border-top:1px solid var(--color-border);padding-top:12px;">
+                        ${val.trainings.map(t => {
+                            const estado = t.estadoManual || t.estado || 'agendada';
+                            const dtStr = t._dt ? t._dt.toLocaleDateString('pt-PT') : '-';
+                            return `<div style="padding:10px 0;border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                                <div>
+                                    <strong>${t.tema || 'Sem título'}</strong>
+                                    <div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;">${dtStr} · ${t.formador||'-'} · ${t.entidadeFormadora||'-'} · ${t.durationMinutes||t.duracaoHoras*60||0} min${t.creditosOF ? ' · 🏅 '+t.creditosOF+' créd.' : ''}</div>
+                                </div>
+                                <span class="badge ${estadoColor[estado]||'badge-info'}">${estado}</span>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`).join('');
+        } catch(e) {
+            console.error(e);
+            showToast('Erro ao carregar formações por mês','error');
+        }
+    };
+
+    window.toggleMesDetail = function(id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // Objetivos Gerais do Plano
+    window.loadObjetivosPlano = async function() {
+        document.getElementById('pageTitle').textContent = 'Objetivos Gerais do Plano';
+        let snap, docId = null, texto = '';
+        try {
+            snap = await db.collection('objetivosPlano').orderBy('createdAt','desc').limit(1).get();
+            if (!snap.empty) { docId = snap.docs[0].id; texto = snap.docs[0].data().texto || ''; }
+        } catch(e) {}
+        document.getElementById('contentArea').innerHTML = `
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🎯 Objetivos Gerais do Plano Anual</h2>
+                    <button class="btn btn-secondary" onclick="imprimirObjetivos()">🖨️ Imprimir</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Defina os objetivos gerais do plano de formação anual <strong>${new Date().getFullYear()}</strong>:</label>
+                    <textarea id="objetivosTexto" class="form-control" rows="12" style="font-size:14px;line-height:1.8;" placeholder="Ex: 1. Garantir a formação contínua de todos os colaboradores&#10;2. Atingir 40h de formação por colaborador&#10;3. ...">${texto}</textarea>
+                </div>
+                <button class="btn btn-primary" onclick="guardarObjetivosPlano('${docId}')">💾 Guardar Objetivos</button>
+            </div>`;
+    };
+
+    window.guardarObjetivosPlano = async function(docId) {
+        const texto = document.getElementById('objetivosTexto').value;
+        try {
+            if (docId && docId !== 'null') {
+                await db.collection('objetivosPlano').doc(docId).update({ texto, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            } else {
+                await db.collection('objetivosPlano').add({ texto, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            }
+            showToast('Objetivos guardados com sucesso!','success');
+            loadObjetivosPlano();
+        } catch(e) { showToast('Erro ao guardar objetivos','error'); }
+    };
+
+    window.imprimirObjetivos = function() {
+        const texto = document.getElementById('objetivosTexto')?.value || '';
+        const w = window.open('','_blank');
+        w.document.write(`<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8"><title>Objetivos do Plano</title>
+        <style>body{font-family:Arial,sans-serif;padding:48px;max-width:800px;margin:0 auto;color:#333;}
+        h1{color:#4A6572;border-bottom:3px solid #4A6572;padding-bottom:12px;}
+        pre{white-space:pre-wrap;font-size:14px;line-height:2;margin-top:24px;}
+        .footer{margin-top:48px;font-size:11px;color:#aaa;text-align:center;}
+        @media print{button{display:none!important;}}</style></head>
+        <body><h1>💊 Farmácia da Liga<br><span style="font-size:16px;font-weight:400;">Objetivos Gerais do Plano de Formação ${new Date().getFullYear()}</span></h1>
+        <pre>${texto.replace(/</g,'&lt;')}</pre>
+        <div class="footer">Gerado em ${new Date().toLocaleString('pt-PT')} — Farmácia da Liga, Vila Nova de Gaia</div>
+        <br><button onclick="window.print()" style="padding:10px 24px;background:#4A6572;color:white;border:none;border-radius:8px;cursor:pointer;">🖨️ Imprimir / Guardar PDF</button>
+        </body></html>`);
+        w.document.close();
+    };
+
+    // Os Meus Créditos OF (apenas Farmacêuticos)
+    window.loadMeusCreditos = async function() {
+        document.getElementById('pageTitle').textContent = 'Os Meus Créditos OF';
+        document.getElementById('contentArea').innerHTML = `<div class="card"><div class="card-header"><h2 class="card-title">🏅 Os Meus Créditos OF</h2></div><div id="creditosContainer"><div class="loading active"><div class="spinner"></div><p>A carregar...</p></div></div></div>`;
+        try {
+            const snap = await db.collection('creditosOF').where('userId','==',currentUser.uid).orderBy('atribuidoEm','desc').get();
+            const total = snap.docs.reduce((s,d) => s+(d.data().creditos||0), 0);
+            const rows = snap.docs.map(d => {
+                const dd = d.data();
+                let dt = dd.data ? (dd.data.toDate ? dd.data.toDate() : new Date(dd.data.seconds*1000)) : null;
+                return `<tr><td>${dt ? dt.toLocaleDateString('pt-PT') : '-'}</td><td><strong>${dd.tema||'-'}</strong></td><td>${dd.entidadeFormadora||'-'}</td><td style="text-align:center;font-weight:700;">${dd.creditos}</td></tr>`;
+            }).join('');
+            document.getElementById('creditosContainer').innerHTML = `
+                <div style="background:linear-gradient(135deg,var(--color-accent-blue),var(--color-accent-green));border-radius:12px;padding:24px;margin-bottom:24px;text-align:center;">
+                    <div style="font-size:48px;font-weight:700;color:var(--color-text-primary);">${total}</div>
+                    <div style="color:var(--color-text-secondary);font-size:14px;">Créditos OF acumulados</div>
+                </div>
+                ${rows ? `<div class="table-container"><table><thead><tr><th>Data</th><th>Formação</th><th>Entidade</th><th style="text-align:center;">Créditos</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty-state"><div class="empty-state-icon">🏅</div><p class="empty-state-text">Ainda não tem créditos OF atribuídos.</p></div>'}`;
+        } catch(e) { console.error(e); showToast('Erro ao carregar créditos','error'); }
+    };
+
+    // Confirmar presenças com atribuição de créditos (gestor)
+    window.abrirConfirmarPresencas = async function(trainingId) {
+        try {
+            const tDoc = await db.collection('trainings').doc(trainingId).get();
+            const t = tDoc.data();
+            const usersMap = await getUsersMap();
+            const attSnap = await db.collection('attendance').where('trainingId','==',trainingId).get();
+            const confirmed = new Set(attSnap.docs.filter(d=>d.data().status==='present').map(d=>d.data().userId));
+            const participants = (t.participantes||[]).map(uid => ({uid, nome: usersMap[uid]?.nome||uid, funcao: usersMap[uid]?.funcao||''}));
+
+            const listHtml = participants.map(p => `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="pres-${p.uid}" value="${p.uid}" ${confirmed.has(p.uid)?'checked':''}>
+                    <label for="pres-${p.uid}" style="flex:1;cursor:pointer;">
+                        <strong>${p.nome}</strong>
+                        <small style="color:var(--color-text-secondary);margin-left:8px;">${p.funcao}</small>
+                        ${p.funcao==='Farmacêutico' && t.creditosOF ? `<span class="badge badge-info" style="margin-left:6px;">🏅 ${t.creditosOF} créd. OF</span>` : ''}
+                    </label>
+                </div>`).join('');
+
+            document.getElementById('contentArea').innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">✓ Confirmar Presenças — ${t.tema||'Formação'}</h2>
+                        <button class="btn btn-secondary" onclick="navigateTo('todasFormacoes')">← Voltar</button>
+                    </div>
+                    ${t.creditosOF ? `<div class="alert-item" style="margin-bottom:16px;">🏅 Esta formação atribui <strong>${t.creditosOF} créditos OF</strong> a todos os Farmacêuticos com presença confirmada.</div>` : ''}
+                    <div style="display:flex;gap:8px;margin-bottom:16px;">
+                        <button class="btn btn-success btn-icon" onclick="document.querySelectorAll('[id^=pres-]').forEach(c=>c.checked=true)">✓ Todos</button>
+                        <button class="btn btn-secondary btn-icon" onclick="document.querySelectorAll('[id^=pres-]').forEach(c=>c.checked=false)">✗ Nenhum</button>
+                    </div>
+                    <div class="participants-grid">${listHtml}</div>
+                    <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--color-border);">
+                        <button class="btn btn-primary" onclick="gravarPresencas('${trainingId}',${t.creditosOF||0})">💾 Confirmar e Guardar Presenças</button>
+                    </div>
+                </div>`;
+        } catch(e) { console.error(e); showToast('Erro ao carregar participantes','error'); }
+    };
+
+    window.gravarPresencas = async function(trainingId, creditosOF) {
+        const checks = document.querySelectorAll('[id^="pres-"]');
+        const batch = db.batch();
+        const usersMap = await getUsersMap();
+        for (const cb of checks) {
+            const uid = cb.value;
+            const ref = db.collection('attendance').doc(`${trainingId}_${uid}`);
+            if (cb.checked) {
+                batch.set(ref, { trainingId, userId: uid, status: 'present', confirmedAt: firebase.firestore.FieldValue.serverTimestamp(), confirmedByGestor: true }, { merge: true });
+                // Atribuir créditos OF a Farmacêuticos
+                if (creditosOF > 0 && usersMap[uid]?.funcao === 'Farmacêutico') {
+                    const tDoc = await db.collection('trainings').doc(trainingId).get();
+                    const existing = await db.collection('creditosOF').where('trainingId','==',trainingId).where('userId','==',uid).get();
+                    if (existing.empty) {
+                        const cRef = db.collection('creditosOF').doc();
+                        batch.set(cRef, { userId: uid, trainingId, tema: tDoc.data()?.tema||'', entidadeFormadora: tDoc.data()?.entidadeFormadora||'', creditos: creditosOF, data: tDoc.data()?.data||null, atribuidoEm: firebase.firestore.FieldValue.serverTimestamp() });
+                    }
+                }
+            } else {
+                batch.set(ref, { trainingId, userId: uid, status: 'absent', confirmedAt: firebase.firestore.FieldValue.serverTimestamp(), confirmedByGestor: true }, { merge: true });
+            }
+        }
+        await batch.commit();
+        showToast('Presenças confirmadas com sucesso!','success');
+        navigateTo('todasFormacoes');
+    };
+
+    // Exportar Plano de Formações com filtros
+    window.exportarPlanoFormacoes = async function() {
+        showToast('A preparar exportação...','info');
+        try {
+            const dataInicio = document.getElementById('exportDataInicio')?.value;
+            const dataFim = document.getElementById('exportDataFim')?.value;
+            const entidade = (document.getElementById('exportEntidade')?.value||'').toLowerCase().trim();
+            const snap = await db.collection('trainings').orderBy('data','asc').get();
+            const usersMap = await getUsersMap();
+            const rows = [['Data','Tema','Entidade Formadora','Formador','Local','Duração (min)','Objetivos','Créditos OF','Estado','Média Avaliação Global','Presentes','Ausentes','Por Avaliar']];
+            for (const doc of snap.docs) {
+                const t = doc.data();
+                let dt = t.data ? (t.data.toDate ? t.data.toDate() : new Date(t.data.seconds*1000)) : null;
+                if (dataInicio && dt && dt < new Date(dataInicio)) continue;
+                if (dataFim && dt && dt > new Date(dataFim+'T23:59:59')) continue;
+                if (entidade && !(t.entidadeFormadora||'').toLowerCase().includes(entidade)) continue;
+                const attSnap = await db.collection('attendance').where('trainingId','==',doc.id).get();
+                const evalSnap = await db.collection('evaluations').where('trainingId','==',doc.id).get();
+                const evalByUser = {};
+                evalSnap.docs.forEach(e => { evalByUser[e.data().userId] = e.data(); });
+                const presentes = [], ausentes = [], porAvaliar = [];
+                (t.participantes||[]).forEach(uid => {
+                    const att = attSnap.docs.find(a=>a.data().userId===uid);
+                    const cod = usersMap[uid]?.codigoOperador || usersMap[uid]?.nome || uid;
+                    if (att?.data().status==='absent') ausentes.push(cod);
+                    else if (att?.data().status==='present') { presentes.push(cod); if (!evalByUser[uid]) porAvaliar.push(cod); }
+                    else porAvaliar.push(cod);
+                });
+                let media = '-';
+                if (evalSnap.size > 0) {
+                    const soma = evalSnap.docs.reduce((s,d)=>s+(d.data().avaliacaoGlobal||0),0);
+                    media = (soma/evalSnap.size).toFixed(1);
+                }
+                rows.push([
+                    dt ? dt.toLocaleDateString('pt-PT') : '',
+                    t.tema||'', t.entidadeFormadora||'', t.formador||'', t.local||'',
+                    t.durationMinutes||((t.duracaoHoras||0)*60)||0,
+                    (t.objetivos||'').replace(/\n/g,' '),
+                    t.creditosOF||0,
+                    t.estadoManual||t.estado||'',
+                    media,
+                    presentes.join('; '), ausentes.join('; '), porAvaliar.join('; ')
+                ]);
+            }
+            const bom = '\uFEFF';
+            const csv = bom + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `plano_formacoes_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            showToast('Plano exportado com sucesso!','success');
+        } catch(e) { console.error(e); showToast('Erro ao exportar plano','error'); }
+    };
+
+    // Ver Plano de Formações (janela imprimível)
+    window.verPlanoFormacoes = async function() {
+        showToast('A gerar plano...','info');
+        try {
+            const snap = await db.collection('trainings').orderBy('data','asc').get();
+            let objTexto = '';
+            try {
+                const os = await db.collection('objetivosPlano').orderBy('createdAt','desc').limit(1).get();
+                if (!os.empty) objTexto = os.docs[0].data().texto||'';
+            } catch(e){}
+            const usersMap = await getUsersMap();
+            const rows = await Promise.all(snap.docs.map(async doc => {
+                const t = { id: doc.id, ...doc.data() };
+                let dt = t.data ? (t.data.toDate ? t.data.toDate() : new Date(t.data.seconds*1000)) : null;
+                const attSnap = await db.collection('attendance').where('trainingId','==',doc.id).get();
+                const presentes = attSnap.docs.filter(a=>a.data().status==='present').length;
+                const total = (t.participantes||[]).length;
+                return { ...t, dt, presentes, total };
+            }));
+            const estadoCor = { 'realizada':'#DFF3E3','agendada':'#D8EFFF','adiada':'#FFF4E5','cancelada':'#FFEBEE' };
+            const w = window.open('','_blank');
+            w.document.write(`<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
+            <title>Plano de Formações ${new Date().getFullYear()}</title>
+            <style>
+                body{font-family:Arial,sans-serif;padding:40px;color:#333;max-width:1100px;margin:0 auto;}
+                h1{color:#4A6572;} h2{color:#4A6572;margin-top:32px;border-bottom:2px solid #eee;padding-bottom:8px;}
+                table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px;}
+                th{background:#4A6572;color:white;padding:10px 8px;text-align:left;font-size:11px;}
+                td{padding:8px;border-bottom:1px solid #eee;vertical-align:top;}
+                tr:nth-child(even){background:#f9f9f9;}
+                .obj{background:#f0f7ff;padding:16px;border-radius:8px;white-space:pre-wrap;line-height:1.8;font-size:13px;}
+                .footer{margin-top:40px;font-size:11px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:16px;}
+                @media print{.no-print{display:none!important;}}
+            </style></head><body>
+            <div style="text-align:center;margin-bottom:32px;">
+                <div style="font-size:40px;">💊</div>
+                <h1 style="margin:8px 0;">Farmácia da Liga</h1>
+                <div style="font-size:16px;color:#666;">Plano de Formações ${new Date().getFullYear()}</div>
+                <div style="font-size:12px;color:#999;margin-top:4px;">Gerado em ${new Date().toLocaleString('pt-PT')}</div>
+            </div>
+            ${objTexto ? `<h2>🎯 Objetivos Gerais do Plano</h2><div class="obj">${objTexto.replace(/</g,'&lt;')}</div>` : ''}
+            <h2>📚 Formações</h2>
+            <table><thead><tr>
+                <th>Data</th><th>Tema</th><th>Entidade Formadora</th><th>Formador</th>
+                <th>Local</th><th>Duração</th><th>Créditos OF</th><th>Estado</th>
+                <th>Objetivos</th><th>Participantes</th>
+            </tr></thead><tbody>
+            ${rows.map(t => {
+                const cor = estadoCor[t.estadoManual||t.estado||'agendada']||'#fff';
+                const mins = t.durationMinutes||((t.duracaoHoras||0)*60)||0;
+                const hLabel = mins >= 60 ? Math.floor(mins/60)+'h'+(mins%60?String(mins%60).padStart(2,'0'):'') : mins+'min';
+                return `<tr style="background:${cor}">
+                    <td style="white-space:nowrap;">${t.dt?t.dt.toLocaleDateString('pt-PT'):'-'}</td>
+                    <td><strong>${t.tema||'-'}</strong></td>
+                    <td>${t.entidadeFormadora||'-'}</td>
+                    <td>${t.formador||'-'}</td>
+                    <td>${t.local||'-'}</td>
+                    <td style="white-space:nowrap;">${hLabel}</td>
+                    <td style="text-align:center;">${t.creditosOF||'-'}</td>
+                    <td><span style="background:${cor};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;">${t.estadoManual||t.estado||'-'}</span></td>
+                    <td style="font-size:11px;max-width:200px;">${(t.objetivos||'-').replace(/</g,'&lt;')}</td>
+                    <td style="text-align:center;">${t.presentes}/${t.total}</td>
+                </tr>`;
+            }).join('')}
+            </tbody></table>
+            <div class="footer">Farmácia da Liga · Vila Nova de Gaia · ${new Date().getFullYear()}</div>
+            <br class="no-print">
+            <button class="no-print" onclick="window.print()" style="padding:12px 28px;background:#4A6572;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;">🖨️ Imprimir / Guardar PDF</button>
+            </body></html>`);
+            w.document.close();
+        } catch(e) { console.error(e); showToast('Erro ao gerar plano','error'); }
+    };
+
 </script>
 
 </body>
