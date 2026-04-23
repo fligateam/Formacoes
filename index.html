@@ -4719,198 +4719,503 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
 
 })();
 </script>
-<!-- PATCH: loadTodasFormacoes com agrupamento por meses -->
+<!-- ═══════════════════════════════════════════════════════
+     FORMAÇÕES LIGA — SCRIPT FINAL UNIFICADO v4
+     Substitui todos os patches anteriores
+════════════════════════════════════════════════════════ -->
+
+<!-- Modal Mapa de Formações -->
+<div class="modal" id="mapaFormacaoModal">
+  <div class="modal-content" style="max-width:1100px;">
+    <div class="modal-header">
+      <h2 class="modal-title">🗓️ Mapa de Formações</h2>
+      <button class="close-modal" onclick="closeModal('mapaFormacaoModal')">✕</button>
+    </div>
+    <div id="mapaFormacaoBody"></div>
+  </div>
+</div>
+
+<!-- Modal Presenças -->
+<div class="modal" id="presencaModal">
+  <div class="modal-content" style="max-width:700px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="presencaModalTitulo">📋 Registo de Presenças</h2>
+      <button class="close-modal" onclick="closeModal('presencaModal')">✕</button>
+    </div>
+    <div id="presencaModalBody"></div>
+    <div style="display:flex;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--color-border);">
+      <button class="btn btn-primary" onclick="guardarPresencas()">💾 Guardar Presenças</button>
+      <button class="btn btn-secondary" onclick="closeModal('presencaModal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <script>
-(function(){
+(function () {
 
-  window.loadTodasFormacoes = async function(){
-    document.getElementById('pageTitle').textContent = 'Gestão de Formações';
-    document.getElementById('contentArea').innerHTML = `
-      <div class="card" style="margin-bottom:24px;">
-        <div class="card-header">
-          <h2 class="card-title">Todas as Formações</h2>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="navigateTo('criarFormacao')">➕ Nova Formação</button>
-            <button class="btn btn-secondary" onclick="abrirMapaFormacoes()">🗓️ Mapa</button>
+  /* ══ HELPERS ══ */
+  function asDateF(v) {
+    if (!v) return null;
+    if (v.toDate) return v.toDate();
+    if (v.seconds) return new Date(v.seconds * 1000);
+    const d = new Date(v); return isNaN(d) ? null : d;
+  }
+  function fmtDate(d) {
+    if (!d) return '—';
+    return d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+  function minToH(min) {
+    min = Number(min) || 0;
+    if (min >= 60) return Math.floor(min / 60) + 'h' + (min % 60 ? String(min % 60).padStart(2, '0') : '');
+    return min + 'min';
+  }
+  function csvQ(v) { return '"' + String(v ?? '').replace(/"/g, '""') + '"'; }
+  function dlCSV(filename, rows) {
+    const csv = '\uFEFF' + rows.map(r => r.map(csvQ).join(';')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    a.download = filename; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  function getStatusF(t) {
+    const m = (t.estadoManual || '').toLowerCase();
+    if (['cancelada', 'adiada', 'realizada'].includes(m)) return m;
+    const e = (t.estado || '').toLowerCase();
+    if (['cancelada', 'adiada', 'realizada'].includes(e)) return e;
+    const d = asDateF(t.data || t.date || t.dataFormacao);
+    if (!d) return 'agendada';
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const td = new Date(d); td.setHours(0, 0, 0, 0);
+    return td <= today ? 'realizada' : 'agendada';
+  }
+  function getDurMin(t) {
+    if (t.durationMinutes != null) return Number(t.durationMinutes) || 0;
+    if (t.duracaoMinutos != null) return Number(t.duracaoMinutos) || 0;
+    if (t.duracaoHoras != null) return Math.round(Number(t.duracaoHoras) * 60);
+    return 0;
+  }
+  function getParts(t) {
+    const arr = t.participantes || t.participants || t.inscritos || [];
+    return (Array.isArray(arr) ? arr : []).map(p => typeof p === 'string' ? p : (p.userId || p.id || p.uid || null)).filter(Boolean);
+  }
+  function getTitle(t) { return t.tema || t.titulo || t.nome || 'Formação'; }
+  function getTrainer(t) { return t.formador || t.formadorNome || '—'; }
+  function getTDate(t) { return asDateF(t.data || t.date || t.dataFormacao || t.scheduledAt); }
+  function sbadge(status) {
+    const map = { agendada: 'badge badge-info', realizada: 'badge badge-success', cancelada: 'badge badge-error', adiada: 'badge badge-warning' };
+    return `<span class="${map[status] || 'badge badge-info'}">${status}</span>`;
+  }
+  function monthKey2(dt) {
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+  }
+  function monthLabel(dt) {
+    return dt.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+  }
+  function currentMonthKey() {
+    return monthKey2(new Date());
+  }
+
+  /* ══ 1. MAPA DE FORMAÇÕES ══ */
+  window.abrirMapaFormacoes = async function () {
+    const body = document.getElementById('mapaFormacaoBody');
+    body.innerHTML = '<div class="loading active"><div class="spinner"></div><p>A carregar mapa...</p></div>';
+    openModal('mapaFormacaoModal');
+    try {
+      const snap = await db.collection('trainings').get();
+      const trainings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const months = {};
+      trainings.forEach(t => {
+        const dt = getTDate(t); if (!dt) return;
+        const key = monthKey2(dt);
+        const label = monthLabel(dt);
+        if (!months[key]) months[key] = { label, days: {}, list: [] };
+        months[key].list.push({ ...t, _dt: dt });
+        months[key].days[dt.getDate()] = months[key].days[dt.getDate()] || [];
+        months[key].days[dt.getDate()].push(t);
+      });
+      if (!Object.keys(months).length) {
+        body.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🗓️</div><p class="empty-state-text">Nenhuma formação com data definida.</p></div>';
+        return;
+      }
+      const stColor = { agendada: '#64B5F6', realizada: '#7BC97F', cancelada: '#E57373', adiada: '#FFB84D' };
+      body.innerHTML = Object.entries(months).sort().map(([key, m]) => {
+        const [year, month] = key.split('-').map(Number);
+        const firstDay = new Date(year, month - 1, 1).getDay();
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+        const daysInMonth = new Date(year, month, 0).getDate();
+        let cells = '';
+        for (let i = 0; i < startOffset; i++) cells += '<div style="min-height:44px;"></div>';
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dts = m.days[d] || [];
+          const dots = dts.map(t => {
+            const st = getStatusF(t);
+            return `<div title="${(t.tema||'').replace(/"/g,'')}" style="width:8px;height:8px;border-radius:50%;background:${stColor[st]||'#64B5F6'};display:inline-block;margin:1px;cursor:pointer;" onclick="closeModal('mapaFormacaoModal');abrirDetalheFormacao('${t.id}')"></div>`;
+          }).join('');
+          cells += `<div style="min-height:44px;padding:4px;border:1px solid #E0D5C7;border-radius:6px;${dts.length?'background:#F0F9FF;':''}">
+            <div style="font-size:11px;font-weight:600;color:#4A6572;">${d}</div>${dots}</div>`;
+        }
+        const tableRows = m.list.map(t => {
+          const st = getStatusF(t);
+          return `<tr><td>${fmtDate(t._dt)}</td><td><strong>${(t.tema||'—').replace(/</g,'&lt;')}</strong></td>
+            <td>${(t.formador||'—').replace(/</g,'&lt;')}</td><td>${(t.entidadeFormadora||'—').replace(/</g,'&lt;')}</td>
+            <td>${minToH(getDurMin(t))}</td>
+            <td><span class="badge" style="background:${stColor[st]};color:#fff;">${st}</span></td>
+            <td>${getParts(t).length}</td></tr>`;
+        }).join('');
+        return `<div style="margin-bottom:32px;">
+          <h3 style="font-size:18px;font-weight:700;text-transform:capitalize;margin-bottom:12px;">${m.label}</h3>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px;">
+            ${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(d=>`<div style="text-align:center;font-size:11px;font-weight:700;color:#6B7F8C;padding:4px;">${d}</div>`).join('')}
+            ${cells}
           </div>
-        </div>
-        <!-- Filtros -->
-        <div class="filters-bar" style="margin-top:0;margin-bottom:16px;">
-          <div class="filter-item">
-            <input type="text" id="filtroTexto" class="form-control" placeholder="🔍 Pesquisar tema, formador, entidade..." oninput="renderTodasFormacoes()">
-          </div>
-          <div class="filter-item">
-            <select id="filtroEstado" class="form-control" onchange="renderTodasFormacoes()">
-              <option value="">Todos os estados</option>
-              <option value="agendada">Agendada</option>
-              <option value="realizada">Realizada</option>
-              <option value="cancelada">Cancelada</option>
-              <option value="adiada">Adiada</option>
-            </select>
-          </div>
-          <div class="filter-item">
-            <input type="number" id="filtroAno" class="form-control" placeholder="Ano (ex: 2025)" oninput="renderTodasFormacoes()" value="${new Date().getFullYear()}">
-          </div>
-        </div>
-        <div id="todasFormacoesContainer"></div>
-      </div>`;
-
-    if (typeof ensureAutoStatus === 'function') await ensureAutoStatus();
-
-    // Load data once, re-render on filter
-    window._todasFormacoesData = null;
-
-    const loadData = async () => {
-      const [usersMap, attendanceMap, evalMap, trainings] = await Promise.all([
-        getUsersMap(), getAttendanceMap(), getEvaluationsMap(), getAllTrainings()
-      ]);
-      window._todasFormacoesData = { usersMap, attendanceMap, evalMap, trainings };
-      renderTodasFormacoes();
-    };
-
-    await loadData();
-    if (typeof activeUnsubscribe === 'function') activeUnsubscribe();
-    window.activeUnsubscribe = db.collection('trainings').onSnapshot(async () => {
-      window._todasFormacoesData = null;
-      await loadData();
-    });
+          <div class="table-container"><table>
+            <thead><tr><th>Data</th><th>Tema</th><th>Formador</th><th>Entidade</th><th>Duração</th><th>Estado</th><th>Inscritos</th></tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table></div>
+          <button class="btn btn-secondary" style="margin-top:12px;" onclick="exportarMesEspecifico('${key}')">📥 Exportar ${m.label}</button>
+        </div>`;
+      }).join('<hr style="margin:20px 0;">');
+    } catch (e) {
+      body.innerHTML = `<p style="color:red;padding:20px;">Erro: ${e.message}</p>`;
+    }
   };
 
-  window.renderTodasFormacoes = function(){
-    const container = document.getElementById('todasFormacoesContainer');
-    if (!container || !window._todasFormacoesData) return;
+  /* ══ 2. SELECIONAR TODOS ══ */
+  window.selecionarTodos = function () {
+    document.querySelectorAll('#participantesContainer input[type="checkbox"]').forEach(cb => cb.checked = true);
+  };
+  window.desselecionarTodos = function () {
+    document.querySelectorAll('#participantesContainer input[type="checkbox"]').forEach(cb => cb.checked = false);
+  };
 
-    const { usersMap, attendanceMap, evalMap, trainings } = window._todasFormacoesData;
+  /* ══ 3. PRESENÇAS ══ */
+  let _presTrainingId = null;
 
-    const filtroTexto = (document.getElementById('filtroTexto')?.value || '').toLowerCase().trim();
-    const filtroEstado = document.getElementById('filtroEstado')?.value || '';
-    const filtroAno = document.getElementById('filtroAno')?.value || '';
-
-    // Filter
-    let filtered = trainings.filter(t => {
-      const dt = trainingDate(t);
-      const status = resolvedStatus(t);
-      if (filtroEstado && status !== filtroEstado) return false;
-      if (filtroAno && dt && dt.getFullYear() !== parseInt(filtroAno)) return false;
-      if (filtroTexto) {
-        const haystack = [t.tema, t.formador, t.entidadeFormadora, t.local, t.laboratorioMarca].join(' ').toLowerCase();
-        if (!haystack.includes(filtroTexto)) return false;
+  window.abrirPresencas = async function (trainingId) {
+    _presTrainingId = trainingId;
+    document.getElementById('presencaModalBody').innerHTML = '<div class="loading active"><div class="spinner"></div><p>A carregar...</p></div>';
+    openModal('presencaModal');
+    try {
+      const [tDoc, usersSnap, attSnap] = await Promise.all([
+        db.collection('trainings').doc(trainingId).get(),
+        db.collection('users').where('ativo', '==', true).orderBy('nome').get(),
+        db.collection('attendance').where('trainingId', '==', trainingId).get()
+      ]);
+      const t = tDoc.data();
+      document.getElementById('presencaModalTitulo').textContent = '📋 Presenças — ' + (t.tema || 'Formação');
+      const partIds = getParts(t);
+      const attMap = {};
+      attSnap.forEach(d => { attMap[d.data().userId] = d.data().status; });
+      const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => partIds.includes(u.id));
+      if (!users.length) {
+        document.getElementById('presencaModalBody').innerHTML = '<p style="text-align:center;padding:24px;color:var(--color-text-secondary);">Nenhum participante inscrito.</p>';
+        return;
       }
-      return true;
-    });
-
-    // Sort descending by date
-    filtered.sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0));
-
-    if (!filtered.length) {
-      container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📚</div><div class="empty-state-text">Nenhuma formação encontrada.</div></div>`;
-      return;
-    }
-
-    // Group by month
-    const grouped = {};
-    filtered.forEach(t => {
-      const dt = trainingDate(t);
-      const key = dt ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}` : '0000-00';
-      const label = dt ? dt.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' }) : 'Sem data';
-      if (!grouped[key]) grouped[key] = { label, trainings: [] };
-      grouped[key].trainings.push(t);
-    });
-
-    const currentMonthKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
-
-    const html = Object.entries(grouped)
-      .sort((a,b) => b[0].localeCompare(a[0]))
-      .map(([key, group]) => {
-        const isCurrentMonth = key === currentMonthKey;
-        const monthId = 'gesmes-' + key;
-
-        const cards = group.trainings.map(t => {
-          const ids = participantIds(t);
-          const status = resolvedStatus(t);
-          const presentCount = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'present').length;
-          const absentCount  = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'absent').length;
-          const evalCount    = ids.filter(uid => !!evalMap[`${t.id}_${uid}`]).length;
-          const dt = trainingDate(t);
-          const mins = normalizeDurationMinutes(t);
-          const hLabel = mins >= 60 ? Math.floor(mins/60)+'h'+(mins%60 ? String(mins%60).padStart(2,'0') : '') : mins+'min';
-
-          return `
-            <div class="training-card ${status==='realizada'?'completed':'pending'}" style="margin-bottom:12px;">
-              <div class="training-header">
-                <div style="flex:1;">
-                  <div class="training-title">${trainingTitle(t)}</div>
-                  <div class="training-meta" style="margin-top:6px;">
-                    <div class="training-meta-item">📅 ${dt ? dt.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'}) + ' ' + dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}) : '—'}</div>
-                    <div class="training-meta-item">⏱️ ${hLabel}</div>
-                    <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
-                    ${t.entidadeFormadora ? `<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>` : ''}
-                    ${t.local ? `<div class="training-meta-item">📍 ${t.local}</div>` : ''}
-                    ${t.laboratorioMarca ? `<div class="training-meta-item">🏭 ${t.laboratorioMarca}</div>` : ''}
-                    ${t.creditosOF ? `<div class="training-meta-item">🏅 ${t.creditosOF} créditos OF</div>` : ''}
-                    <div class="training-meta-item">👥 ${ids.length} inscritos</div>
-                  </div>
-                </div>
-                <div>${statusBadge(status)}</div>
+      document.getElementById('presencaModalBody').innerHTML = `
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+          <button class="btn btn-success" style="font-size:12px;" onclick="marcarTodosPresentes()">✓ Todos Presentes</button>
+          <button class="btn btn-danger" style="font-size:12px;" onclick="marcarTodosAusentes()">✗ Todos Ausentes</button>
+        </div>
+        <div id="presencaLista" style="display:grid;gap:8px;">
+          ${users.map(u => {
+            const cur = attMap[u.id] || '';
+            return `<div id="presrow_${u.id}" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid var(--color-border);border-radius:10px;background:#fff;">
+              <div>
+                <strong>${u.nome || u.email}</strong>
+                <small style="color:var(--color-text-secondary);margin-left:8px;">${u.funcao || ''} ${u.codigoOperador ? '· ' + u.codigoOperador : ''}</small>
               </div>
-              <div class="kpi-row">
-                <span class="kpi-pill">✓ Presentes: ${presentCount}</span>
-                <span class="kpi-pill">✗ Faltas: ${absentCount}</span>
-                <span class="kpi-pill">⭐ Avaliações: ${evalCount}/${ids.length}</span>
-              </div>
-              ${ids.length ? `<div class="small-text" style="margin-top:8px;">👤 ${ids.map(uid => usersMap[uid]?.nome || uid).join(', ')}</div>` : ''}
-              <div class="actions-row" style="margin-top:12px;">
-                <button class="btn btn-secondary" onclick="event.stopPropagation();editTraining('${t.id}')">✏️ Editar</button>
-                <button class="btn btn-primary" onclick="event.stopPropagation();abrirPresencas('${t.id}')" title="Gerir presenças">📋 Presenças</button>
-                ${status === 'agendada' ? `
-                  <button class="btn btn-success" onclick="event.stopPropagation();marcarRealizada('${t.id}')">✅ Marcar Realizada</button>
-                  <button class="btn btn-danger" onclick="event.stopPropagation();apagarFormacao('${t.id}')" title="Apagar formação">🗑️ Apagar</button>
-                ` : ''}
-                ${status === 'realizada' ? `
-                  <button class="btn btn-secondary" onclick="event.stopPropagation();exportarResumoFormacao('${t.id}')">📋 Resumo</button>
-                ` : ''}
-                <button class="btn btn-warning" style="color:white;font-size:12px;padding:8px 12px;" onclick="event.stopPropagation();anularFormacao('${t.id}')" title="Anular">🚫 Anular</button>
+              <div style="display:flex;gap:8px;">
+                <label id="lbl_present_${u.id}" style="cursor:pointer;display:flex;align-items:center;gap:4px;padding:6px 14px;border-radius:8px;border:2px solid ${cur==='present'?'#7BC97F':'#E0D5C7'};background:${cur==='present'?'#DFF3E3':'#fff'};font-size:13px;font-weight:600;">
+                  <input type="radio" name="att_${u.id}" value="present" ${cur==='present'?'checked':''} style="display:none;" onchange="styleAttRow('${u.id}','present')"> ✓ Presente
+                </label>
+                <label id="lbl_absent_${u.id}" style="cursor:pointer;display:flex;align-items:center;gap:4px;padding:6px 14px;border-radius:8px;border:2px solid ${cur==='absent'?'#E57373':'#E0D5C7'};background:${cur==='absent'?'#FFEBEE':'#fff'};font-size:13px;font-weight:600;">
+                  <input type="radio" name="att_${u.id}" value="absent" ${cur==='absent'?'checked':''} style="display:none;" onchange="styleAttRow('${u.id}','absent')"> ✗ Ausente
+                </label>
               </div>
             </div>`;
-        }).join('');
-
-        const totalMins = group.trainings.reduce((s,t) => s + normalizeDurationMinutes(t), 0);
-        const totalH = totalMins >= 60 ? Math.floor(totalMins/60)+'h'+(totalMins%60 ? String(totalMins%60).padStart(2,'0') : '') : totalMins+'min';
-
-        return `
-          <div class="month-group" style="margin-bottom:24px;">
-            <div class="training-card" style="cursor:pointer;border-left:4px solid var(--color-info);margin-bottom:0;border-radius:12px 12px ${isCurrentMonth?'0 0':'12px 12px'};"
-                 onclick="toggleMesDetail('${monthId}')">
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div>
-                  <h3 style="font-size:17px;font-weight:700;text-transform:capitalize;">${group.label}</h3>
-                  <p style="color:var(--color-text-secondary);font-size:12px;margin-top:3px;">
-                    ${group.trainings.length} formação(ões) · ${totalH} total
-                    · ${group.trainings.filter(t=>resolvedStatus(t)==='realizada').length} realizadas
-                    · ${group.trainings.filter(t=>resolvedStatus(t)==='agendada').length} agendadas
-                  </p>
-                </div>
-                <span id="${monthId}-arrow" style="font-size:20px;transition:transform 0.2s;">${isCurrentMonth?'🔽':'▶️'}</span>
-              </div>
-            </div>
-            <div id="${monthId}" style="display:${isCurrentMonth?'block':'none'};border:1px solid var(--color-border);border-top:none;border-radius:0 0 12px 12px;padding:16px;background:#fff;">
-              ${cards}
-            </div>
-          </div>`;
-      }).join('');
-
-    container.innerHTML = html;
+          }).join('')}
+        </div>`;
+    } catch (e) {
+      document.getElementById('presencaModalBody').innerHTML = `<p style="color:red;">Erro: ${e.message}</p>`;
+    }
   };
 
-})();
-<!-- PATCH: Fix loadTodasFormacoes race + fix loadMinhasFormacoes sort por data -->
-<script>
-(function(){
+  window.styleAttRow = function (uid, val) {
+    const lp = document.getElementById('lbl_present_' + uid);
+    const la = document.getElementById('lbl_absent_' + uid);
+    if (lp) { lp.style.borderColor = val==='present'?'#7BC97F':'#E0D5C7'; lp.style.background = val==='present'?'#DFF3E3':'#fff'; }
+    if (la) { la.style.borderColor = val==='absent'?'#E57373':'#E0D5C7'; la.style.background = val==='absent'?'#FFEBEE':'#fff'; }
+  };
 
-  /* ══════════════════════════════════════════════
-     FIX 1 — loadTodasFormacoes completo e robusto
-  ══════════════════════════════════════════════ */
-  window.loadTodasFormacoes = async function(){
+  window.marcarTodosPresentes = function () {
+    document.querySelectorAll('#presencaLista input[value="present"]').forEach(r => {
+      r.checked = true;
+      styleAttRow(r.name.replace('att_', ''), 'present');
+    });
+  };
+  window.marcarTodosAusentes = function () {
+    document.querySelectorAll('#presencaLista input[value="absent"]').forEach(r => {
+      r.checked = true;
+      styleAttRow(r.name.replace('att_', ''), 'absent');
+    });
+  };
+
+  window.guardarPresencas = async function () {
+    if (!_presTrainingId) return;
+    const checked = document.querySelectorAll('#presencaLista input[type="radio"]:checked');
+    if (!checked.length) { showToast('Nenhuma presença para guardar.', 'error'); return; }
+    try {
+      const batch = db.batch();
+      checked.forEach(r => {
+        const userId = r.name.replace('att_', '');
+        batch.set(db.collection('attendance').doc(_presTrainingId + '_' + userId), {
+          trainingId: _presTrainingId, userId, status: r.value,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedBy: currentUser.uid
+        }, { merge: true });
+      });
+      await batch.commit();
+
+      // Créditos OF para Farmacêuticos
+      const tDoc = await db.collection('trainings').doc(_presTrainingId).get();
+      const t = tDoc.data();
+      if (t.creditosOF) {
+        const usersSnap = await db.collection('users').get();
+        const uMap = {}; usersSnap.forEach(d => uMap[d.id] = d.data());
+        const cb = db.batch();
+        checked.forEach(r => {
+          if (r.value !== 'present') return;
+          const uid = r.name.replace('att_', '');
+          if (uMap[uid]?.funcao === 'Farmacêutico') {
+            cb.set(db.collection('creditosOF').doc(_presTrainingId + '_' + uid), {
+              userId: uid, trainingId: _presTrainingId, tema: t.tema,
+              entidadeFormadora: t.entidadeFormadora || '',
+              creditos: Number(t.creditosOF), data: t.data,
+              atribuidoEm: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+          }
+        });
+        await cb.commit();
+      }
+      showToast('Presenças guardadas com sucesso!', 'success');
+      closeModal('presencaModal');
+      if (window._todasFormacoesData) await _reloadTodasFormacoes();
+    } catch (e) { showToast('Erro: ' + e.message, 'error'); }
+  };
+
+  /* ══ 5. APAGAR FORMAÇÃO (só agendadas) ══ */
+  window.apagarFormacao = async function (trainingId) {
+    const tDoc = await db.collection('trainings').doc(trainingId).get();
+    if (!tDoc.exists) return showToast('Formação não encontrada.', 'error');
+    if (getStatusF(tDoc.data()) === 'realizada') return showToast('Não é possível apagar formações realizadas.', 'error');
+    if (!confirm('Apagar definitivamente esta formação? Esta ação não pode ser revertida.')) return;
+    try {
+      await db.collection('trainings').doc(trainingId).delete();
+      showToast('Formação apagada.', 'success');
+      await _reloadTodasFormacoes();
+    } catch (e) { showToast('Erro: ' + e.message, 'error'); }
+  };
+
+  /* ══ 6. MARCAR REALIZADA ══ */
+  window.marcarRealizada = async function (trainingId) {
+    if (!confirm('Marcar esta formação como REALIZADA?')) return;
+    try {
+      await db.collection('trainings').doc(trainingId).update({
+        estadoManual: 'realizada', estado: 'realizada',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: currentUser.uid
+      });
+      showToast('Formação marcada como realizada!', 'success');
+      await _reloadTodasFormacoes();
+    } catch (e) { showToast('Erro: ' + e.message, 'error'); }
+  };
+
+  /* ══ 7 & 8. EXPORTAÇÕES ══ */
+  window.exportarPorColaborador = async function () {
+    showToast('A preparar...', 'info');
+    try {
+      const [tsSnap, usSnap, atSnap, evSnap] = await Promise.all([
+        db.collection('trainings').get(), db.collection('users').orderBy('nome').get(),
+        db.collection('attendance').get(), db.collection('evaluations').get()
+      ]);
+      const ts = {}; tsSnap.forEach(d => ts[d.id] = { id: d.id, ...d.data() });
+      const atMap = {}; atSnap.forEach(d => { const dd=d.data(); atMap[dd.trainingId+'_'+dd.userId]=dd.status; });
+      const evMap = {}; evSnap.forEach(d => { const dd=d.data(); evMap[dd.trainingId+'_'+dd.userId]=dd; });
+      const rows = [['Colaborador','Cód. Operador','NIF','Cédula','Função','Formação','Data','Entidade','Formador','Duração (min)','Horas','Tipo','Laboratório','Créditos OF','Estado','Presença','Aval. Global']];
+      usSnap.forEach(ud => {
+        const u = ud.data();
+        Object.values(ts).forEach(t => {
+          if (!getParts(t).includes(ud.id)) return;
+          const dt = getTDate(t); const mins = getDurMin(t);
+          rows.push([u.nome||'',u.codigoOperador||'',u.nif||'',u.cedula||'',u.funcao||'',
+            t.tema||'',dt?fmtDate(dt):'',t.entidadeFormadora||'',t.formador||'',
+            mins,(mins/60).toFixed(2),t.tipo||'',t.laboratorioMarca||'',t.creditosOF||'',
+            getStatusF(t),atMap[t.id+'_'+ud.id]||'pendente',evMap[t.id+'_'+ud.id]?.avaliacaoGlobal||'']);
+        });
+      });
+      dlCSV('formacoes_por_colaborador_'+new Date().toISOString().slice(0,10)+'.csv', rows);
+      showToast('Exportado!', 'success');
+    } catch(e){ showToast('Erro: '+e.message,'error'); }
+  };
+
+  window.exportarPorMes = async function () {
+    showToast('A preparar...', 'info');
+    const inicio = document.getElementById('exportDataInicio')?.value;
+    const fim = document.getElementById('exportDataFim')?.value;
+    try {
+      const [tsSnap, usSnap, atSnap] = await Promise.all([
+        db.collection('trainings').get(), db.collection('users').get(), db.collection('attendance').get()
+      ]);
+      const uMap = {}; usSnap.forEach(d => uMap[d.id]=d.data());
+      const atMap = {}; atSnap.forEach(d => { const dd=d.data(); atMap[dd.trainingId+'_'+dd.userId]=dd.status; });
+      const rows = [['Mês','Ano','Data','Tema','Entidade','Formador','Local','Dur.(min)','Horas','Tipo','Lab.','Créd.OF','Estado','Inscritos','Presentes','Ausentes','Participantes']];
+      tsSnap.forEach(td => {
+        const t={id:td.id,...td.data()}; const dt=getTDate(t); if(!dt) return;
+        if(inicio && dt<new Date(inicio)) return;
+        if(fim && dt>new Date(fim+'T23:59:59')) return;
+        const parts=getParts(t); const mins=getDurMin(t);
+        const pres=parts.filter(u=>atMap[t.id+'_'+u]==='present').length;
+        const aus=parts.filter(u=>atMap[t.id+'_'+u]==='absent').length;
+        rows.push([dt.toLocaleDateString('pt-PT',{month:'long'}),dt.getFullYear(),fmtDate(dt),
+          t.tema||'',t.entidadeFormadora||'',t.formador||'',t.local||'',mins,(mins/60).toFixed(2),
+          t.tipo||'',t.laboratorioMarca||'',t.creditosOF||'',getStatusF(t),parts.length,pres,aus,
+          parts.map(u=>uMap[u]?.nome||u).join(', ')]);
+      });
+      dlCSV('formacoes_por_mes_'+new Date().toISOString().slice(0,10)+'.csv', rows);
+      showToast('Exportado!', 'success');
+    } catch(e){ showToast('Erro: '+e.message,'error'); }
+  };
+
+  window.exportarPorFormacao = async function () {
+    showToast('A preparar...', 'info');
+    try {
+      const [tsSnap, usSnap, atSnap, evSnap] = await Promise.all([
+        db.collection('trainings').get(), db.collection('users').get(),
+        db.collection('attendance').get(), db.collection('evaluations').get()
+      ]);
+      const uMap={}; usSnap.forEach(d=>uMap[d.id]=d.data());
+      const atMap={}; atSnap.forEach(d=>{const dd=d.data();atMap[dd.trainingId+'_'+dd.userId]=dd.status;});
+      const evMap={}; evSnap.forEach(d=>{const dd=d.data();if(dd.trainingId&&dd.userId)evMap[dd.trainingId+'_'+dd.userId]=dd;});
+      const rows=[['Formação','Data','Entidade','Formador','Local','Dur.(min)','Horas','Tipo','Lab.','Créd.OF','Estado','Colaborador','Cód.Op.','Função','Presença','Dur.','Pedag.','Domínio','Relev.','Global']];
+      tsSnap.forEach(td=>{
+        const t={id:td.id,...td.data()};const dt=getTDate(t);const mins=getDurMin(t);const parts=getParts(t);
+        if(!parts.length){rows.push([t.tema||'',fmtDate(dt),t.entidadeFormadora||'',t.formador||'',t.local||'',mins,(mins/60).toFixed(2),t.tipo||'',t.laboratorioMarca||'',t.creditosOF||'',getStatusF(t),'—','','','','','','','','']);return;}
+        parts.forEach(uid=>{
+          const u=uMap[uid]||{};const at=atMap[t.id+'_'+uid]||'pendente';const ev=evMap[t.id+'_'+uid]||{};
+          rows.push([t.tema||'',fmtDate(dt),t.entidadeFormadora||'',t.formador||'',t.local||'',mins,(mins/60).toFixed(2),t.tipo||'',t.laboratorioMarca||'',t.creditosOF||'',getStatusF(t),u.nome||uid,u.codigoOperador||'',u.funcao||'',at,ev.duracaoAcao||'',ev.capacidadePedagogicaFormador||'',ev.dominioTemaFormador||'',ev.relevanciaTarefasDesempenha||'',ev.avaliacaoGlobal||'']);
+        });
+      });
+      dlCSV('formacoes_por_formacao_'+new Date().toISOString().slice(0,10)+'.csv', rows);
+      showToast('Exportado!', 'success');
+    } catch(e){ showToast('Erro: '+e.message,'error'); }
+  };
+
+  window.exportarPorLaboratorio = async function () {
+    showToast('A preparar...', 'info');
+    try {
+      const [tsSnap, usSnap, atSnap] = await Promise.all([
+        db.collection('trainings').get(), db.collection('users').get(), db.collection('attendance').get()
+      ]);
+      const uMap={}; usSnap.forEach(d=>uMap[d.id]=d.data());
+      const atMap={}; atSnap.forEach(d=>{const dd=d.data();atMap[dd.trainingId+'_'+dd.userId]=dd.status;});
+      const rows=[['Laboratório/Marca','Data','Tema','Entidade','Formador','Local','Dur.(min)','Horas','Estado','Inscritos','Presentes','Participantes']];
+      const sorted=[];
+      tsSnap.forEach(td=>{
+        const t={id:td.id,...td.data()};const dt=getTDate(t);const mins=getDurMin(t);const parts=getParts(t);
+        const pres=parts.filter(u=>atMap[t.id+'_'+u]==='present').length;
+        sorted.push([t.laboratorioMarca||'(sem laboratório)',fmtDate(dt),t.tema||'',t.entidadeFormadora||'',t.formador||'',t.local||'',mins,(mins/60).toFixed(2),getStatusF(t),parts.length,pres,parts.map(u=>uMap[u]?.nome||u).join(', ')]);
+      });
+      sorted.sort((a,b)=>String(a[0]).localeCompare(String(b[0])));
+      dlCSV('formacoes_por_laboratorio_'+new Date().toISOString().slice(0,10)+'.csv', [rows[0],...sorted]);
+      showToast('Exportado!', 'success');
+    } catch(e){ showToast('Erro: '+e.message,'error'); }
+  };
+
+  window.exportarMesEspecifico = async function (key) {
+    const [year, month] = key.split('-').map(Number);
+    const el = document.getElementById('exportDataInicio');
+    const el2 = document.getElementById('exportDataFim');
+    const s = new Date(year, month-1, 1).toISOString().slice(0,10);
+    const e = new Date(year, month, 0).toISOString().slice(0,10);
+    if (el) el.value = s;
+    if (el2) el2.value = e;
+    await exportarPorMes();
+  };
+
+  window.exportarPlanoFormacoes = async function () {
+    showToast('A preparar plano...', 'info');
+    try {
+      const [tsSnap, usSnap, atSnap, objSnap] = await Promise.all([
+        db.collection('trainings').orderBy('data').get(),
+        db.collection('users').get(), db.collection('attendance').get(),
+        db.collection('objetivosPlano').orderBy('createdAt','desc').limit(1).get()
+      ]);
+      const uMap={}; usSnap.forEach(d=>uMap[d.id]=d.data());
+      const atMap={}; atSnap.forEach(d=>{const dd=d.data();atMap[dd.trainingId+'_'+dd.userId]=dd.status;});
+      const obj = objSnap.empty ? '' : (objSnap.docs[0].data().texto||'');
+      const rows=[
+        ['PLANO DE FORMAÇÕES — Farmácia da Liga — '+new Date().getFullYear()],[],
+        ['OBJETIVOS GERAIS:'],[obj],[],
+        ['Nº','Data','Tema','Entidade','Formador','Local','Tipo','Horas','Créd.OF','Estado','Objetivos','Participantes','Presentes','Ausentes']
+      ];
+      tsSnap.docs.forEach((td,i)=>{
+        const t={id:td.id,...td.data()};const dt=getTDate(t);const mins=getDurMin(t);const parts=getParts(t);
+        const pres=parts.filter(u=>atMap[t.id+'_'+u]==='present').length;
+        const aus=parts.filter(u=>atMap[t.id+'_'+u]==='absent').length;
+        rows.push([i+1,fmtDate(dt),t.tema||'',t.entidadeFormadora||'',t.formador||'',t.local||'',t.tipo||'',(mins/60).toFixed(2),t.creditosOF||'',getStatusF(t),(t.objetivos||'').replace(/\n/g,' '),parts.map(u=>uMap[u]?.nome||u).join(', '),pres,aus]);
+      });
+      dlCSV('plano_formacoes_'+new Date().getFullYear()+'.csv', rows);
+      showToast('Plano exportado!', 'success');
+    } catch(e){ showToast('Erro: '+e.message,'error'); }
+  };
+
+  /* ══ 9. RESUMO DE FORMAÇÃO ══ */
+  window.exportarResumoFormacao = async function (trainingId) {
+    showToast('A preparar resumo...', 'info');
+    try {
+      const [tDoc, usSnap, atSnap, evSnap] = await Promise.all([
+        db.collection('trainings').doc(trainingId).get(),
+        db.collection('users').get(),
+        db.collection('attendance').where('trainingId','==',trainingId).get(),
+        db.collection('evaluations').where('trainingId','==',trainingId).get()
+      ]);
+      const t={id:tDoc.id,...tDoc.data()};const dt=getTDate(t);const mins=getDurMin(t);
+      const uMap={}; usSnap.forEach(d=>uMap[d.id]=d.data());
+      const atMap={}; atSnap.forEach(d=>{const dd=d.data();atMap[dd.userId]=dd.status;});
+      const parts=getParts(t);
+      const pres=parts.filter(u=>atMap[u]==='present');
+      const aus=parts.filter(u=>atMap[u]==='absent');
+      const pend=parts.filter(u=>!atMap[u]);
+      const evals=evSnap.docs.map(d=>d.data());
+      const avg=field=>{const v=evals.map(e=>Number(e[field]||0)).filter(x=>x>0);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(2):'—';};
+      const rows=[
+        ['RESUMO DE FORMAÇÃO — Farmácia da Liga'],[],
+        ['DADOS'],['Tema',t.tema||''],['Data',dt?dt.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):''],
+        ['Entidade',t.entidadeFormadora||''],['Formador',t.formador||''],['Local',t.local||''],
+        ['Tipo',t.tipo||''],['Duração',(mins/60).toFixed(2)+' h ('+mins+' min)'],['Créditos OF',t.creditosOF||'—'],
+        ['Estado',getStatusF(t)],['Objetivos',(t.objetivos||'').replace(/\n/g,' ')],[],
+        ['PARTICIPAÇÃO'],['Total Inscritos',parts.length],['Presentes',pres.length],
+        ['Ausentes',aus.length],['Pendentes',pend.length],
+        ['Taxa de Presença',parts.length?((pres.length/parts.length)*100).toFixed(0)+'%':'—'],[],
+        ['PARTICIPANTES'],['Nome','Cód.Op.','NIF','Cédula','Função','Presença'],
+        ...parts.map(uid=>{const u=uMap[uid]||{};return[u.nome||uid,u.codigoOperador||'',u.nif||'',u.cedula||'',u.funcao||'',atMap[uid]||'pendente'];}),
+        [],['MÉDIAS ('+evals.length+' avaliações)'],['Parâmetro','Média (1-5)'],
+        ['Duração da Ação',avg('duracaoAcao')],
+        ['Capacidade Pedagógica',avg('capacidadePedagogicaFormador')],
+        ['Domínio do Tema',avg('dominioTemaFormador')],
+        ['Relevância',avg('relevanciaTarefasDesempenha')],
+        ['Avaliação Global',avg('avaliacaoGlobal')],[],
+        ['DETALHE AVALIAÇÕES'],['Colaborador','Dur.','Pedag.','Domínio','Relev.','Global','Afasta prática?','Observações'],
+        ...evals.map(ev=>{const u=uMap[ev.userId]||{};return[u.nome||ev.userId,ev.duracaoAcao||'',ev.capacidadePedagogicaFormador||'',ev.dominioTemaFormador||'',ev.relevanciaTarefasDesempenha||'',ev.avaliacaoGlobal||'',ev.temasAfastamPraticaInstituida?'Sim':'Não',(ev.observacoesPropostasImplementacao||'')+(ev.justificacaoAfastamentoPratica?' | '+ev.justificacaoAfastamentoPratica:'')];}),
+        [],[],['Gerado em',new Date().toLocaleString('pt-PT'),'Farmácia da Liga — Vila Nova de Gaia']
+      ];
+      dlCSV('resumo_'+(t.tema||'formacao').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30)+'_'+new Date().toISOString().slice(0,10)+'.csv', rows);
+      showToast('Resumo exportado!', 'success');
+    } catch(e){ showToast('Erro: '+e.message,'error'); }
+  };
+
+  /* ══ loadTodasFormacoes — VERSÃO FINAL CORRECTA ══ */
+  window.loadTodasFormacoes = async function () {
     document.getElementById('pageTitle').textContent = 'Gestão de Formações';
     document.getElementById('contentArea').innerHTML = `
       <div class="card">
@@ -4923,9 +5228,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
         </div>
         <div class="filters-bar" style="margin-bottom:16px;">
           <div class="filter-item">
-            <input type="text" id="filtroTexto" class="form-control"
-              placeholder="🔍 Tema, formador, entidade, laboratório..."
-              oninput="renderTodasFormacoes()">
+            <input type="text" id="filtroTexto" class="form-control" placeholder="🔍 Tema, formador, entidade..." oninput="renderTodasFormacoes()">
           </div>
           <div class="filter-item">
             <select id="filtroEstado" class="form-control" onchange="renderTodasFormacoes()">
@@ -4937,345 +5240,237 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
             </select>
           </div>
           <div class="filter-item" style="max-width:140px;">
-            <input type="number" id="filtroAno" class="form-control"
-              placeholder="Ano" oninput="renderTodasFormacoes()"
-              value="${new Date().getFullYear()}">
+            <input type="number" id="filtroAno" class="form-control" placeholder="Ano" oninput="renderTodasFormacoes()" value="${new Date().getFullYear()}">
           </div>
         </div>
-        <div id="todasFormacoesContainer">
-          <div class="loading active"><div class="spinner"></div><p>A carregar...</p></div>
-        </div>
+        <div id="todasFormacoesContainer"><div class="loading active"><div class="spinner"></div><p>A carregar...</p></div></div>
       </div>`;
-
     if (typeof ensureAutoStatus === 'function') await ensureAutoStatus();
     await _reloadTodasFormacoes();
-
-    // Live updates
     if (typeof activeUnsubscribe === 'function') activeUnsubscribe();
-    window.activeUnsubscribe = db.collection('trainings').onSnapshot(async () => {
-      await _reloadTodasFormacoes();
-    });
+    window.activeUnsubscribe = db.collection('trainings').onSnapshot(() => _reloadTodasFormacoes());
   };
 
-  async function _reloadTodasFormacoes(){
+  window._reloadTodasFormacoes = async function () {
     try {
-      const [usersMap, attendanceMap, evalMap, trainings] = await Promise.all([
-        getUsersMap(), getAttendanceMap(), getEvaluationsMap(), getAllTrainings()
-      ]);
-      window._todasFormacoesData = { usersMap, attendanceMap, evalMap, trainings };
+      const [uMap, atMap_raw, evMap_raw, trainings] = await Promise.all([getUsersMap(), getAttendanceMap(), getEvaluationsMap(), getAllTrainings()]);
+      window._todasFormacoesData = { uMap, atMap: atMap_raw, evMap: evMap_raw, trainings };
       renderTodasFormacoes();
-    } catch(e) {
-      console.error('Erro loadTodasFormacoes:', e);
+    } catch (e) {
       const c = document.getElementById('todasFormacoesContainer');
-      if (c) c.innerHTML = `<p style="color:red;padding:20px;">Erro ao carregar: ${e.message}</p>`;
+      if (c) c.innerHTML = `<p style="color:red;padding:20px;">Erro: ${e.message}</p>`;
     }
-  }
+  };
 
-  window.renderTodasFormacoes = function(){
+  window.renderTodasFormacoes = function () {
     const container = document.getElementById('todasFormacoesContainer');
     if (!container || !window._todasFormacoesData) return;
-
-    const { usersMap, attendanceMap, evalMap, trainings } = window._todasFormacoesData;
-    const filtroTexto  = (document.getElementById('filtroTexto')?.value  || '').toLowerCase();
-    const filtroEstado = document.getElementById('filtroEstado')?.value  || '';
-    const filtroAno    = document.getElementById('filtroAno')?.value     || '';
-
-    let filtered = trainings.filter(t => {
-      const dt     = trainingDate(t);
-      const status = resolvedStatus(t);
-      if (filtroEstado && status !== filtroEstado) return false;
-      if (filtroAno && dt && dt.getFullYear() !== parseInt(filtroAno)) return false;
-      if (filtroTexto) {
-        const hay = [t.tema, t.formador, t.entidadeFormadora, t.local, t.laboratorioMarca]
-          .join(' ').toLowerCase();
-        if (!hay.includes(filtroTexto)) return false;
-      }
+    const { uMap, atMap, evMap, trainings } = window._todasFormacoesData;
+    const txt = (document.getElementById('filtroTexto')?.value || '').toLowerCase();
+    const est = document.getElementById('filtroEstado')?.value || '';
+    const ano = document.getElementById('filtroAno')?.value || '';
+    let list = trainings.filter(t => {
+      const dt = getTDate(t); const st = getStatusF(t);
+      if (est && st !== est) return false;
+      if (ano && dt && dt.getFullYear() !== parseInt(ano)) return false;
+      if (txt && ![t.tema,t.formador,t.entidadeFormadora,t.local,t.laboratorioMarca].join(' ').toLowerCase().includes(txt)) return false;
       return true;
     });
-
-    filtered.sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0));
-
-    if (!filtered.length) {
-      container.innerHTML = `<div class="empty-state">
-        <div class="empty-state-icon">📚</div>
-        <div class="empty-state-text">Nenhuma formação encontrada.</div>
-      </div>`;
-      return;
-    }
-
-    // Group by YYYY-MM key (sortable)
+    list.sort((a,b) => (getTDate(b)?.getTime()||0) - (getTDate(a)?.getTime()||0));
+    if (!list.length) { container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📚</div><div class="empty-state-text">Nenhuma formação encontrada.</div></div>'; return; }
     const grouped = {};
-    filtered.forEach(t => {
-      const dt  = trainingDate(t);
-      const key = dt
-        ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`
-        : '0000-00';
-      const label = dt
-        ? dt.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
-        : 'Sem data';
-      if (!grouped[key]) grouped[key] = { label, trainings: [] };
-      grouped[key].trainings.push(t);
+    list.forEach(t => {
+      const dt = getTDate(t);
+      const key = dt ? monthKey2(dt) : '0000-00';
+      const label = dt ? monthLabel(dt) : 'Sem data';
+      if (!grouped[key]) grouped[key] = { label, list: [] };
+      grouped[key].list.push(t);
     });
-
-    const currentKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
-
-    const html = Object.entries(grouped)
-      .sort((a,b) => b[0].localeCompare(a[0]))   // sort YYYY-MM desc ✓
-      .map(([key, group]) => {
-        const isCurrentMonth = key === currentKey;
-        const monthId = 'gesmes-' + key;
-        const totalMins = group.trainings.reduce((s,t) => s + normalizeDurationMinutes(t), 0);
-        const hTot = totalMins >= 60
-          ? Math.floor(totalMins/60)+'h'+(totalMins%60 ? String(totalMins%60).padStart(2,'0') : '')
-          : totalMins+'min';
-        const nReal = group.trainings.filter(t => resolvedStatus(t)==='realizada').length;
-        const nAge  = group.trainings.filter(t => resolvedStatus(t)==='agendada').length;
-
-        const cards = group.trainings.map(t => {
-          const ids     = participantIds(t);
-          const status  = resolvedStatus(t);
-          const dt      = trainingDate(t);
-          const mins    = normalizeDurationMinutes(t);
-          const hLabel  = mins >= 60
-            ? Math.floor(mins/60)+'h'+(mins%60 ? String(mins%60).padStart(2,'0') : '')
-            : mins+'min';
-          const nPresente = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status==='present').length;
-          const nAusente  = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status==='absent').length;
-          const nEval     = ids.filter(uid => !!evalMap[`${t.id}_${uid}`]).length;
-
-          return `
-            <div class="training-card ${status==='realizada'?'completed':'pending'}" style="margin-bottom:12px;">
-              <div class="training-header">
-                <div style="flex:1;">
-                  <div class="training-title">${trainingTitle(t)}</div>
-                  <div class="training-meta" style="margin-top:6px;">
-                    <div class="training-meta-item">📅 ${dt ? dt.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}) : '—'}</div>
-                    <div class="training-meta-item">⏱️ ${hLabel}</div>
-                    <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
-                    ${t.entidadeFormadora ? `<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>` : ''}
-                    ${t.local            ? `<div class="training-meta-item">📍 ${t.local}</div>` : ''}
-                    ${t.laboratorioMarca ? `<div class="training-meta-item">🏭 ${t.laboratorioMarca}</div>` : ''}
-                    ${t.creditosOF       ? `<div class="training-meta-item">🏅 ${t.creditosOF} créditos OF</div>` : ''}
-                    <div class="training-meta-item">👥 ${ids.length} inscritos</div>
-                  </div>
-                </div>
-                <div>${statusBadge(status)}</div>
-              </div>
-              <div class="kpi-row">
-                <span class="kpi-pill">✓ Presentes: ${nPresente}</span>
-                <span class="kpi-pill">✗ Faltas: ${nAusente}</span>
-                <span class="kpi-pill">⭐ Avaliações: ${nEval}/${ids.length}</span>
-              </div>
-              ${ids.length ? `<div class="small-text" style="margin-top:8px;">👤 ${ids.map(uid=>usersMap[uid]?.nome||uid).join(', ')}</div>` : ''}
-              <div class="actions-row" style="margin-top:12px;">
-                <button class="btn btn-secondary" onclick="event.stopPropagation();editTraining('${t.id}')">✏️ Editar</button>
-                <button class="btn btn-primary"   onclick="event.stopPropagation();abrirPresencas('${t.id}')">📋 Presenças</button>
-                ${status==='agendada' ? `
-                  <button class="btn btn-success" onclick="event.stopPropagation();marcarRealizada('${t.id}')">✅ Realizada</button>
-                  <button class="btn btn-danger"  onclick="event.stopPropagation();apagarFormacao('${t.id}')">🗑️ Apagar</button>
-                ` : ''}
-                ${status==='realizada' ? `
-                  <button class="btn btn-secondary" onclick="event.stopPropagation();exportarResumoFormacao('${t.id}')">📋 Resumo</button>
-                ` : ''}
-                <button class="btn btn-warning" style="color:white;font-size:12px;padding:8px 12px;"
-                  onclick="event.stopPropagation();anularFormacao('${t.id}')">🚫 Anular</button>
-              </div>
-            </div>`;
-        }).join('');
-
-        return `
-          <div style="margin-bottom:20px;">
-            <div class="training-card" style="cursor:pointer;border-left:4px solid var(--color-info);
-              margin-bottom:0;border-radius:12px 12px ${isCurrentMonth?'0 0':'12px 12px'};"
-              onclick="toggleMesDetail('${monthId}')">
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div>
-                  <h3 style="font-size:17px;font-weight:700;text-transform:capitalize;">${group.label}</h3>
-                  <p style="color:var(--color-text-secondary);font-size:12px;margin-top:3px;">
-                    ${group.trainings.length} formação(ões) &nbsp;·&nbsp; ${hTot} &nbsp;·&nbsp;
-                    ✅ ${nReal} realizadas &nbsp;·&nbsp; 📅 ${nAge} agendadas
-                  </p>
-                </div>
-                <span id="${monthId}-arrow" style="font-size:20px;">${isCurrentMonth?'🔽':'▶️'}</span>
+    const curKey = currentMonthKey();
+    container.innerHTML = Object.entries(grouped).sort((a,b)=>b[0].localeCompare(a[0])).map(([key, grp]) => {
+      const isNow = key === curKey;
+      const mid = 'gm-' + key;
+      const totMin = grp.list.reduce((s,t)=>s+getDurMin(t),0);
+      const nR = grp.list.filter(t=>getStatusF(t)==='realizada').length;
+      const nA = grp.list.filter(t=>getStatusF(t)==='agendada').length;
+      const cards = grp.list.map(t => {
+        const ids = getParts(t); const st = getStatusF(t); const dt = getTDate(t); const mins = getDurMin(t);
+        const nP = ids.filter(u=>atMap[t.id+'_'+u]?.status==='present').length;
+        const nAb = ids.filter(u=>atMap[t.id+'_'+u]?.status==='absent').length;
+        const nEv = ids.filter(u=>!!evMap[t.id+'_'+u]).length;
+        return `<div class="training-card ${st==='realizada'?'completed':'pending'}" style="margin-bottom:12px;">
+          <div class="training-header">
+            <div style="flex:1;">
+              <div class="training-title">${getTitle(t)}</div>
+              <div class="training-meta" style="margin-top:6px;">
+                <div class="training-meta-item">📅 ${dt?dt.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}):'—'}</div>
+                <div class="training-meta-item">⏱️ ${minToH(mins)}</div>
+                <div class="training-meta-item">🎓 ${getTrainer(t)}</div>
+                ${t.entidadeFormadora?`<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>`:''}
+                ${t.local?`<div class="training-meta-item">📍 ${t.local}</div>`:''}
+                ${t.laboratorioMarca?`<div class="training-meta-item">🏭 ${t.laboratorioMarca}</div>`:''}
+                ${t.creditosOF?`<div class="training-meta-item">🏅 ${t.creditosOF} créditos OF</div>`:''}
+                <div class="training-meta-item">👥 ${ids.length} inscritos</div>
               </div>
             </div>
-            <div id="${monthId}"
-              style="display:${isCurrentMonth?'block':'none'};
-                border:1px solid var(--color-border);border-top:none;
-                border-radius:0 0 12px 12px;padding:16px;background:#fff;">
-              ${cards}
-            </div>
-          </div>`;
+            <div>${sbadge(st)}</div>
+          </div>
+          <div class="kpi-row">
+            <span class="kpi-pill">✓ Presentes: ${nP}</span>
+            <span class="kpi-pill">✗ Faltas: ${nAb}</span>
+            <span class="kpi-pill">⭐ Avaliações: ${nEv}/${ids.length}</span>
+          </div>
+          ${ids.length?`<div class="small-text" style="margin-top:8px;">👤 ${ids.map(u=>uMap[u]?.nome||u).join(', ')}</div>`:''}
+          <div class="actions-row" style="margin-top:12px;">
+            <button class="btn btn-secondary" onclick="event.stopPropagation();editTraining('${t.id}')">✏️ Editar</button>
+            <button class="btn btn-primary" onclick="event.stopPropagation();abrirPresencas('${t.id}')">📋 Presenças</button>
+            ${st==='agendada'?`<button class="btn btn-success" onclick="event.stopPropagation();marcarRealizada('${t.id}')">✅ Realizada</button>
+            <button class="btn btn-danger" onclick="event.stopPropagation();apagarFormacao('${t.id}')">🗑️ Apagar</button>`:''}
+            ${st==='realizada'?`<button class="btn btn-secondary" onclick="event.stopPropagation();exportarResumoFormacao('${t.id}')">📋 Resumo</button>`:''}
+            <button class="btn btn-warning" style="color:white;font-size:12px;padding:8px 12px;" onclick="event.stopPropagation();anularFormacao('${t.id}')">🚫 Anular</button>
+          </div>
+        </div>`;
       }).join('');
-
-    container.innerHTML = html;
+      return `<div style="margin-bottom:20px;">
+        <div class="training-card" style="cursor:pointer;border-left:4px solid var(--color-info);margin-bottom:0;border-radius:12px 12px ${isNow?'0 0':'12px 12px'};" onclick="toggleMesDetail('${mid}')">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <h3 style="font-size:17px;font-weight:700;text-transform:capitalize;">${grp.label}</h3>
+              <p style="color:var(--color-text-secondary);font-size:12px;margin-top:3px;">${grp.list.length} formação(ões) · ${minToH(totMin)} · ✅ ${nR} realizadas · 📅 ${nA} agendadas</p>
+            </div>
+            <span id="${mid}-arrow" style="font-size:20px;">${isNow?'🔽':'▶️'}</span>
+          </div>
+        </div>
+        <div id="${mid}" style="display:${isNow?'block':'none'};border:1px solid var(--color-border);border-top:none;border-radius:0 0 12px 12px;padding:16px;background:#fff;">${cards}</div>
+      </div>`;
+    }).join('');
   };
 
-  /* ══════════════════════════════════════════════
-     FIX 2 — loadMinhasFormacoes: sort por data real
-     O bug: monthKey() devolve "abril 2025" e o sort
-     faz localeCompare de strings (ordem alfabética).
-     Fix: agrupar com chave YYYY-MM e label separado.
-  ══════════════════════════════════════════════ */
-  window.loadMinhasFormacoes = async function(){
+  /* ══ loadMinhasFormacoes — VERSÃO FINAL CORRECTA ══ */
+  window.loadMinhasFormacoes = async function () {
     document.getElementById('pageTitle').textContent = 'As Minhas Formações';
     document.getElementById('contentArea').innerHTML = `
       <div class="stats-grid">
-        <div class="stat-card blue">
-          <div class="stat-label">Formações Futuras</div>
-          <div class="stat-value" id="statFuturas">-</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-label">Horas frequentadas</div>
-          <div class="stat-value" id="statHoras">-</div>
-        </div>
-        <div class="stat-card warning">
-          <div class="stat-label">Por avaliar</div>
-          <div class="stat-value" id="statAvaliar">-</div>
-        </div>
+        <div class="stat-card blue"><div class="stat-label">Formações Futuras</div><div class="stat-value" id="statFuturas">-</div></div>
+        <div class="stat-card green"><div class="stat-label">Horas frequentadas</div><div class="stat-value" id="statHoras">-</div></div>
+        <div class="stat-card warning"><div class="stat-label">Por avaliar</div><div class="stat-value" id="statAvaliar">-</div></div>
       </div>
       <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">As minhas formações por mês</h2>
-        </div>
-        <div id="minhasFormacoesContainer">
-          <div class="loading active"><div class="spinner"></div><p>A carregar...</p></div>
-        </div>
+        <div class="card-header"><h2 class="card-title">As minhas formações por mês</h2></div>
+        <div id="minhasFormacoesContainer"><div class="loading active"><div class="spinner"></div><p>A carregar...</p></div></div>
       </div>`;
-
     const render = async () => {
       try {
-        const [trainings, attendanceMap, evalMap] = await Promise.all([
-          getAllTrainings(), getAttendanceMap(), getEvaluationsMap()
-        ]);
-
-        const my = trainings
-          .filter(t => isParticipant(t, currentUser.uid))
-          .sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0));
-
-        // Group with YYYY-MM key
-        const grouped = {};
-        let futuras = 0, avaliar = 0, minutes = 0;
-
+        const [trainings, atMapRaw, evMapRaw] = await Promise.all([getAllTrainings(), getAttendanceMap(), getEvaluationsMap()]);
+        const my = trainings.filter(t=>isParticipant(t,currentUser.uid)).sort((a,b)=>(getTDate(b)?.getTime()||0)-(getTDate(a)?.getTime()||0));
+        const grouped = {}; let futuras=0, avaliar=0, minutes=0;
         my.forEach(t => {
-          const dt     = trainingDate(t) || new Date();
-          const key    = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
-          const label  = dt.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+          const dt = getTDate(t) || new Date();
+          const key = monthKey2(dt); const label = monthLabel(dt);
           if (!grouped[key]) grouped[key] = { label, rows: [] };
-
-          const att    = attendanceMap[`${t.id}_${currentUser.uid}`];
-          const ev     = evalMap[`${t.id}_${currentUser.uid}`];
-          const status = resolvedStatus(t);
-
-          if (status === 'agendada') futuras++;
-          if (att?.status === 'present') minutes += normalizeDurationMinutes(t);
-          if (status === 'realizada' && att?.status === 'present' && !ev) avaliar++;
-
-          grouped[key].rows.push({ t, dt, att, ev, status });
+          const att = atMapRaw[t.id+'_'+currentUser.uid];
+          const ev = evMapRaw[t.id+'_'+currentUser.uid];
+          const st = getStatusF(t);
+          if (st==='agendada') futuras++;
+          if (att?.status==='present') minutes += getDurMin(t);
+          if (st==='realizada' && att?.status==='present' && !ev) avaliar++;
+          grouped[key].rows.push({ t, dt, att, ev, st });
         });
-
         document.getElementById('statFuturas').textContent = futuras;
-        document.getElementById('statHoras').textContent   = hoursLabelFromMinutes(minutes);
+        document.getElementById('statHoras').textContent = hoursLabelFromMinutes ? hoursLabelFromMinutes(minutes) : minToH(minutes);
         document.getElementById('statAvaliar').textContent = avaliar;
-
-        const currentKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
-
-        const html = Object.entries(grouped)
-          .sort((a,b) => b[0].localeCompare(a[0]))   // YYYY-MM desc ✓
-          .map(([key, group]) => {
-            const isCurrentMonth = key === currentKey;
-            const monthId = 'colabmes-' + key;
-
-            const cards = group.rows.map(({ t, dt, att, ev, status }) => {
-              const canEvaluate = status === 'realizada' && att?.status !== 'absent';
-              const mins = normalizeDurationMinutes(t);
-              return `
-                <div class="training-card ${status==='realizada'?'completed':'pending'}"
-                  style="cursor:pointer;margin-bottom:10px;"
-                  onclick="abrirDetalheFormacao('${t.id}')">
-                  <div class="training-header">
-                    <div style="flex:1;">
-                      <div class="training-title" style="font-size:15px;">${trainingTitle(t)}</div>
-                      <div class="training-meta" style="margin-top:6px;">
-                        <div class="training-meta-item">📅 ${dt ? dt.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : '—'}</div>
-                        <div class="training-meta-item">⏱️ ${hoursLabelFromMinutes(mins)}</div>
-                        <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
-                        ${t.entidadeFormadora ? `<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>` : ''}
-                        ${t.local            ? `<div class="training-meta-item">📍 ${t.local}</div>`             : ''}
-                        ${t.laboratorioMarca ? `<div class="training-meta-item">🏭 ${t.laboratorioMarca}</div>`  : ''}
-                      </div>
-                    </div>
-                    <div>${statusBadge(status)}</div>
-                  </div>
-                  <div class="kpi-row">
-                    <span class="kpi-pill">
-                      Presença: ${att?.status==='present' ? '✓ Confirmada'
-                               : att?.status==='absent'  ? '✗ Não compareceu'
-                               : '⏳ Pendente'}
-                    </span>
-                    <span class="kpi-pill">
-                      Avaliação: ${ev ? '✓ Submetida' : (canEvaluate ? '⚠️ Por fazer' : '—')}
-                    </span>
-                    ${t.creditosOF && att?.status==='present' && currentUserData?.funcao==='Farmacêutico'
-                      ? `<span class="kpi-pill">🏅 ${t.creditosOF} créditos OF</span>` : ''}
-                  </div>
-                  ${canEvaluate && !ev ? `
-                    <div style="margin-top:10px;">
-                      <button class="btn btn-primary" style="font-size:12px;"
-                        onclick="event.stopPropagation();openEvaluationForTraining('${t.id}')">
-                        ⭐ Avaliar Formação
-                      </button>
-                    </div>` : ''}
-                </div>`;
-            }).join('');
-
-            return `
-              <div style="margin-bottom:20px;">
-                <div class="training-card"
-                  style="cursor:pointer;border-left:4px solid var(--color-info);
-                    margin-bottom:0;border-radius:12px 12px ${isCurrentMonth?'0 0':'12px 12px'};"
-                  onclick="toggleMesDetail('${monthId}')">
-                  <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div>
-                      <h3 style="font-size:16px;font-weight:700;text-transform:capitalize;">${group.label}</h3>
-                      <p style="color:var(--color-text-secondary);font-size:12px;margin-top:2px;">
-                        ${group.rows.length} formação(ões)
-                        · ${group.rows.filter(r=>r.status==='realizada').length} realizadas
-                        · ${group.rows.filter(r=>r.status==='agendada').length} agendadas
-                      </p>
-                    </div>
-                    <span id="${monthId}-arrow" style="font-size:20px;">${isCurrentMonth?'🔽':'▶️'}</span>
+        const curKey = currentMonthKey();
+        const html = Object.entries(grouped).sort((a,b)=>b[0].localeCompare(a[0])).map(([key, grp]) => {
+          const isNow = key === curKey; const mid = 'cm-' + key;
+          const cards = grp.rows.map(({ t, dt, att, ev, st }) => {
+            const canEval = st==='realizada' && att?.status!=='absent'; const mins = getDurMin(t);
+            return `<div class="training-card ${st==='realizada'?'completed':'pending'}" style="cursor:pointer;margin-bottom:10px;" onclick="abrirDetalheFormacao('${t.id}')">
+              <div class="training-header">
+                <div style="flex:1;">
+                  <div class="training-title" style="font-size:15px;">${getTitle(t)}</div>
+                  <div class="training-meta" style="margin-top:6px;">
+                    <div class="training-meta-item">📅 ${dt?dt.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'—'}</div>
+                    <div class="training-meta-item">⏱️ ${minToH(mins)}</div>
+                    <div class="training-meta-item">🎓 ${getTrainer(t)}</div>
+                    ${t.entidadeFormadora?`<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>`:''}
+                    ${t.local?`<div class="training-meta-item">📍 ${t.local}</div>`:''}
+                    ${t.laboratorioMarca?`<div class="training-meta-item">🏭 ${t.laboratorioMarca}</div>`:''}
                   </div>
                 </div>
-                <div id="${monthId}"
-                  style="display:${isCurrentMonth?'block':'none'};
-                    border:1px solid var(--color-border);border-top:none;
-                    border-radius:0 0 12px 12px;padding:16px;background:#fff;"
-                  onclick="event.stopPropagation()">
-                  ${cards}
-                </div>
-              </div>`;
+                <div>${sbadge(st)}</div>
+              </div>
+              <div class="kpi-row">
+                <span class="kpi-pill">Presença: ${att?.status==='present'?'✓ Confirmada':att?.status==='absent'?'✗ Não compareceu':'⏳ Pendente'}</span>
+                <span class="kpi-pill">Avaliação: ${ev?'✓ Submetida':canEval?'⚠️ Por fazer':'—'}</span>
+                ${t.creditosOF&&att?.status==='present'&&currentUserData?.funcao==='Farmacêutico'?`<span class="kpi-pill">🏅 ${t.creditosOF} créditos OF</span>`:''}
+              </div>
+              ${canEval&&!ev?`<div style="margin-top:10px;"><button class="btn btn-primary" style="font-size:12px;" onclick="event.stopPropagation();openEvaluationForTraining('${t.id}')">⭐ Avaliar Formação</button></div>`:''}
+            </div>`;
           }).join('');
-
-        document.getElementById('minhasFormacoesContainer').innerHTML =
-          html || `<div class="empty-state">
-            <div class="empty-state-icon">📚</div>
-            <div class="empty-state-text">Ainda não tens formações atribuídas.</div>
+          return `<div style="margin-bottom:20px;">
+            <div class="training-card" style="cursor:pointer;border-left:4px solid var(--color-info);margin-bottom:0;border-radius:12px 12px ${isNow?'0 0':'12px 12px'};" onclick="toggleMesDetail('${mid}')">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <h3 style="font-size:16px;font-weight:700;text-transform:capitalize;">${grp.label}</h3>
+                  <p style="color:var(--color-text-secondary);font-size:12px;margin-top:2px;">${grp.rows.length} formação(ões) · ✅ ${grp.rows.filter(r=>r.st==='realizada').length} realizadas · 📅 ${grp.rows.filter(r=>r.st==='agendada').length} agendadas</p>
+                </div>
+                <span id="${mid}-arrow" style="font-size:20px;">${isNow?'🔽':'▶️'}</span>
+              </div>
+            </div>
+            <div id="${mid}" style="display:${isNow?'block':'none'};border:1px solid var(--color-border);border-top:none;border-radius:0 0 12px 12px;padding:16px;background:#fff;" onclick="event.stopPropagation()">${cards}</div>
           </div>`;
-
+        }).join('');
+        document.getElementById('minhasFormacoesContainer').innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">📚</div><div class="empty-state-text">Ainda não tens formações atribuídas.</div></div>';
       } catch(e) {
-        console.error('Erro loadMinhasFormacoes:', e);
         const c = document.getElementById('minhasFormacoesContainer');
         if (c) c.innerHTML = `<p style="color:red;padding:20px;">Erro: ${e.message}</p>`;
       }
     };
-
     await render();
     if (typeof activeUnsubscribe === 'function') activeUnsubscribe();
     window.activeUnsubscribe = db.collection('trainings').onSnapshot(render);
   };
 
+  /* ══ Adicionar "Mapa" ao menu ══ */
+  const _origBuildMenu = window.buildMenu;
+  window.buildMenu = function () {
+    if (_origBuildMenu) _origBuildMenu();
+    if (currentUserData?.role === 'gestorformacao') {
+      const menu = document.getElementById('sidebarMenu');
+      if (menu && !menu.querySelector('[data-page="mapaFormacoes"]')) {
+        const item = document.createElement('div');
+        item.className = 'menu-item'; item.setAttribute('data-page', 'mapaFormacoes');
+        item.innerHTML = '<span>🗓️</span><span>Mapa de Formações</span>';
+        item.onclick = () => { document.querySelectorAll('.menu-item').forEach(m=>m.classList.remove('active')); item.classList.add('active'); abrirMapaFormacoes(); };
+        const ref = menu.querySelector('[data-page="formacoesMes"]');
+        if (ref) ref.insertAdjacentElement('afterend', item); else menu.appendChild(item);
+      }
+    }
+  };
+
+  /* ══ Override loadRelatorios para adicionar botões extra ══ */
+  const _origRel = window.loadRelatorios;
+  window.loadRelatorios = function () {
+    if (_origRel) _origRel();
+    setTimeout(() => {
+      const area = document.querySelector('#contentArea .card');
+      if (!area || area.querySelector('.extra-exports')) return;
+      const div = document.createElement('div');
+      div.className = 'extra-exports';
+      div.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border);';
+      div.innerHTML = `
+        <p style="width:100%;font-size:13px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Exportações avançadas</p>
+        <button class="btn btn-success" onclick="exportarPorColaborador()">👤 Por Colaborador</button>
+        <button class="btn btn-secondary" onclick="exportarPorMes()">📅 Por Mês</button>
+        <button class="btn btn-secondary" onclick="exportarPorFormacao()">📚 Por Formação</button>
+        <button class="btn btn-secondary" onclick="exportarPorLaboratorio()">🏭 Por Laboratório</button>
+        <button class="btn btn-warning" style="color:white;" onclick="abrirMapaFormacoes()">🗓️ Mapa de Formações</button>`;
+      area.appendChild(div);
+    }, 400);
+  };
+
 })();
 </script>
+
 </body>
 </html>
