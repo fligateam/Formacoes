@@ -4903,15 +4903,17 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
   };
 
 })();
-</script>
-<!-- PATCH: loadTodasFormacoes com agrupamento por meses -->
+<!-- PATCH: Fix loadTodasFormacoes race + fix loadMinhasFormacoes sort por data -->
 <script>
 (function(){
 
+  /* ══════════════════════════════════════════════
+     FIX 1 — loadTodasFormacoes completo e robusto
+  ══════════════════════════════════════════════ */
   window.loadTodasFormacoes = async function(){
     document.getElementById('pageTitle').textContent = 'Gestão de Formações';
     document.getElementById('contentArea').innerHTML = `
-      <div class="card" style="margin-bottom:24px;">
+      <div class="card">
         <div class="card-header">
           <h2 class="card-title">Todas as Formações</h2>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -4919,10 +4921,11 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
             <button class="btn btn-secondary" onclick="abrirMapaFormacoes()">🗓️ Mapa</button>
           </div>
         </div>
-        <!-- Filtros -->
-        <div class="filters-bar" style="margin-top:0;margin-bottom:16px;">
+        <div class="filters-bar" style="margin-bottom:16px;">
           <div class="filter-item">
-            <input type="text" id="filtroTexto" class="form-control" placeholder="🔍 Pesquisar tema, formador, entidade..." oninput="renderTodasFormacoes()">
+            <input type="text" id="filtroTexto" class="form-control"
+              placeholder="🔍 Tema, formador, entidade, laboratório..."
+              oninput="renderTodasFormacoes()">
           </div>
           <div class="filter-item">
             <select id="filtroEstado" class="form-control" onchange="renderTodasFormacoes()">
@@ -4933,92 +4936,112 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
               <option value="adiada">Adiada</option>
             </select>
           </div>
-          <div class="filter-item">
-            <input type="number" id="filtroAno" class="form-control" placeholder="Ano (ex: 2025)" oninput="renderTodasFormacoes()" value="${new Date().getFullYear()}">
+          <div class="filter-item" style="max-width:140px;">
+            <input type="number" id="filtroAno" class="form-control"
+              placeholder="Ano" oninput="renderTodasFormacoes()"
+              value="${new Date().getFullYear()}">
           </div>
         </div>
-        <div id="todasFormacoesContainer"></div>
+        <div id="todasFormacoesContainer">
+          <div class="loading active"><div class="spinner"></div><p>A carregar...</p></div>
+        </div>
       </div>`;
 
     if (typeof ensureAutoStatus === 'function') await ensureAutoStatus();
+    await _reloadTodasFormacoes();
 
-    // Load data once, re-render on filter
-    window._todasFormacoesData = null;
+    // Live updates
+    if (typeof activeUnsubscribe === 'function') activeUnsubscribe();
+    window.activeUnsubscribe = db.collection('trainings').onSnapshot(async () => {
+      await _reloadTodasFormacoes();
+    });
+  };
 
-    const loadData = async () => {
+  async function _reloadTodasFormacoes(){
+    try {
       const [usersMap, attendanceMap, evalMap, trainings] = await Promise.all([
         getUsersMap(), getAttendanceMap(), getEvaluationsMap(), getAllTrainings()
       ]);
       window._todasFormacoesData = { usersMap, attendanceMap, evalMap, trainings };
       renderTodasFormacoes();
-    };
-
-    await loadData();
-    if (typeof activeUnsubscribe === 'function') activeUnsubscribe();
-    window.activeUnsubscribe = db.collection('trainings').onSnapshot(async () => {
-      window._todasFormacoesData = null;
-      await loadData();
-    });
-  };
+    } catch(e) {
+      console.error('Erro loadTodasFormacoes:', e);
+      const c = document.getElementById('todasFormacoesContainer');
+      if (c) c.innerHTML = `<p style="color:red;padding:20px;">Erro ao carregar: ${e.message}</p>`;
+    }
+  }
 
   window.renderTodasFormacoes = function(){
     const container = document.getElementById('todasFormacoesContainer');
     if (!container || !window._todasFormacoesData) return;
 
     const { usersMap, attendanceMap, evalMap, trainings } = window._todasFormacoesData;
+    const filtroTexto  = (document.getElementById('filtroTexto')?.value  || '').toLowerCase();
+    const filtroEstado = document.getElementById('filtroEstado')?.value  || '';
+    const filtroAno    = document.getElementById('filtroAno')?.value     || '';
 
-    const filtroTexto = (document.getElementById('filtroTexto')?.value || '').toLowerCase().trim();
-    const filtroEstado = document.getElementById('filtroEstado')?.value || '';
-    const filtroAno = document.getElementById('filtroAno')?.value || '';
-
-    // Filter
     let filtered = trainings.filter(t => {
-      const dt = trainingDate(t);
+      const dt     = trainingDate(t);
       const status = resolvedStatus(t);
       if (filtroEstado && status !== filtroEstado) return false;
       if (filtroAno && dt && dt.getFullYear() !== parseInt(filtroAno)) return false;
       if (filtroTexto) {
-        const haystack = [t.tema, t.formador, t.entidadeFormadora, t.local, t.laboratorioMarca].join(' ').toLowerCase();
-        if (!haystack.includes(filtroTexto)) return false;
+        const hay = [t.tema, t.formador, t.entidadeFormadora, t.local, t.laboratorioMarca]
+          .join(' ').toLowerCase();
+        if (!hay.includes(filtroTexto)) return false;
       }
       return true;
     });
 
-    // Sort descending by date
     filtered.sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0));
 
     if (!filtered.length) {
-      container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📚</div><div class="empty-state-text">Nenhuma formação encontrada.</div></div>`;
+      container.innerHTML = `<div class="empty-state">
+        <div class="empty-state-icon">📚</div>
+        <div class="empty-state-text">Nenhuma formação encontrada.</div>
+      </div>`;
       return;
     }
 
-    // Group by month
+    // Group by YYYY-MM key (sortable)
     const grouped = {};
     filtered.forEach(t => {
-      const dt = trainingDate(t);
-      const key = dt ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}` : '0000-00';
-      const label = dt ? dt.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' }) : 'Sem data';
+      const dt  = trainingDate(t);
+      const key = dt
+        ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`
+        : '0000-00';
+      const label = dt
+        ? dt.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
+        : 'Sem data';
       if (!grouped[key]) grouped[key] = { label, trainings: [] };
       grouped[key].trainings.push(t);
     });
 
-    const currentMonthKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+    const currentKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
 
     const html = Object.entries(grouped)
-      .sort((a,b) => b[0].localeCompare(a[0]))
+      .sort((a,b) => b[0].localeCompare(a[0]))   // sort YYYY-MM desc ✓
       .map(([key, group]) => {
-        const isCurrentMonth = key === currentMonthKey;
+        const isCurrentMonth = key === currentKey;
         const monthId = 'gesmes-' + key;
+        const totalMins = group.trainings.reduce((s,t) => s + normalizeDurationMinutes(t), 0);
+        const hTot = totalMins >= 60
+          ? Math.floor(totalMins/60)+'h'+(totalMins%60 ? String(totalMins%60).padStart(2,'0') : '')
+          : totalMins+'min';
+        const nReal = group.trainings.filter(t => resolvedStatus(t)==='realizada').length;
+        const nAge  = group.trainings.filter(t => resolvedStatus(t)==='agendada').length;
 
         const cards = group.trainings.map(t => {
-          const ids = participantIds(t);
-          const status = resolvedStatus(t);
-          const presentCount = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'present').length;
-          const absentCount  = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'absent').length;
-          const evalCount    = ids.filter(uid => !!evalMap[`${t.id}_${uid}`]).length;
-          const dt = trainingDate(t);
-          const mins = normalizeDurationMinutes(t);
-          const hLabel = mins >= 60 ? Math.floor(mins/60)+'h'+(mins%60 ? String(mins%60).padStart(2,'0') : '') : mins+'min';
+          const ids     = participantIds(t);
+          const status  = resolvedStatus(t);
+          const dt      = trainingDate(t);
+          const mins    = normalizeDurationMinutes(t);
+          const hLabel  = mins >= 60
+            ? Math.floor(mins/60)+'h'+(mins%60 ? String(mins%60).padStart(2,'0') : '')
+            : mins+'min';
+          const nPresente = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status==='present').length;
+          const nAusente  = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status==='absent').length;
+          const nEval     = ids.filter(uid => !!evalMap[`${t.id}_${uid}`]).length;
 
           return `
             <div class="training-card ${status==='realizada'?'completed':'pending'}" style="margin-bottom:12px;">
@@ -5026,65 +5049,230 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                 <div style="flex:1;">
                   <div class="training-title">${trainingTitle(t)}</div>
                   <div class="training-meta" style="margin-top:6px;">
-                    <div class="training-meta-item">📅 ${dt ? dt.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'}) + ' ' + dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}) : '—'}</div>
+                    <div class="training-meta-item">📅 ${dt ? dt.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short',year:'numeric'})+' '+dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}) : '—'}</div>
                     <div class="training-meta-item">⏱️ ${hLabel}</div>
                     <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
                     ${t.entidadeFormadora ? `<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>` : ''}
-                    ${t.local ? `<div class="training-meta-item">📍 ${t.local}</div>` : ''}
+                    ${t.local            ? `<div class="training-meta-item">📍 ${t.local}</div>` : ''}
                     ${t.laboratorioMarca ? `<div class="training-meta-item">🏭 ${t.laboratorioMarca}</div>` : ''}
-                    ${t.creditosOF ? `<div class="training-meta-item">🏅 ${t.creditosOF} créditos OF</div>` : ''}
+                    ${t.creditosOF       ? `<div class="training-meta-item">🏅 ${t.creditosOF} créditos OF</div>` : ''}
                     <div class="training-meta-item">👥 ${ids.length} inscritos</div>
                   </div>
                 </div>
                 <div>${statusBadge(status)}</div>
               </div>
               <div class="kpi-row">
-                <span class="kpi-pill">✓ Presentes: ${presentCount}</span>
-                <span class="kpi-pill">✗ Faltas: ${absentCount}</span>
-                <span class="kpi-pill">⭐ Avaliações: ${evalCount}/${ids.length}</span>
+                <span class="kpi-pill">✓ Presentes: ${nPresente}</span>
+                <span class="kpi-pill">✗ Faltas: ${nAusente}</span>
+                <span class="kpi-pill">⭐ Avaliações: ${nEval}/${ids.length}</span>
               </div>
-              ${ids.length ? `<div class="small-text" style="margin-top:8px;">👤 ${ids.map(uid => usersMap[uid]?.nome || uid).join(', ')}</div>` : ''}
+              ${ids.length ? `<div class="small-text" style="margin-top:8px;">👤 ${ids.map(uid=>usersMap[uid]?.nome||uid).join(', ')}</div>` : ''}
               <div class="actions-row" style="margin-top:12px;">
                 <button class="btn btn-secondary" onclick="event.stopPropagation();editTraining('${t.id}')">✏️ Editar</button>
-                <button class="btn btn-primary" onclick="event.stopPropagation();abrirPresencas('${t.id}')" title="Gerir presenças">📋 Presenças</button>
-                ${status === 'agendada' ? `
-                  <button class="btn btn-success" onclick="event.stopPropagation();marcarRealizada('${t.id}')">✅ Marcar Realizada</button>
-                  <button class="btn btn-danger" onclick="event.stopPropagation();apagarFormacao('${t.id}')" title="Apagar formação">🗑️ Apagar</button>
+                <button class="btn btn-primary"   onclick="event.stopPropagation();abrirPresencas('${t.id}')">📋 Presenças</button>
+                ${status==='agendada' ? `
+                  <button class="btn btn-success" onclick="event.stopPropagation();marcarRealizada('${t.id}')">✅ Realizada</button>
+                  <button class="btn btn-danger"  onclick="event.stopPropagation();apagarFormacao('${t.id}')">🗑️ Apagar</button>
                 ` : ''}
-                ${status === 'realizada' ? `
+                ${status==='realizada' ? `
                   <button class="btn btn-secondary" onclick="event.stopPropagation();exportarResumoFormacao('${t.id}')">📋 Resumo</button>
                 ` : ''}
-                <button class="btn btn-warning" style="color:white;font-size:12px;padding:8px 12px;" onclick="event.stopPropagation();anularFormacao('${t.id}')" title="Anular">🚫 Anular</button>
+                <button class="btn btn-warning" style="color:white;font-size:12px;padding:8px 12px;"
+                  onclick="event.stopPropagation();anularFormacao('${t.id}')">🚫 Anular</button>
               </div>
             </div>`;
         }).join('');
 
-        const totalMins = group.trainings.reduce((s,t) => s + normalizeDurationMinutes(t), 0);
-        const totalH = totalMins >= 60 ? Math.floor(totalMins/60)+'h'+(totalMins%60 ? String(totalMins%60).padStart(2,'0') : '') : totalMins+'min';
-
         return `
-          <div class="month-group" style="margin-bottom:24px;">
-            <div class="training-card" style="cursor:pointer;border-left:4px solid var(--color-info);margin-bottom:0;border-radius:12px 12px ${isCurrentMonth?'0 0':'12px 12px'};"
-                 onclick="toggleMesDetail('${monthId}')">
+          <div style="margin-bottom:20px;">
+            <div class="training-card" style="cursor:pointer;border-left:4px solid var(--color-info);
+              margin-bottom:0;border-radius:12px 12px ${isCurrentMonth?'0 0':'12px 12px'};"
+              onclick="toggleMesDetail('${monthId}')">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div>
                   <h3 style="font-size:17px;font-weight:700;text-transform:capitalize;">${group.label}</h3>
                   <p style="color:var(--color-text-secondary);font-size:12px;margin-top:3px;">
-                    ${group.trainings.length} formação(ões) · ${totalH} total
-                    · ${group.trainings.filter(t=>resolvedStatus(t)==='realizada').length} realizadas
-                    · ${group.trainings.filter(t=>resolvedStatus(t)==='agendada').length} agendadas
+                    ${group.trainings.length} formação(ões) &nbsp;·&nbsp; ${hTot} &nbsp;·&nbsp;
+                    ✅ ${nReal} realizadas &nbsp;·&nbsp; 📅 ${nAge} agendadas
                   </p>
                 </div>
-                <span id="${monthId}-arrow" style="font-size:20px;transition:transform 0.2s;">${isCurrentMonth?'🔽':'▶️'}</span>
+                <span id="${monthId}-arrow" style="font-size:20px;">${isCurrentMonth?'🔽':'▶️'}</span>
               </div>
             </div>
-            <div id="${monthId}" style="display:${isCurrentMonth?'block':'none'};border:1px solid var(--color-border);border-top:none;border-radius:0 0 12px 12px;padding:16px;background:#fff;">
+            <div id="${monthId}"
+              style="display:${isCurrentMonth?'block':'none'};
+                border:1px solid var(--color-border);border-top:none;
+                border-radius:0 0 12px 12px;padding:16px;background:#fff;">
               ${cards}
             </div>
           </div>`;
       }).join('');
 
     container.innerHTML = html;
+  };
+
+  /* ══════════════════════════════════════════════
+     FIX 2 — loadMinhasFormacoes: sort por data real
+     O bug: monthKey() devolve "abril 2025" e o sort
+     faz localeCompare de strings (ordem alfabética).
+     Fix: agrupar com chave YYYY-MM e label separado.
+  ══════════════════════════════════════════════ */
+  window.loadMinhasFormacoes = async function(){
+    document.getElementById('pageTitle').textContent = 'As Minhas Formações';
+    document.getElementById('contentArea').innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-label">Formações Futuras</div>
+          <div class="stat-value" id="statFuturas">-</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Horas frequentadas</div>
+          <div class="stat-value" id="statHoras">-</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-label">Por avaliar</div>
+          <div class="stat-value" id="statAvaliar">-</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">As minhas formações por mês</h2>
+        </div>
+        <div id="minhasFormacoesContainer">
+          <div class="loading active"><div class="spinner"></div><p>A carregar...</p></div>
+        </div>
+      </div>`;
+
+    const render = async () => {
+      try {
+        const [trainings, attendanceMap, evalMap] = await Promise.all([
+          getAllTrainings(), getAttendanceMap(), getEvaluationsMap()
+        ]);
+
+        const my = trainings
+          .filter(t => isParticipant(t, currentUser.uid))
+          .sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0));
+
+        // Group with YYYY-MM key
+        const grouped = {};
+        let futuras = 0, avaliar = 0, minutes = 0;
+
+        my.forEach(t => {
+          const dt     = trainingDate(t) || new Date();
+          const key    = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
+          const label  = dt.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+          if (!grouped[key]) grouped[key] = { label, rows: [] };
+
+          const att    = attendanceMap[`${t.id}_${currentUser.uid}`];
+          const ev     = evalMap[`${t.id}_${currentUser.uid}`];
+          const status = resolvedStatus(t);
+
+          if (status === 'agendada') futuras++;
+          if (att?.status === 'present') minutes += normalizeDurationMinutes(t);
+          if (status === 'realizada' && att?.status === 'present' && !ev) avaliar++;
+
+          grouped[key].rows.push({ t, dt, att, ev, status });
+        });
+
+        document.getElementById('statFuturas').textContent = futuras;
+        document.getElementById('statHoras').textContent   = hoursLabelFromMinutes(minutes);
+        document.getElementById('statAvaliar').textContent = avaliar;
+
+        const currentKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+
+        const html = Object.entries(grouped)
+          .sort((a,b) => b[0].localeCompare(a[0]))   // YYYY-MM desc ✓
+          .map(([key, group]) => {
+            const isCurrentMonth = key === currentKey;
+            const monthId = 'colabmes-' + key;
+
+            const cards = group.rows.map(({ t, dt, att, ev, status }) => {
+              const canEvaluate = status === 'realizada' && att?.status !== 'absent';
+              const mins = normalizeDurationMinutes(t);
+              return `
+                <div class="training-card ${status==='realizada'?'completed':'pending'}"
+                  style="cursor:pointer;margin-bottom:10px;"
+                  onclick="abrirDetalheFormacao('${t.id}')">
+                  <div class="training-header">
+                    <div style="flex:1;">
+                      <div class="training-title" style="font-size:15px;">${trainingTitle(t)}</div>
+                      <div class="training-meta" style="margin-top:6px;">
+                        <div class="training-meta-item">📅 ${dt ? dt.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : '—'}</div>
+                        <div class="training-meta-item">⏱️ ${hoursLabelFromMinutes(mins)}</div>
+                        <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
+                        ${t.entidadeFormadora ? `<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>` : ''}
+                        ${t.local            ? `<div class="training-meta-item">📍 ${t.local}</div>`             : ''}
+                        ${t.laboratorioMarca ? `<div class="training-meta-item">🏭 ${t.laboratorioMarca}</div>`  : ''}
+                      </div>
+                    </div>
+                    <div>${statusBadge(status)}</div>
+                  </div>
+                  <div class="kpi-row">
+                    <span class="kpi-pill">
+                      Presença: ${att?.status==='present' ? '✓ Confirmada'
+                               : att?.status==='absent'  ? '✗ Não compareceu'
+                               : '⏳ Pendente'}
+                    </span>
+                    <span class="kpi-pill">
+                      Avaliação: ${ev ? '✓ Submetida' : (canEvaluate ? '⚠️ Por fazer' : '—')}
+                    </span>
+                    ${t.creditosOF && att?.status==='present' && currentUserData?.funcao==='Farmacêutico'
+                      ? `<span class="kpi-pill">🏅 ${t.creditosOF} créditos OF</span>` : ''}
+                  </div>
+                  ${canEvaluate && !ev ? `
+                    <div style="margin-top:10px;">
+                      <button class="btn btn-primary" style="font-size:12px;"
+                        onclick="event.stopPropagation();openEvaluationForTraining('${t.id}')">
+                        ⭐ Avaliar Formação
+                      </button>
+                    </div>` : ''}
+                </div>`;
+            }).join('');
+
+            return `
+              <div style="margin-bottom:20px;">
+                <div class="training-card"
+                  style="cursor:pointer;border-left:4px solid var(--color-info);
+                    margin-bottom:0;border-radius:12px 12px ${isCurrentMonth?'0 0':'12px 12px'};"
+                  onclick="toggleMesDetail('${monthId}')">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                      <h3 style="font-size:16px;font-weight:700;text-transform:capitalize;">${group.label}</h3>
+                      <p style="color:var(--color-text-secondary);font-size:12px;margin-top:2px;">
+                        ${group.rows.length} formação(ões)
+                        · ${group.rows.filter(r=>r.status==='realizada').length} realizadas
+                        · ${group.rows.filter(r=>r.status==='agendada').length} agendadas
+                      </p>
+                    </div>
+                    <span id="${monthId}-arrow" style="font-size:20px;">${isCurrentMonth?'🔽':'▶️'}</span>
+                  </div>
+                </div>
+                <div id="${monthId}"
+                  style="display:${isCurrentMonth?'block':'none'};
+                    border:1px solid var(--color-border);border-top:none;
+                    border-radius:0 0 12px 12px;padding:16px;background:#fff;"
+                  onclick="event.stopPropagation()">
+                  ${cards}
+                </div>
+              </div>`;
+          }).join('');
+
+        document.getElementById('minhasFormacoesContainer').innerHTML =
+          html || `<div class="empty-state">
+            <div class="empty-state-icon">📚</div>
+            <div class="empty-state-text">Ainda não tens formações atribuídas.</div>
+          </div>`;
+
+      } catch(e) {
+        console.error('Erro loadMinhasFormacoes:', e);
+        const c = document.getElementById('minhasFormacoesContainer');
+        if (c) c.innerHTML = `<p style="color:red;padding:20px;">Erro: ${e.message}</p>`;
+      }
+    };
+
+    await render();
+    if (typeof activeUnsubscribe === 'function') activeUnsubscribe();
+    window.activeUnsubscribe = db.collection('trainings').onSnapshot(render);
   };
 
 })();
