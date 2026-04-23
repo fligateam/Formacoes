@@ -1110,8 +1110,7 @@ async function exportAvaliacoesDetalhadoExcel(){
         const t=trainMap[ev.trainingId];const dt=t?trainingDate(t):null;
         if(!rangeFilter(dt,start,end))return;
         const u=usersMap[ev.userId]||{};
-        rows.push([u.nome||ev.userId,u.codigoOperador||'',u.funcao||'',t?trainingTitle(t):ev.trainingId,dt?dateShort(dt):'',t?(t.entidadeFormadora||t.laboratorioMarca||'):'',ev.avaliacaoGlobal||'',ev.duracaoAcao||'',ev.capacidadePedagogicaFormador||'',ev.dominioTemaFormador||'',ev.relevanciaTarefasDesempenha||'',(ev.temasAfastamPraticaInstituida||ev.afastaDaPratica)?'Sim':'Não',ev.justificacaoAfastamentoPratica||ev.detalheAfastamento||'',ev.observacoesPropostasImplementacao||ev.observacoesPropostas||'']);
-    });
+     rows.push([u.nome||ev.userId,u.codigoOperador||'',u.funcao||'',t?trainingTitle(t):ev.trainingId,dt?dateShort(dt):'',t?(t.entidadeFormadora||t.laboratorioMarca||''):'',ev.avaliacaoGlobal||'',ev.duracaoAcao||'',ev.capacidadePedagogicaFormador||'',ev.dominioTemaFormador||'',ev.relevanciaTarefasDesempenha||'',(ev.temasAfastamPraticaInstituida||ev.afastaDaPratica)?'Sim':'Não',ev.justificacaoAfastamentoPratica||ev.detalheAfastamento||'',ev.observacoesPropostasImplementacao||ev.observacoesPropostas||'']);
     const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[22,12,16,28,12,18,10,10,12,10,12,12,28,32].map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb,ws,'Avaliações Detalhadas');
     xlDl(wb,`avaliacoes_${new Date().toISOString().slice(0,10)}.xlsx`);
