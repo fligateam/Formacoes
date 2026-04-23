@@ -1097,10 +1097,6 @@ async function exportResumoFormacoeExcel(){
     XLSX.utils.book_append_sheet(wb,ws2,'Avaliações por Formação');
     xlDl(wb,`resumo_formacoes_${new Date().toISOString().slice(0,10)}.xlsx`);
     showToast('Resumo exportado!','success');
-XLSX.utils.book_append_sheet(wb,ws1,'Resumo Formações');
-    XLSX.utils.book_append_sheet(wb,ws2,'Avaliações por Formação');
-    xlDl(wb,`resumo_formacoes_${new Date().toISOString().slice(0,10)}.xlsx`);
-    showToast('Resumo exportado!','success');
 }
 
 async function exportAvaliacoesDetalhadoExcel(){
