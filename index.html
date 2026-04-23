@@ -4590,6 +4590,319 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
   };
 
 })();
+<script>
+(function(){
+  // Override loadCriarFormacao to inject missing fields
+  const _orig = window.loadCriarFormacao;
+
+  window.loadCriarFormacao = async function(editId = null) {
+    // Run original first
+    if (_orig) await _orig(editId);
+
+    // Now inject the missing fields into the rendered form
+    // We wait for DOM to be ready
+    setTimeout(() => {
+      const form = document.getElementById('formacaoFormPro');
+      if (!form) return;
+
+      // Avoid double-injection
+      if (document.getElementById('localPro')) return;
+
+      // Get existing record data from Firebase if editing
+      (async () => {
+        let record = null;
+        if (editId) {
+          const doc = await db.collection('trainings').doc(editId).get();
+          if (doc.exists) record = { id: doc.id, ...doc.data() };
+        }
+
+        // Find the "Entidade Formadora" group and inject AFTER it
+        const allGroups = form.querySelectorAll('.form-group');
+        let entidadeGroup = null;
+        allGroups.forEach(g => {
+          if (g.querySelector('label')?.textContent?.includes('Entidade Formadora')) {
+            entidadeGroup = g;
+          }
+        });
+
+        // --- Campo LOCAL ---
+        const localGroup = document.createElement('div');
+        localGroup.className = 'form-group';
+        localGroup.innerHTML = `
+          <label class="form-label" for="localPro">Local da Formação</label>
+          <input type="text" id="localPro" class="form-control" 
+            placeholder="Ex: Sala de reuniões, Online, Laboratório X..." 
+            value="${(record?.local || '').replace(/"/g, '&quot;')}">
+        `;
+
+        // --- Campo LABORATÓRIO/MARCA ---
+        const labGroup = document.createElement('div');
+        labGroup.className = 'form-group';
+        labGroup.innerHTML = `
+          <label class="form-label" for="laboratorioMarcaPro">Laboratório / Marca</label>
+          <input type="text" id="laboratorioMarcaPro" class="form-control" 
+            placeholder="Ex: Bayer, Pfizer, Nestlé Health Science..." 
+            value="${(record?.laboratorioMarca || '').replace(/"/g, '&quot;')}">
+        `;
+
+        // Insert after Entidade Formadora, or before submit buttons
+        if (entidadeGroup) {
+          entidadeGroup.insertAdjacentElement('afterend', labGroup);
+          entidadeGroup.insertAdjacentElement('afterend', localGroup);
+        } else {
+          const actionsRow = form.querySelector('.actions-row');
+          if (actionsRow) {
+            actionsRow.insertAdjacentElement('beforebegin', localGroup);
+            actionsRow.insertAdjacentElement('beforebegin', labGroup);
+          }
+        }
+
+        // --- Patch o submit para incluir local e laboratorioMarca ---
+        // Remove old listener and replace with new one
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+
+        newForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const participantes = Array.from(
+            newForm.querySelectorAll('.participants-grid input[type="checkbox"]:checked')
+          ).map(i => i.value);
+
+          const dataVal = document.getElementById('dataPro').value;
+          const dataObj = dataVal ? new Date(dataVal) : null;
+          if (!dataObj || isNaN(dataObj)) {
+            showToast('Data inválida. Por favor verifica.', 'error');
+            return;
+          }
+
+          const payload = {
+            tema: document.getElementById('temaPro').value.trim(),
+            data: dataObj,
+            durationMinutes: parseInt(document.getElementById('duracaoMinutosPro').value || 0),
+            formador: document.getElementById('formadorPro').value.trim(),
+            tipo: document.getElementById('tipoPro').value.trim(),
+            descricao: document.getElementById('descricaoPro').value.trim(),
+            participantes,
+            estado: document.getElementById('estadoPro').value,
+            estadoManual: document.getElementById('estadoPro').value,
+            objetivos: document.getElementById('objetivosPro').value.trim(),
+            entidadeFormadora: document.getElementById('entidadeFormadoraPro').value.trim(),
+            creditosOF: parseFloat(document.getElementById('creditosOFPro').value) || 0,
+            local: (document.getElementById('localPro')?.value || '').trim(),
+            laboratorioMarca: (document.getElementById('laboratorioMarcaPro')?.value || '').trim(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedBy: currentUser.uid
+          };
+
+          if (!editId) {
+            payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            payload.createdBy = currentUser.uid;
+          }
+
+          try {
+            const ref = editId
+              ? db.collection('trainings').doc(editId)
+              : db.collection('trainings').doc();
+            await ref.set(payload, { merge: true });
+            showToast(editId ? 'Formação atualizada com sucesso!' : 'Formação criada com sucesso!', 'success');
+            navigateTo('todasFormacoes');
+          } catch (err) {
+            console.error('Erro ao guardar formação:', err);
+            showToast('Erro ao guardar: ' + err.message, 'error');
+          }
+        });
+
+      })();
+    }, 200);
+  };
+
+})();
+</script>
+<!-- PATCH: loadTodasFormacoes com agrupamento por meses -->
+<script>
+(function(){
+
+  window.loadTodasFormacoes = async function(){
+    document.getElementById('pageTitle').textContent = 'Gestão de Formações';
+    document.getElementById('contentArea').innerHTML = `
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+          <h2 class="card-title">Todas as Formações</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="navigateTo('criarFormacao')">➕ Nova Formação</button>
+            <button class="btn btn-secondary" onclick="abrirMapaFormacoes()">🗓️ Mapa</button>
+          </div>
+        </div>
+        <!-- Filtros -->
+        <div class="filters-bar" style="margin-top:0;margin-bottom:16px;">
+          <div class="filter-item">
+            <input type="text" id="filtroTexto" class="form-control" placeholder="🔍 Pesquisar tema, formador, entidade..." oninput="renderTodasFormacoes()">
+          </div>
+          <div class="filter-item">
+            <select id="filtroEstado" class="form-control" onchange="renderTodasFormacoes()">
+              <option value="">Todos os estados</option>
+              <option value="agendada">Agendada</option>
+              <option value="realizada">Realizada</option>
+              <option value="cancelada">Cancelada</option>
+              <option value="adiada">Adiada</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <input type="number" id="filtroAno" class="form-control" placeholder="Ano (ex: 2025)" oninput="renderTodasFormacoes()" value="${new Date().getFullYear()}">
+          </div>
+        </div>
+        <div id="todasFormacoesContainer"></div>
+      </div>`;
+
+    if (typeof ensureAutoStatus === 'function') await ensureAutoStatus();
+
+    // Load data once, re-render on filter
+    window._todasFormacoesData = null;
+
+    const loadData = async () => {
+      const [usersMap, attendanceMap, evalMap, trainings] = await Promise.all([
+        getUsersMap(), getAttendanceMap(), getEvaluationsMap(), getAllTrainings()
+      ]);
+      window._todasFormacoesData = { usersMap, attendanceMap, evalMap, trainings };
+      renderTodasFormacoes();
+    };
+
+    await loadData();
+    if (typeof activeUnsubscribe === 'function') activeUnsubscribe();
+    window.activeUnsubscribe = db.collection('trainings').onSnapshot(async () => {
+      window._todasFormacoesData = null;
+      await loadData();
+    });
+  };
+
+  window.renderTodasFormacoes = function(){
+    const container = document.getElementById('todasFormacoesContainer');
+    if (!container || !window._todasFormacoesData) return;
+
+    const { usersMap, attendanceMap, evalMap, trainings } = window._todasFormacoesData;
+
+    const filtroTexto = (document.getElementById('filtroTexto')?.value || '').toLowerCase().trim();
+    const filtroEstado = document.getElementById('filtroEstado')?.value || '';
+    const filtroAno = document.getElementById('filtroAno')?.value || '';
+
+    // Filter
+    let filtered = trainings.filter(t => {
+      const dt = trainingDate(t);
+      const status = resolvedStatus(t);
+      if (filtroEstado && status !== filtroEstado) return false;
+      if (filtroAno && dt && dt.getFullYear() !== parseInt(filtroAno)) return false;
+      if (filtroTexto) {
+        const haystack = [t.tema, t.formador, t.entidadeFormadora, t.local, t.laboratorioMarca].join(' ').toLowerCase();
+        if (!haystack.includes(filtroTexto)) return false;
+      }
+      return true;
+    });
+
+    // Sort descending by date
+    filtered.sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0));
+
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📚</div><div class="empty-state-text">Nenhuma formação encontrada.</div></div>`;
+      return;
+    }
+
+    // Group by month
+    const grouped = {};
+    filtered.forEach(t => {
+      const dt = trainingDate(t);
+      const key = dt ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}` : '0000-00';
+      const label = dt ? dt.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' }) : 'Sem data';
+      if (!grouped[key]) grouped[key] = { label, trainings: [] };
+      grouped[key].trainings.push(t);
+    });
+
+    const currentMonthKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+
+    const html = Object.entries(grouped)
+      .sort((a,b) => b[0].localeCompare(a[0]))
+      .map(([key, group]) => {
+        const isCurrentMonth = key === currentMonthKey;
+        const monthId = 'gesmes-' + key;
+
+        const cards = group.trainings.map(t => {
+          const ids = participantIds(t);
+          const status = resolvedStatus(t);
+          const presentCount = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'present').length;
+          const absentCount  = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'absent').length;
+          const evalCount    = ids.filter(uid => !!evalMap[`${t.id}_${uid}`]).length;
+          const dt = trainingDate(t);
+          const mins = normalizeDurationMinutes(t);
+          const hLabel = mins >= 60 ? Math.floor(mins/60)+'h'+(mins%60 ? String(mins%60).padStart(2,'0') : '') : mins+'min';
+
+          return `
+            <div class="training-card ${status==='realizada'?'completed':'pending'}" style="margin-bottom:12px;">
+              <div class="training-header">
+                <div style="flex:1;">
+                  <div class="training-title">${trainingTitle(t)}</div>
+                  <div class="training-meta" style="margin-top:6px;">
+                    <div class="training-meta-item">📅 ${dt ? dt.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'}) + ' ' + dt.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}) : '—'}</div>
+                    <div class="training-meta-item">⏱️ ${hLabel}</div>
+                    <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
+                    ${t.entidadeFormadora ? `<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>` : ''}
+                    ${t.local ? `<div class="training-meta-item">📍 ${t.local}</div>` : ''}
+                    ${t.laboratorioMarca ? `<div class="training-meta-item">🏭 ${t.laboratorioMarca}</div>` : ''}
+                    ${t.creditosOF ? `<div class="training-meta-item">🏅 ${t.creditosOF} créditos OF</div>` : ''}
+                    <div class="training-meta-item">👥 ${ids.length} inscritos</div>
+                  </div>
+                </div>
+                <div>${statusBadge(status)}</div>
+              </div>
+              <div class="kpi-row">
+                <span class="kpi-pill">✓ Presentes: ${presentCount}</span>
+                <span class="kpi-pill">✗ Faltas: ${absentCount}</span>
+                <span class="kpi-pill">⭐ Avaliações: ${evalCount}/${ids.length}</span>
+              </div>
+              ${ids.length ? `<div class="small-text" style="margin-top:8px;">👤 ${ids.map(uid => usersMap[uid]?.nome || uid).join(', ')}</div>` : ''}
+              <div class="actions-row" style="margin-top:12px;">
+                <button class="btn btn-secondary" onclick="event.stopPropagation();editTraining('${t.id}')">✏️ Editar</button>
+                <button class="btn btn-primary" onclick="event.stopPropagation();abrirPresencas('${t.id}')" title="Gerir presenças">📋 Presenças</button>
+                ${status === 'agendada' ? `
+                  <button class="btn btn-success" onclick="event.stopPropagation();marcarRealizada('${t.id}')">✅ Marcar Realizada</button>
+                  <button class="btn btn-danger" onclick="event.stopPropagation();apagarFormacao('${t.id}')" title="Apagar formação">🗑️ Apagar</button>
+                ` : ''}
+                ${status === 'realizada' ? `
+                  <button class="btn btn-secondary" onclick="event.stopPropagation();exportarResumoFormacao('${t.id}')">📋 Resumo</button>
+                ` : ''}
+                <button class="btn btn-warning" style="color:white;font-size:12px;padding:8px 12px;" onclick="event.stopPropagation();anularFormacao('${t.id}')" title="Anular">🚫 Anular</button>
+              </div>
+            </div>`;
+        }).join('');
+
+        const totalMins = group.trainings.reduce((s,t) => s + normalizeDurationMinutes(t), 0);
+        const totalH = totalMins >= 60 ? Math.floor(totalMins/60)+'h'+(totalMins%60 ? String(totalMins%60).padStart(2,'0') : '') : totalMins+'min';
+
+        return `
+          <div class="month-group" style="margin-bottom:24px;">
+            <div class="training-card" style="cursor:pointer;border-left:4px solid var(--color-info);margin-bottom:0;border-radius:12px 12px ${isCurrentMonth?'0 0':'12px 12px'};"
+                 onclick="toggleMesDetail('${monthId}')">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <h3 style="font-size:17px;font-weight:700;text-transform:capitalize;">${group.label}</h3>
+                  <p style="color:var(--color-text-secondary);font-size:12px;margin-top:3px;">
+                    ${group.trainings.length} formação(ões) · ${totalH} total
+                    · ${group.trainings.filter(t=>resolvedStatus(t)==='realizada').length} realizadas
+                    · ${group.trainings.filter(t=>resolvedStatus(t)==='agendada').length} agendadas
+                  </p>
+                </div>
+                <span id="${monthId}-arrow" style="font-size:20px;transition:transform 0.2s;">${isCurrentMonth?'🔽':'▶️'}</span>
+              </div>
+            </div>
+            <div id="${monthId}" style="display:${isCurrentMonth?'block':'none'};border:1px solid var(--color-border);border-top:none;border-radius:0 0 12px 12px;padding:16px;background:#fff;">
+              ${cards}
+            </div>
+          </div>`;
+      }).join('');
+
+    container.innerHTML = html;
+  };
+
+})();
 </script>
 
 </body>
