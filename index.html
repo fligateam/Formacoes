@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- FormaLiga v2.0 — Farmácia da Liga | Corrigido 2026-05-19 -->
 <html lang="pt-PT">
 <head>
   <meta charset="UTF-8">
@@ -1283,7 +1282,7 @@
       try {
         const dataInicio = document.getElementById('exportDataInicio')?.value;
         const dataFim    = document.getElementById('exportDataFim')?.value;
-        const entidade   = (document.getElementById('exportEntidade')?.value || '').toLowerCase().trim();
+        const entidade   = document.getElementById('exportEntidade')?.value.toLowerCase().trim();
         const trainings  = await getAllTrainings();
         let csv = 'Data,Tema,Entidade Formadora,Formador,Local,Duração (h),Estado\n';
         trainings.forEach(t => {
@@ -1336,6 +1335,16 @@
     function getEstadoBadge(e)   { return { Submetida:'info', 'Em análise':'warning', Planeada:'success', Rejeitada:'error' }[e] || 'info'; }
     function getEstadoBadgeClass(e) { return { Rascunho:'info', Agendada:'info', Concluida:'success', 'Em avaliação':'warning', Cancelada:'error' }[e] || 'info'; }
   </script>
+
+
+<script>
+window.getUsersMap = window.getUsersMap || (async ()=> (await Promise.resolve({})));
+window.getAllTrainings = window.getAllTrainings || (async ()=> []);
+window.getAttendanceMap = window.getAttendanceMap || (async ()=> ({}));
+window.getEvaluationsMap = window.getEvaluationsMap || (async ()=> ({}));
+window.exportarPlanoFormacoes = window.exportarPlanoFormacoes || (async ()=> { alert('Função a carregar...'); });
+window.verPlanoFormacoes = window.verPlanoFormacoes || window.exportarPlanoFormacoes;
+</script>
 
 </body>
 </html>
