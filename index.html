@@ -1925,6 +1925,7 @@
                                         <td><span class="badge badge-${getEstadoBadgeClass(t.estado)}">${t.estado}</span></td>
                                         <td>
                                             <button class="btn btn-secondary btn-icon" onclick="editarFormacao('${t.id}')" title="Editar">✏️</button>
+                                            <button class="btn btn-secondary btn-icon" onclick="imprimirFormacao('${t.id}')" title="Imprimir Registo">🖨️</button>
                                             <button class="btn btn-warning btn-icon" onclick="gerirParticipantes('${t.id}')" title="Participantes">👥</button>
                                             ${t.estado === 'Concluida' && !t.avaliacaoAutorizada ? `
                                                 <button class="btn btn-success btn-icon" onclick="autorizarAvaliacao('${t.id}')" title="Autorizar Avaliação">✓</button>
@@ -3069,6 +3070,7 @@
                 <div class="stat-card warning"><div class="stat-label">Avaliações pendentes</div><div class="stat-value" id="kpiPendentes">-</div></div>
                 <div class="stat-card"><div class="stat-label">Colaboradores ativos</div><div class="stat-value" id="kpiColabsAtivos">-</div></div>
             </div>
+            <div id="alertasPorAvaliar" style="margin-bottom:20px;"></div>
             <div class="dashboard-split">
                 <div class="card">
                     <div class="card-header"><h2 class="card-title">Formandos com formações por avaliar</h2></div>
@@ -3080,18 +3082,6 @@
                     <div id="hoursByUserList" class="rank-list"></div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">Automação e controlo</h2></div>
-                <div class="muted-box">
-                    <div class="kpi-row">
-                        <span class="kpi-pill">Estados automáticos ativos</span>
-                        <span class="kpi-pill">Tempo registado em minutos</span>
-                        <span class="kpi-pill">Horas visíveis por colaborador</span>
-                        <span class="kpi-pill">Backup semanal configurável para ${PRO.backupEmail}</span>
-                    </div>
-                    <div class="small-text" style="margin-top:12px;">A automação de backup semanal por email e a sincronização direta para a pasta Drive exigem uma Cloud Function ou Google Apps Script. A interface já fica preparada para essa integração.</div>
-                </div>
-            </div>`;
 
         await ensureAutoStatus();
         const render = async () => {
@@ -3099,6 +3089,38 @@
             const year = new Date().getFullYear();
             const realized = trainings.filter(t => resolvedStatus(t) === 'realizada');
             const trainingsYear = trainings.filter(t => trainingDate(t)?.getFullYear() === year);
+            // Colaboradores com formações por avaliar
+const alertaEl = document.getElementById('alertasPorAvaliar');
+if (alertaEl) {
+    try {
+        const enrollSnap = await db.collection('enrollments')
+            .where('estadoInscricao','==','Presente')
+            .where('avaliado','==',false)
+            .get();
+        const usersMap = await getUsersMap();
+        const porAvaliar = {};
+        enrollSnap.docs.forEach(d => {
+            const uid = d.data().userId;
+            if (!porAvaliar[uid]) porAvaliar[uid] = 0;
+            porAvaliar[uid]++;
+        });
+        const lista = Object.entries(porAvaliar);
+        if (lista.length > 0) {
+            alertaEl.innerHTML = `
+                <div class="alert-item" style="background:#fff7e6;border:1px solid #fde58a;border-radius:12px;padding:14px 16px;margin-bottom:12px;">
+                    <strong>⚠️ Colaboradores com avaliações pendentes</strong>
+                    <div class="kpi-row" style="margin-top:8px;">
+                        ${lista.map(([uid, n]) => `
+                            <span class="kpi-pill" style="background:#fff3cd;color:#856404;">
+                                ${usersMap[uid]?.nome || uid} — ${n} por avaliar
+                            </span>`).join('')}
+                    </div>
+                </div>`;
+        } else {
+            alertaEl.innerHTML = '';
+        }
+    } catch(e) { console.warn('alertas por avaliar:', e); }
+}
 
             const hoursByUser = {};
             Object.values(usersMap).forEach(u => hoursByUser[u.id] = 0);
@@ -3946,6 +3968,120 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
         } catch(e) { console.error(e); showToast('Erro ao anular formação','error'); }
     };
 
+    window.imprimirFormacao = async function(trainingId) {
+    const trainingDoc = await db.collection('trainings').doc(trainingId).get();
+    if (!trainingDoc.exists) return showToast('Formação não encontrada','error');
+    const t = { id: trainingDoc.id, ...trainingDoc.data() };
+    const dt = t.data ? (t.data.toDate ? t.data.toDate() : new Date(t.data.seconds*1000)) : null;
+    const dtStr = dt ? dt.toLocaleDateString('pt-PT', {day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+
+    // Participantes + presenças
+    const enrollSnap = await db.collection('enrollments').where('trainingId','==',trainingId).get();
+    const usersMap = await getUsersMap();
+    const enrolls = enrollSnap.docs.map(d => ({id:d.id,...d.data()}));
+
+    // Avaliações + média
+    const evalSnap = await db.collection('evaluations').where('trainingId','==',trainingId).get();
+    const evals = evalSnap.docs.map(d => d.data());
+    const mediaGlobal = evals.length
+        ? (evals.reduce((s,e) => s+(e.avaliacaoGlobal||0),0) / evals.length).toFixed(1)
+        : '—';
+    const mediaPedagogica = evals.length
+        ? (evals.reduce((s,e) => s+(e.capacidadePedagogicaFormador||0),0) / evals.length).toFixed(1)
+        : '—';
+    const mediaDominio = evals.length
+        ? (evals.reduce((s,e) => s+(e.dominioTemaFormador||0),0) / evals.length).toFixed(1)
+        : '—';
+    const mediaRelevancia = evals.length
+        ? (evals.reduce((s,e) => s+(e.relevanciaTarefasDesempenha||0),0) / evals.length).toFixed(1)
+        : '—';
+
+    const participantesHTML = enrolls.map(en => {
+        const u = usersMap[en.userId] || {};
+        const presente = en.estadoInscricao === 'Presente' ? '✓ Presente' : en.estadoInscricao === 'Ausente' ? '✗ Ausente' : en.estadoInscricao || '—';
+        const avaliou = en.avaliado ? '✓' : '✗';
+        return `<tr>
+            <td style="padding:6px 10px;border-bottom:1px solid #e0e0e0;">${u.nome||en.userId}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #e0e0e0;">${u.funcao||'—'}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #e0e0e0;text-align:center;">${presente}</td>
+            <td style="padding:6px 10px;border-bottom:1px solid #e0e0e0;text-align:center;">${avaliou}</td>
+        </tr>`;
+    }).join('');
+
+    const realizada = (t.estadoManual||t.estado||'').toLowerCase().includes('conclu') ||
+                      (t.estadoManual||t.estado||'').toLowerCase().includes('realiz')
+                      ? '✓ Realizada' : '✗ Não realizada / ' + (t.estadoManual||t.estado||'Agendada');
+
+    const win = window.open('','_blank');
+    win.document.write(`<!DOCTYPE html><html lang="pt-PT"><head>
+    <meta charset="UTF-8">
+    <title>Registo de Formação — ${t.tema||''}</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 32px; color: #172033; font-size: 13px; }
+        h1 { font-size: 20px; margin-bottom: 4px; }
+        .sub { color: #666; font-size: 12px; margin-bottom: 24px; }
+        .section { margin-bottom: 20px; }
+        .section h3 { font-size: 13px; font-weight: 700; text-transform: uppercase;
+                      letter-spacing: .05em; color: #4a6572; border-bottom: 1px solid #ddd;
+                      padding-bottom: 6px; margin-bottom: 12px; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .field { background: #f7f9fa; border-radius: 6px; padding: 8px 12px; }
+        .label { font-size: 10px; font-weight: 700; text-transform: uppercase;
+                 color: #888; letter-spacing: .05em; }
+        .val { font-size: 13px; font-weight: 600; margin-top: 2px; }
+        table { width: 100%; border-collapse: collapse; }
+        thead th { background: #eaf2ff; padding: 8px 10px; text-align: left;
+                   font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .medias { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+        .media-pill { background: #eaf2ff; border-radius: 8px; padding: 8px 14px; }
+        .media-pill .ml { font-size: 10px; color: #666; text-transform:uppercase; }
+        .media-pill .mv { font-size: 18px; font-weight: 700; color: #2563eb; }
+        .estado-ok { color: #0f7b55; font-weight: 700; }
+        .estado-nok { color: #b42318; font-weight: 700; }
+        @media print { body { margin: 16px; } }
+    </style>
+    </head><body>
+    <h1>📋 Registo de Formação</h1>
+    <div class="sub">Farmácia da Liga · Impresso em ${new Date().toLocaleString('pt-PT')}</div>
+
+    <div class="section">
+        <h3>Informações da Formação</h3>
+        <div class="grid2">
+            <div class="field"><div class="label">Tema</div><div class="val">${t.tema||'—'}</div></div>
+            <div class="field"><div class="label">Estado</div><div class="val ${realizada.startsWith('✓')?'estado-ok':'estado-nok'}">${realizada}</div></div>
+            <div class="field"><div class="label">Data</div><div class="val">${dtStr}</div></div>
+            <div class="field"><div class="label">Duração</div><div class="val">${t.durationMinutes ? t.durationMinutes+' min' : (t.duracaoHoras||'—')+'h'}</div></div>
+            <div class="field"><div class="label">Formador</div><div class="val">${t.formador||'—'}</div></div>
+            <div class="field"><div class="label">Entidade Formadora</div><div class="val">${t.entidadeFormadora||'—'}</div></div>
+            <div class="field"><div class="label">Local</div><div class="val">${t.local||'—'}</div></div>
+            <div class="field"><div class="label">Créditos OF</div><div class="val">${t.creditosOF||'0'}</div></div>
+            ${t.objetivos ? `<div class="field" style="grid-column:1/-1"><div class="label">Objetivos</div><div class="val">${t.objetivos}</div></div>` : ''}
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Participantes (${enrolls.length})</h3>
+        <table>
+            <thead><tr><th>Nome</th><th>Função</th><th>Presença</th><th>Avaliou</th></tr></thead>
+            <tbody>${participantesHTML||'<tr><td colspan="4" style="padding:12px;text-align:center;color:#888">Sem participantes</td></tr>'}</tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h3>Médias das Avaliações ${evals.length > 0 ? '('+evals.length+' resposta'+(evals.length>1?'s':'')+')' : '(sem avaliações)'}</h3>
+        ${evals.length > 0 ? `
+        <div class="medias">
+            <div class="media-pill"><div class="ml">Global</div><div class="mv">${mediaGlobal}/5</div></div>
+            <div class="media-pill"><div class="ml">Pedagógica</div><div class="mv">${mediaPedagogica}/5</div></div>
+            <div class="media-pill"><div class="ml">Domínio Tema</div><div class="mv">${mediaDominio}/5</div></div>
+            <div class="media-pill"><div class="ml">Relevância</div><div class="mv">${mediaRelevancia}/5</div></div>
+        </div>` : '<p style="color:#888;font-size:12px;">Nenhuma avaliação submetida até ao momento.</p>'}
+    </div>
+
+    <script>window.onload=()=>{window.print();}<\/script>
+    </body></html>`);
+    win.document.close();
+};
 </script>
 
 </body>
