@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FarmÃ¡cia da Liga - Sistema de GestÃ£o de FormaÃ§Ãµes</title>
+    <title>Farmácia da Liga - Sistema de Gestão de Formações</title>
 
     <meta name="theme-color" content="#4A6572">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -801,7 +801,7 @@
         @media (max-width: 980px) { .dashboard-split { grid-template-columns: 1fr; } }
 
     
-    /* â”€â”€ Professional Override Theme â”€â”€ */
+    /* ── Professional Override Theme ── */
     :root {
       --color-bg-primary: #f0f4f8;
       --color-bg-secondary: #ffffff;
@@ -847,7 +847,7 @@
     }
 
     
-    /* â”€â”€ Professional Override Theme â”€â”€ */
+    /* ── Professional Override Theme ── */
     :root {
       --color-bg-primary: #f0f4f8;
       --color-bg-secondary: #ffffff;
@@ -899,9 +899,9 @@
     <div id="loginPage" class="page active">
         <div class="login-container">
             <div class="login-card">
-      <div class="login-logo">ðŸ‘©ðŸ¼â€ðŸŽ“</div>
-                <h1 class="login-title">FarmÃ¡cia da Liga</h1>
-                <p class="login-subtitle">Sistema de GestÃ£o de FormaÃ§Ãµes</p>
+      <div class="login-logo">👩🏼‍🎓</div>
+                <h1 class="login-title">Farmácia da Liga</h1>
+                <p class="login-subtitle">Sistema de Gestão de Formações</p>
                 <form id="loginForm">
                     <div class="form-group">
                         <label class="form-label" for="email">Email</label>
@@ -909,7 +909,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="password">Password</label>
-                        <input type="password" id="password" class="form-control" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required>
+                        <input type="password" id="password" class="form-control" placeholder="••••••••" required>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
                         Entrar
@@ -924,8 +924,8 @@
         <div class="app-container">
             <aside class="sidebar" id="sidebar">
                 <div class="sidebar-header">
-                    <h1>ðŸ“— FarmÃ¡cia da Liga</h1>
-                    <p>GestÃ£o de FormaÃ§Ãµes</p>
+                    <h1>📗 Farmácia da Liga</h1>
+                    <p>Gestão de Formações</p>
                 </div>
                 <nav class="sidebar-menu" id="sidebarMenu"></nav>
             </aside>
@@ -941,8 +941,8 @@
                             <h3 id="userName">Utilizador</h3>
                             <p id="userRole">Colaborador</p>
                         </div>
-                        <button class="btn btn-secondary btn-icon" onclick="logout()" title="Terminar sessÃ£o">
-                            ðŸšª
+                        <button class="btn btn-secondary btn-icon" onclick="logout()" title="Terminar sessão">
+                            🚪
                         </button>
                     </div>
                 </header>
@@ -952,51 +952,51 @@
         </div>
     </div>
 
-    <!-- Modal de AvaliaÃ§Ã£o -->
+    <!-- Modal de Avaliação -->
     <div class="modal" id="avaliacaoModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Avaliar FormaÃ§Ã£o</h2>
-                <button class="close-modal" onclick="closeModal('avaliacaoModal')">âœ•</button>
+                <h2 class="modal-title">Avaliar Formação</h2>
+                <button class="close-modal" onclick="closeModal('avaliacaoModal')">✕</button>
             </div>
             <form id="avaliacaoForm" onsubmit="submitAvaliacao(event)">
                 <input type="hidden" id="evalTrainingId">
 
                 <div class="rating-group">
-                    <label class="form-label">DuraÃ§Ã£o da AÃ§Ã£o</label>
+                    <label class="form-label">Duração da Ação</label>
                     <div class="rating-stars" id="stars-duracao"></div>
                     <input type="hidden" id="rating-duracao" required>
                 </div>
 
                 <div class="rating-group">
-                    <label class="form-label">Capacidade PedagÃ³gica do Formador</label>
+                    <label class="form-label">Capacidade Pedagógica do Formador</label>
                     <div class="rating-stars" id="stars-pedagogica"></div>
                     <input type="hidden" id="rating-pedagogica" required>
                 </div>
 
                 <div class="rating-group">
-                    <label class="form-label">DomÃ­nio do Tema pelo Formador</label>
+                    <label class="form-label">Domínio do Tema pelo Formador</label>
                     <div class="rating-stars" id="stars-dominio"></div>
                     <input type="hidden" id="rating-dominio" required>
                 </div>
 
                 <div class="rating-group">
-                    <label class="form-label">RelevÃ¢ncia para as Tarefas que Desempenha</label>
+                    <label class="form-label">Relevância para as Tarefas que Desempenha</label>
                     <div class="rating-stars" id="stars-relevancia"></div>
                     <input type="hidden" id="rating-relevancia" required>
                 </div>
 
                 <div class="rating-group">
-                    <label class="form-label">AvaliaÃ§Ã£o Global da AÃ§Ã£o de FormaÃ§Ã£o</label>
+                    <label class="form-label">Avaliação Global da Ação de Formação</label>
                     <div class="rating-stars" id="stars-global"></div>
                     <input type="hidden" id="rating-global" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Os temas abordados afastam-se da prÃ¡tica instituda na FarmÃ¡cia?</label>
+                    <label class="form-label">Os temas abordados afastam-se da prática instituda na Farmácia?</label>
                     <select id="afastamentoPratica" class="form-control" required onchange="toggleAfastamentoDetalhe()">
                         <option value="">Selecione...</option>
-                        <option value="nao">NÃ£o</option>
+                        <option value="nao">Não</option>
                         <option value="sim">Sim</option>
                     </select>
                 </div>
@@ -1007,12 +1007,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">ObservaÃ§Ãµes / Propostas para implementar os conceitos apreendidos</label>
+                    <label class="form-label">Observações / Propostas para implementar os conceitos apreendidos</label>
                     <textarea id="observacoesPropostas" class="form-control"></textarea>
                 </div>
 
                 <div style="display: flex; gap: 12px;">
-                    <button type="submit" class="btn btn-primary">Submeter AvaliaÃ§Ã£o</button>
+                    <button type="submit" class="btn btn-primary">Submeter Avaliação</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('avaliacaoModal')">Cancelar</button>
                 </div>
             </form>
@@ -1024,7 +1024,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="colaboradorModalTitle">Adicionar Colaborador</h2>
-                <button class="close-modal" onclick="closeModal('colaboradorModal')">âœ•</button>
+                <button class="close-modal" onclick="closeModal('colaboradorModal')">✕</button>
             </div>
             <form id="colaboradorForm" onsubmit="submitColaborador(event)">
                 <input type="hidden" id="colaboradorId">
@@ -1038,7 +1038,7 @@
                     <input type="text" id="colabNomeCompleto" class="form-control" placeholder="Nome completo legal">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="colabCodigoOperador">CÃ³digo de Operador</label>
+                    <label class="form-label" for="colabCodigoOperador">Código de Operador</label>
                     <input type="text" id="colabCodigoOperador" class="form-control" placeholder="Ex: OP001">
                 </div>
                 <div class="form-group">
@@ -1046,7 +1046,7 @@
                     <input type="text" id="colabNIF" class="form-control" placeholder="Ex: 123456789" maxlength="9">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="colabCedula">NÂº CÃ©dula / Carteira Profissional</label>
+                    <label class="form-label" for="colabCedula">Nº Cédula / Carteira Profissional</label>
                     <input type="text" id="colabCedula" class="form-control" placeholder="Ex: C-12345">
                 </div>
 
@@ -1056,11 +1056,11 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="colabFuncao">FunÃ§Ã£o</label>
+                    <label class="form-label" for="colabFuncao">Função</label>
                     <select id="colabFuncao" class="form-control" required>
                         <option value="">Selecione...</option>
-                        <option value="FarmacÃªutico">FarmacÃªutico</option>
-                        <option value="TÃ©cnico de FarmÃ¡cia">TÃ©cnico de FarmÃ¡cia</option>
+                        <option value="Farmacêutico">Farmacêutico</option>
+                        <option value="Técnico de Farmácia">Técnico de Farmácia</option>
                         <option value="Auxiliar">Auxiliar</option>
                         <option value="Gestor">Gestor</option>
                     </select>
@@ -1070,7 +1070,7 @@
                     <label class="form-label" for="colabRole">Perfil</label>
                     <select id="colabRole" class="form-control" required>
                         <option value="colaborador">Colaborador</option>
-                        <option value="gestorformacao">Gestor de FormaÃ§Ã£o</option>
+                        <option value="gestorformacao">Gestor de Formação</option>
                     </select>
                 </div>
 
@@ -1095,30 +1095,30 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Gerir Participantes</h2>
-                <button class="close-modal" onclick="closeModal('participantesModal')">âœ•</button>
+                <button class="close-modal" onclick="closeModal('participantesModal')">✕</button>
             </div>
             <input type="hidden" id="participantesTrainingId">
             
             <div class="form-group">
-                <button type="button" class="btn btn-success" onclick="selecionarTodos()">âœ“ Selecionar Todos</button>
-                <button type="button" class="btn btn-secondary" onclick="desselecionarTodos()">âœ— Desselecionar Todos</button>
+                <button type="button" class="btn btn-success" onclick="selecionarTodos()">✓ Selecionar Todos</button>
+                <button type="button" class="btn btn-secondary" onclick="desselecionarTodos()">✗ Desselecionar Todos</button>
             </div>
 
             <div id="participantesContainer" class="participants-grid"></div>
 
             <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
-                <button type="button" class="btn btn-primary" onclick="salvarParticipantes()">ðŸ’¾ Guardar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarParticipantes()">💾 Guardar</button>
                 <button type="button" class="btn btn-secondary" onclick="closeModal('participantesModal')">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Detalhe FormaÃ§Ã£o (Colaborador) -->
+    <!-- Modal Detalhe Formação (Colaborador) -->
     <div class="modal" id="detalheFormacaoModal">
         <div class="modal-content" style="max-width:700px;">
             <div class="modal-header">
-                <h2 class="modal-title" id="detalheModalTitulo">Detalhe da FormaÃ§Ã£o</h2>
-                <button class="close-modal" onclick="closeModal('detalheFormacaoModal')">âœ•</button>
+                <h2 class="modal-title" id="detalheModalTitulo">Detalhe da Formação</h2>
+                <button class="close-modal" onclick="closeModal('detalheFormacaoModal')">✕</button>
             </div>
             <div id="detalheModalBody"></div>
         </div>
@@ -1126,8 +1126,8 @@
 
     <!-- Toast Notification -->
     <div class="toast" id="toast">
-        <span id="toastIcon">âœ“</span>
-        <span id="toastMessage">OperaÃ§Ã£o realizada com sucesso</span>
+        <span id="toastIcon">✓</span>
+        <span id="toastMessage">Operação realizada com sucesso</span>
     </div>
 
     <!-- Firebase SDKs -->
@@ -1174,18 +1174,18 @@
 
                 const gestoresSeed = {
                     "fligadebora@hotmail.com": {
-                        nome: "DÃ©bora",
-                        funcao: "GestÃ£o",
+                        nome: "Débora",
+                        funcao: "Gestão",
                         role: "gestorformacao"
                     },
                     "fligamarta@hotmail.com": {
                         nome: "Marta",
-                        funcao: "GestÃ£o",
+                        funcao: "Gestão",
                         role: "gestorformacao"
                     },
                     "farmacia@ligagaia.pt": {
-                        nome: "Dra Rita SÃ¡",
-                        funcao: "GestÃ£o",
+                        nome: "Dra Rita Sá",
+                        funcao: "Gestão",
                         role: "gestorformacao"
                     }
                 };
@@ -1267,7 +1267,7 @@
             if (currentUserData) {
                 document.getElementById('userName').textContent = currentUserData.nome || 'Utilizador';
                 document.getElementById('userRole').textContent = 
-                    currentUserData.role === 'gestorformacao' ? 'Gestor de FormaÃ§Ã£o' : 'Colaborador';
+                    currentUserData.role === 'gestorformacao' ? 'Gestor de Formação' : 'Colaborador';
                 
                 const initials = currentUserData.nome 
                     ? currentUserData.nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
@@ -1281,27 +1281,27 @@
             const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
 
             const menuItems = isGestor ? [
-                { id: 'todasFormacoes', label: 'Todas as FormaÃ§Ãµes', icon: 'ðŸ“š', section: 'gestor' },
-                { id: 'criarFormacao', label: 'Criar FormaÃ§Ã£o', icon: 'âž•', section: 'gestor' },
-                { id: 'colaboradores', label: 'Colaboradores', icon: 'ðŸ‘¥', section: 'gestor' },
-                { id: 'necessidadesFormacao', label: 'Necessidades de FormaÃ§Ã£o', icon: 'ðŸ“', section: 'gestor' },
-                { id: 'relatorios', label: 'RelatÃ³rios e ExportaÃ§Ã£o', icon: 'ðŸ“Š', section: 'gestor' },
-        { id: 'planoFormacao', label: 'Plano de FormaÃ§Ã£o', icon: 'ðŸ—“ï¸', section: 'gestor' },
+                { id: 'todasFormacoes', label: 'Todas as Formações', icon: '📚', section: 'gestor' },
+                { id: 'criarFormacao', label: 'Criar Formação', icon: '➕', section: 'gestor' },
+                { id: 'colaboradores', label: 'Colaboradores', icon: '👥', section: 'gestor' },
+                { id: 'necessidadesFormacao', label: 'Necessidades de Formação', icon: '📝', section: 'gestor' },
+                { id: 'relatorios', label: 'Relatórios e Exportação', icon: '📊', section: 'gestor' },
+        { id: 'planoFormacao', label: 'Plano de Formação', icon: '🗓️', section: 'gestor' },
                 { separator: true },
-                { id: 'minhasFormacoes', label: 'As Minhas FormaÃ§Ãµes', icon: 'ðŸ“–', section: 'colaborador' },
-                { id: 'manifestarNecessidade', label: 'Necessidade de FormaÃ§Ã£o', icon: 'âœï¸', section: 'colaborador' },
-                { id: 'historicoAvaliacoes', label: 'HistÃ³rico de AvaliaÃ§Ãµes', icon: 'â­', section: 'colaborador' }
+                { id: 'minhasFormacoes', label: 'As Minhas Formações', icon: '📖', section: 'colaborador' },
+                { id: 'manifestarNecessidade', label: 'Necessidade de Formação', icon: '✍️', section: 'colaborador' },
+                { id: 'historicoAvaliacoes', label: 'Histórico de Avaliações', icon: '⭐', section: 'colaborador' }
             ] : [
-                { id: 'minhasFormacoes', label: 'As Minhas FormaÃ§Ãµes', icon: 'ðŸ“–' },
-                { id: 'manifestarNecessidade', label: 'Necessidade de FormaÃ§Ã£o', icon: 'âœï¸' },
-                { id: 'historicoAvaliacoes', label: 'HistÃ³rico de AvaliaÃ§Ãµes', icon: 'â­' }
+                { id: 'minhasFormacoes', label: 'As Minhas Formações', icon: '📖' },
+                { id: 'manifestarNecessidade', label: 'Necessidade de Formação', icon: '✍️' },
+                { id: 'historicoAvaliacoes', label: 'Histórico de Avaliações', icon: '⭐' }
             ];
 
             menu.innerHTML = menuItems.map(item => {
                 if (item.separator) {
                     return `<div style="padding: 8px 20px; margin: 8px 0; border-bottom: 1px solid var(--color-border);">
                         <small style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                            Ãrea Pessoal
+                            Área Pessoal
                         </small>
                     </div>`;
                 }
@@ -1348,16 +1348,16 @@
 
         // Colaborador Functions
         async function loadMinhasFormacoes() {
-            document.getElementById('pageTitle').textContent = 'As Minhas FormaÃ§Ãµes';
+            document.getElementById('pageTitle').textContent = 'As Minhas Formações';
 
             const content = `
                 <div class="stats-grid">
                     <div class="stat-card blue">
-                        <div class="stat-label">FormaÃ§Ãµes Futuras</div>
+                        <div class="stat-label">Formações Futuras</div>
                         <div class="stat-value" id="statFuturas">-</div>
                     </div>
                     <div class="stat-card green">
-                        <div class="stat-label">FormaÃ§Ãµes ConcluÃ­das</div>
+                        <div class="stat-label">Formações Concluídas</div>
                         <div class="stat-value" id="statConcluidas">-</div>
                     </div>
                     <div class="stat-card warning">
@@ -1372,12 +1372,12 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">FormaÃ§Ãµes</h2>
+                        <h2 class="card-title">Formações</h2>
                     </div>
                     <div id="formacoesContainer">
                         <div class="loading active">
                             <div class="spinner"></div>
-                            <p>A carregar formaÃ§Ãµes...</p>
+                            <p>A carregar formações...</p>
                         </div>
                     </div>
                 </div>
@@ -1398,8 +1398,8 @@
                 if (trainingIds.length === 0) {
                     document.getElementById('formacoesContainer').innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-state-icon">ðŸ“š</div>
-                            <p class="empty-state-text">Ainda nÃ£o tem formaÃ§Ãµes atribuÃ­das</p>
+                            <div class="empty-state-icon">📚</div>
+                            <p class="empty-state-text">Ainda não tem formações atribuídas</p>
                         </div>
                     `;
                     updateStats([]);
@@ -1422,8 +1422,8 @@
                 renderFormacoes(trainings);
                 updateStats(trainings);
             } catch (error) {
-                console.error('Erro ao carregar formaÃ§Ãµes:', error);
-                showToast('Erro ao carregar formaÃ§Ãµes', 'error');
+                console.error('Erro ao carregar formações:', error);
+                showToast('Erro ao carregar formações', 'error');
             }
         }
 
@@ -1433,8 +1433,8 @@
             if (trainings.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">ðŸ“š</div>
-                        <p class="empty-state-text">Nenhuma formaÃ§Ã£o encontrada</p>
+                        <div class="empty-state-icon">📚</div>
+                        <p class="empty-state-text">Nenhuma formação encontrada</p>
                     </div>
                 `;
                 return;
@@ -1451,17 +1451,17 @@
                     <div class="training-card ${isFuture ? 'pending' : 'completed'}">
                         <div class="training-header">
                             <div>
-                                <h3 class="training-title">${training.tema || 'Sem tÃ­tulo'}</h3>
+                                <h3 class="training-title">${training.tema || 'Sem título'}</h3>
                                 <div class="training-meta">
-                                    <div class="training-meta-item">ðŸ“… ${date.toLocaleDateString('pt-PT')}</div>
-                                    <div class="training-meta-item">â±ï¸ ${training.duracaoHoras || 0}h</div>
-                                    <div class="training-meta-item">ðŸ‘¤ ${training.formador || 'N/A'}</div>
-                                    ${training.laboratorioMarca ? `<div class="training-meta-item">ðŸ¢ ${training.laboratorioMarca}</div>` : ''}
+                                    <div class="training-meta-item">📅 ${date.toLocaleDateString('pt-PT')}</div>
+                                    <div class="training-meta-item">⏱️ ${training.duracaoHoras || 0}h</div>
+                                    <div class="training-meta-item">👤 ${training.formador || 'N/A'}</div>
+                                    ${training.laboratorioMarca ? `<div class="training-meta-item">🏢 ${training.laboratorioMarca}</div>` : ''}
                                 </div>
                             </div>
                             <div>
                                 <span class="badge ${isFuture ? 'badge-info' : 'badge-success'}">
-                                    ${isFuture ? 'Agendada' : 'ConcluÃ­da'}
+                                    ${isFuture ? 'Agendada' : 'Concluída'}
                                 </span>
                                 ${canEvaluate ? `
                                     <button class="btn btn-warning" style="margin-left: 8px;" onclick="abrirAvaliacao('${training.id}')">
@@ -1507,7 +1507,7 @@
                 for (let i = 1; i <= 5; i++) {
                     const star = document.createElement('span');
                     star.className = 'star';
-                    star.textContent = 'â˜…';
+                    star.textContent = '★';
                     star.onclick = () => setRating(field, i);
                     container.appendChild(star);
                 }
@@ -1544,11 +1544,11 @@
         async function submitAvaliacao(event) {
             event.preventDefault();
             const trainingId = document.getElementById('evalTrainingId').value;
-            // ValidaÃ§Ã£o obrigatÃ³ria de todas as estrelas
+            // Validação obrigatória de todas as estrelas
             const camposEstrelas = ['duracao', 'pedagogica', 'dominio', 'relevancia', 'global'];
             for (const campo of camposEstrelas) {
                 if (!document.getElementById(`rating-${campo}`).value) {
-                    showToast('Por favor classifique todos os critÃ©rios com estrelas antes de submeter.', 'error');
+                    showToast('Por favor classifique todos os critérios com estrelas antes de submeter.', 'error');
                     return;
                 }
             }
@@ -1580,66 +1580,66 @@
                     });
                 }
 
-                showToast('AvaliaÃ§Ã£o submetida com sucesso!', 'success');
+                showToast('Avaliação submetida com sucesso!', 'success');
                 closeModal('avaliacaoModal');
                 document.getElementById('avaliacaoForm').reset();
                 if (typeof loadMinhasFormacoes === 'function') loadMinhasFormacoes();
             } catch (error) {
-                console.error('Erro ao submeter avaliaÃ§Ã£o:', error);
-                showToast('Erro ao submeter avaliaÃ§Ã£o', 'error');
+                console.error('Erro ao submeter avaliação:', error);
+                showToast('Erro ao submeter avaliação', 'error');
             }
         }
 
         function loadManifestarNecessidade() {
-            document.getElementById('pageTitle').textContent = 'Manifestar Necessidade de FormaÃ§Ã£o';
+            document.getElementById('pageTitle').textContent = 'Manifestar Necessidade de Formação';
 
             const content = `
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">Nova Necessidade de FormaÃ§Ã£o</h2>
+                        <h2 class="card-title">Nova Necessidade de Formação</h2>
                     </div>
                     <form id="necessidadeForm" onsubmit="submitNecessidade(event)">
                         <div class="form-group">
-                            <label class="form-label" for="temaNecessidade">Tema / Necessidade de FormaÃ§Ã£o</label>
+                            <label class="form-label" for="temaNecessidade">Tema / Necessidade de Formação</label>
                             <input type="text" id="temaNecessidade" class="form-control" 
-                                   placeholder="Ex: GestÃ£o de stock de medicamentos" required>
+                                   placeholder="Ex: Gestão de stock de medicamentos" required>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="urgencia">UrgÃªncia</label>
+                            <label class="form-label" for="urgencia">Urgência</label>
                             <select id="urgencia" class="form-control" required>
                                 <option value="">Selecione...</option>
                                 <option value="Baixa">Baixa</option>
-                                <option value="Media">MÃ©dia</option>
+                                <option value="Media">Média</option>
                                 <option value="Alta">Alta</option>
-                                <option value="Critica">CrÃ­tica</option>
+                                <option value="Critica">Crítica</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="laboratorio">Marca ou LaboratÃ³rio</label>
+                            <label class="form-label" for="laboratorio">Marca ou Laboratório</label>
                             <input type="text" id="laboratorio" class="form-control" 
                                    placeholder="Ex: Bayer, Roche, etc.">
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="comentarios">ComentÃ¡rios Adicionais</label>
+                            <label class="form-label" for="comentarios">Comentários Adicionais</label>
                             <textarea id="comentarios" class="form-control" 
-                                      placeholder="InformaÃ§Ãµes adicionais sobre a necessidade de formaÃ§Ã£o"></textarea>
+                                      placeholder="Informações adicionais sobre a necessidade de formação"></textarea>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">âœ“ Submeter Pedido</button>
+                        <button type="submit" class="btn btn-primary">✓ Submeter Pedido</button>
                     </form>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">HistÃ³rico de Pedidos</h2>
+                        <h2 class="card-title">Histórico de Pedidos</h2>
                     </div>
                     <div id="historicoNecessidades">
                         <div class="loading active">
                             <div class="spinner"></div>
-                            <p>A carregar histÃ³rico...</p>
+                            <p>A carregar histórico...</p>
                         </div>
                     </div>
                 </div>
@@ -1685,8 +1685,8 @@
                 if (snapshot.empty) {
                     container.innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-state-icon">ðŸ“</div>
-                            <p class="empty-state-text">Ainda nÃ£o submeteu pedidos de formaÃ§Ã£o</p>
+                            <div class="empty-state-icon">📝</div>
+                            <p class="empty-state-text">Ainda não submeteu pedidos de formação</p>
                         </div>
                     `;
                     return;
@@ -1699,8 +1699,8 @@
                                 <tr>
                                     <th>Data</th>
                                     <th>Tema</th>
-                                    <th>UrgÃªncia</th>
-                                    <th>LaboratÃ³rio</th>
+                                    <th>Urgência</th>
+                                    <th>Laboratório</th>
                                     <th>Estado</th>
                                 </tr>
                             </thead>
@@ -1724,7 +1724,7 @@
                 `;
                 container.innerHTML = html;
             } catch (error) {
-                console.error('Erro ao carregar histÃ³rico:', error);
+                console.error('Erro ao carregar histórico:', error);
             }
         }
 
@@ -1741,7 +1741,7 @@
         function getEstadoBadge(estado) {
             const map = {
                 'Submetida': 'info',
-                'Em anÃ¡lise': 'warning',
+                'Em análise': 'warning',
                 'Planeada': 'success',
                 'Rejeitada': 'error'
             };
@@ -1749,17 +1749,17 @@
         }
 
         function loadHistoricoAvaliacoes() {
-            document.getElementById('pageTitle').textContent = 'HistÃ³rico de AvaliaÃ§Ãµes';
+            document.getElementById('pageTitle').textContent = 'Histórico de Avaliações';
 
             const content = `
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">Minhas AvaliaÃ§Ãµes Submetidas</h2>
+                        <h2 class="card-title">Minhas Avaliações Submetidas</h2>
                     </div>
                     <div id="avaliacoesContainer">
                         <div class="loading active">
                             <div class="spinner"></div>
-                            <p>A carregar avaliaÃ§Ãµes...</p>
+                            <p>A carregar avaliações...</p>
                         </div>
                     </div>
                 </div>
@@ -1781,8 +1781,8 @@
                 if (snapshot.empty) {
                     container.innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-state-icon">â­</div>
-                            <p class="empty-state-text">Ainda nÃ£o submeteu avaliaÃ§Ãµes</p>
+                            <div class="empty-state-icon">⭐</div>
+                            <p class="empty-state-text">Ainda não submeteu avaliações</p>
                         </div>
                     `;
                     return;
@@ -1802,10 +1802,10 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Data AvaliaÃ§Ã£o</th>
-                                    <th>FormaÃ§Ã£o</th>
+                                    <th>Data Avaliação</th>
+                                    <th>Formação</th>
                                     <th>Formador</th>
-                                    <th>AvaliaÃ§Ã£o Global</th>
+                                    <th>Avaliação Global</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1816,7 +1816,7 @@
                                             <td>${date.toLocaleDateString('pt-PT')}</td>
                                             <td>${eval.training.tema || 'N/A'}</td>
                                             <td>${eval.training.formador || 'N/A'}</td>
-                                            <td>${'â˜…'.repeat(eval.avaliacaoGlobal || 0)}${'â˜†'.repeat(5 - (eval.avaliacaoGlobal || 0))}</td>
+                                            <td>${'★'.repeat(eval.avaliacaoGlobal || 0)}${'☆'.repeat(5 - (eval.avaliacaoGlobal || 0))}</td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -1826,26 +1826,86 @@
                 `;
                 container.innerHTML = html;
             } catch (error) {
-                console.error('Erro ao carregar avaliaÃ§Ãµes:', error);
+                console.error('Erro ao carregar avaliações:', error);
             }
         }
 
+
+        window._allAvaliacoesBuff = [];
+        window.filtrarAvaliacoes = function() {
+            const fn = (document.getElementById('filtroNome')?.value || '').toLowerCase();
+            const ff = (document.getElementById('filtroFormacao')?.value || '').toLowerCase();
+            const filtered = window._allAvaliacoesBuff.filter(e =>
+                (e._nomeColab || '').toLowerCase().includes(fn) &&
+                (e.training?.tema || '').toLowerCase().includes(ff)
+            );
+            renderAvaliacoesTable(filtered);
+        };
+
+        async function carregarTodasAvaliacoes() {
+            try {
+                const snapshot = await db.collection('evaluations').get();
+                const container = document.getElementById('avaliacoesContainer');
+                if (snapshot.empty) {
+                    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⭐</div><p class="empty-state-text">Sem avaliações submetidas</p></div>`;
+                    return;
+                }
+                const [usersSnap, trainingsSnap] = await Promise.all([db.collection('users').get(), db.collection('trainings').get()]);
+                const usersMap = {}; usersSnap.docs.forEach(d => usersMap[d.id] = d.data());
+                const trainMap = {}; trainingsSnap.docs.forEach(d => trainMap[d.id] = d.data());
+                const evaluations = snapshot.docs.map(doc => {
+                    const d = doc.data();
+                    return { id: doc.id, ...d, training: trainMap[d.trainingId] || {}, _nomeColab: usersMap[d.userId]?.nome || d.userId || '' };
+                }).sort((a, b) => (b.dataSubmissao?.seconds || 0) - (a.dataSubmissao?.seconds || 0));
+                window._allAvaliacoesBuff = evaluations;
+                renderAvaliacoesTable(evaluations);
+            } catch (error) {
+                console.error('Erro ao carregar todas avaliações:', error);
+                showToast('Erro ao carregar avaliações: ' + error.message, 'error');
+            }
+        }
+
+        function renderAvaliacoesTable(evaluations) {
+            const container = document.getElementById('avaliacoesContainer');
+            if (!container) return;
+            if (!evaluations.length) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⭐</div><p class="empty-state-text">Nenhum resultado encontrado</p></div>`;
+                return;
+            }
+            const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
+            container.innerHTML = `<div class="table-container"><table><thead><tr><th>Data</th><th>Formação</th><th>Formador</th>${isGestor ? '<th>Colaborador</th>' : ''}<th>Global</th><th>Pedagógica</th><th>Domínio</th><th>Relevância</th><th>Duração</th><th>Afasta Prática?</th><th>Observações</th></tr></thead><tbody>${evaluations.map(e => { const date = e.dataSubmissao ? new Date(e.dataSubmissao.seconds * 1000) : null; const stars = n => n ? ('★'.repeat(n) + '☆'.repeat(5-n)) : '—'; return `<tr><td>${date ? date.toLocaleDateString('pt-PT') : '—'}</td><td><strong>${e.training?.tema || '—'}</strong></td><td>${e.training?.formador || '—'}</td>${isGestor ? `<td>${e._nomeColab}</td>` : ''}<td>${stars(e.avaliacaoGlobal)}</td><td>${stars(e.capacidadePedagogicaFormador)}</td><td>${stars(e.dominioTemaFormador)}</td><td>${stars(e.relevanciaParaTarefas || e.relevanciaTarefasDesempenha)}</td><td>${stars(e.duracaoAcao)}</td><td>${e.afastaDaPratica ? '<span class="badge badge-warning">Sim</span>' : '<span class="badge badge-success">Não</span>'}</td><td style="font-size:12px;max-width:200px;">${e.observacoesPropostas || e.observacoesPropostasImplementacao || '—'}</td></tr>`; }).join('')}</tbody></table></div>`;
+        }
+
+        window.exportAvaliacoesCSV = function() {
+            const data = window._allAvaliacoesBuff || [];
+            if (!data.length) { showToast('Sem dados para exportar', 'error'); return; }
+            const rows = [['Data','Colaborador','Formação','Formador','Global','Pedagógica','Domínio','Relevância','Duração','Afasta Prática?','Observações']];
+            data.forEach(e => {
+                const date = e.dataSubmissao ? new Date(e.dataSubmissao.seconds * 1000).toLocaleDateString('pt-PT') : '';
+                rows.push([date, e._nomeColab, e.training?.tema || '', e.training?.formador || '', e.avaliacaoGlobal || '', e.capacidadePedagogicaFormador || '', e.dominioTemaFormador || '', e.relevanciaParaTarefas || e.relevanciaTarefasDesempenha || '', e.duracaoAcao || '', e.afastaDaPratica ? 'Sim' : 'Não', e.observacoesPropostas || e.observacoesPropostasImplementacao || '']);
+            });
+            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('
+');
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'avaliacoes.csv'; a.click();
+        };
+
         // Gestor Functions
         async function loadTodasFormacoes() {
-            document.getElementById('pageTitle').textContent = 'GestÃ£o de FormaÃ§Ãµes';
+            document.getElementById('pageTitle').textContent = 'Gestão de Formações';
 
             const content = `
                 <div class="card" style="margin-bottom: 24px;">
                     <div class="card-header">
-                        <h2 class="card-title">Todas as FormaÃ§Ãµes</h2>
+                        <h2 class="card-title">Todas as Formações</h2>
                         <button class="btn btn-primary" onclick="navigateTo('criarFormacao')">
-                            âž• Nova FormaÃ§Ã£o
+                            ➕ Nova Formação
                         </button>
                     </div>
                     <div id="todasFormacoesContainer">
                         <div class="loading active">
                             <div class="spinner"></div>
-                            <p>A carregar formaÃ§Ãµes...</p>
+                            <p>A carregar formações...</p>
                         </div>
                     </div>
                 </div>
@@ -1866,10 +1926,10 @@
                 if (snapshot.empty) {
                     container.innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-state-icon">ðŸ“š</div>
-                            <p class="empty-state-text">Nenhuma formaÃ§Ã£o criada ainda</p>
+                            <div class="empty-state-icon">📚</div>
+                            <p class="empty-state-text">Nenhuma formação criada ainda</p>
                             <button class="btn btn-primary" onclick="navigateTo('criarFormacao')">
-                                Criar Primeira FormaÃ§Ã£o
+                                Criar Primeira Formação
                             </button>
                         </div>
                     `;
@@ -1890,8 +1950,8 @@
 
                 renderTodasFormacoes(trainings);
             } catch (error) {
-                console.error('Erro ao carregar formaÃ§Ãµes:', error);
-                showToast('Erro ao carregar formaÃ§Ãµes', 'error');
+                console.error('Erro ao carregar formações:', error);
+                showToast('Erro ao carregar formações', 'error');
             }
         }
 
@@ -1906,10 +1966,10 @@
                                 <th>Data</th>
                                 <th>Tema</th>
                                 <th>Formador</th>
-                                <th>DuraÃ§Ã£o</th>
+                                <th>Duração</th>
                                 <th>Participantes</th>
                                 <th>Estado</th>
-                                <th>AÃ§Ãµes</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1918,18 +1978,18 @@
                                 return `
                                     <tr>
                                         <td>${date.toLocaleDateString('pt-PT')}</td>
-                                        <td><strong>${t.tema || 'Sem tÃ­tulo'}</strong></td>
+                                        <td><strong>${t.tema || 'Sem título'}</strong></td>
                                         <td>${t.formador || '-'}</td>
                                         <td>${t.duracaoHoras || 0}h</td>
                                         <td>${t.numParticipantes}</td>
                                         <td><span class="badge badge-${getEstadoBadgeClass(t.estado)}">${t.estado}</span></td>
                                         <td>
-                                            <button class="btn btn-secondary btn-icon" onclick="editarFormacao('${t.id}')" title="Editar">âœï¸</button>
-                                            <button class="btn btn-warning btn-icon" onclick="gerirParticipantes('${t.id}')" title="Participantes">ðŸ‘¥</button>
+                                            <button class="btn btn-secondary btn-icon" onclick="editarFormacao('${t.id}')" title="Editar">✏️</button>
+                                            <button class="btn btn-warning btn-icon" onclick="gerirParticipantes('${t.id}')" title="Participantes">👥</button>
                                             ${t.estado === 'Concluida' && !t.avaliacaoAutorizada ? `
-                                                <button class="btn btn-success btn-icon" onclick="autorizarAvaliacao('${t.id}')" title="Autorizar AvaliaÃ§Ã£o">âœ“</button>
+                                                <button class="btn btn-success btn-icon" onclick="autorizarAvaliacao('${t.id}')" title="Autorizar Avaliação">✓</button>
                                             ` : ''}
-                                            <button class="btn btn-danger btn-icon" onclick="eliminarFormacao('${t.id}')" title="Eliminar">ðŸ—‘ï¸</button>
+                                            <button class="btn btn-danger btn-icon" onclick="eliminarFormacao('${t.id}')" title="Eliminar">🗑️</button>
                                         </td>
                                     </tr>
                                 `;
@@ -1946,7 +2006,7 @@
                 'Rascunho': 'info',
                 'Agendada': 'info',
                 'Concluida': 'success',
-                'Em avaliaÃ§Ã£o': 'warning',
+                'Em avaliação': 'warning',
                 'Cancelada': 'error'
             };
             return map[estado] || 'info';
@@ -1962,18 +2022,18 @@
             try {
                 await db.collection('trainings').doc(trainingId).update({
                     avaliacaoAutorizada: true,
-                    estado: 'Em avaliaÃ§Ã£o'
+                    estado: 'Em avaliação'
                 });
-                showToast('AvaliaÃ§Ã£o autorizada! Colaboradores podem agora avaliar.', 'success');
+                showToast('Avaliação autorizada! Colaboradores podem agora avaliar.', 'success');
                 carregarTodasFormacoes();
             } catch (error) {
-                console.error('Erro ao autorizar avaliaÃ§Ã£o:', error);
-                showToast('Erro ao autorizar avaliaÃ§Ã£o', 'error');
+                console.error('Erro ao autorizar avaliação:', error);
+                showToast('Erro ao autorizar avaliação', 'error');
             }
         }
 
         async function eliminarFormacao(trainingId) {
-            if (!confirm('Tem certeza que deseja eliminar esta formaÃ§Ã£o? Esta aÃ§Ã£o nÃ£o pode ser revertida.')) {
+            if (!confirm('Tem certeza que deseja eliminar esta formação? Esta ação não pode ser revertida.')) {
                 return;
             }
 
@@ -1998,11 +2058,11 @@
                 batch.delete(db.collection('trainings').doc(trainingId));
                 await batch.commit();
 
-                showToast('FormaÃ§Ã£o eliminada com sucesso!', 'success');
+                showToast('Formação eliminada com sucesso!', 'success');
                 carregarTodasFormacoes();
             } catch (error) {
-                console.error('Erro ao eliminar formaÃ§Ã£o:', error);
-                showToast('Erro ao eliminar formaÃ§Ã£o', 'error');
+                console.error('Erro ao eliminar formação:', error);
+                showToast('Erro ao eliminar formação', 'error');
             }
         }
 
@@ -2096,16 +2156,16 @@
         }
 
         function loadCriarFormacao() {
-            document.getElementById('pageTitle').textContent = 'Criar Nova FormaÃ§Ã£o';
+            document.getElementById('pageTitle').textContent = 'Criar Nova Formação';
 
             const content = `
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">Nova FormaÃ§Ã£o</h2>
+                        <h2 class="card-title">Nova Formação</h2>
                     </div>
                     <form id="formacaoForm" onsubmit="submitFormacao(event)">
                         <div class="form-group">
-                            <label class="form-label" for="tema">Tema da FormaÃ§Ã£o</label>
+                            <label class="form-label" for="tema">Tema da Formação</label>
                             <input type="text" id="tema" class="form-control" required>
                         </div>
 
@@ -2120,17 +2180,17 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="horaInicio">Hora de InÃ­cio</label>
+                            <label class="form-label" for="horaInicio">Hora de Início</label>
                             <input type="time" id="horaInicio" class="form-control" required>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="duracaoHoras">DuraÃ§Ã£o (horas)</label>
+                            <label class="form-label" for="duracaoHoras">Duração (horas)</label>
                             <input type="number" id="duracaoHoras" class="form-control" step="0.5" required>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="laboratorioMarca">LaboratÃ³rio / Marca</label>
+                            <label class="form-label" for="laboratorioMarca">Laboratório / Marca</label>
                             <input type="text" id="laboratorioMarca" class="form-control">
                         </div>
 
@@ -2140,12 +2200,12 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="descricao">DescriÃ§Ã£o</label>
+                            <label class="form-label" for="descricao">Descrição</label>
                             <textarea id="descricao" class="form-control"></textarea>
                         </div>
 
                         <div style="display: flex; gap: 12px;">
-                            <button type="submit" class="btn btn-primary">ðŸ’¾ Criar FormaÃ§Ã£o</button>
+                            <button type="submit" class="btn btn-primary">💾 Criar Formação</button>
                             <button type="button" class="btn btn-secondary" onclick="navigateTo('todasFormacoes')">Cancelar</button>
                         </div>
                     </form>
@@ -2178,23 +2238,23 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                showToast('FormaÃ§Ã£o criada com sucesso!', 'success');
+                showToast('Formação criada com sucesso!', 'success');
                 navigateTo('todasFormacoes');
             } catch (error) {
-                console.error('Erro ao criar formaÃ§Ã£o:', error);
-                showToast('Erro ao criar formaÃ§Ã£o', 'error');
+                console.error('Erro ao criar formação:', error);
+                showToast('Erro ao criar formação', 'error');
             }
         }
 
         function loadColaboradores() {
-            document.getElementById('pageTitle').textContent = 'GestÃ£o de Colaboradores';
+            document.getElementById('pageTitle').textContent = 'Gestão de Colaboradores';
 
             const content = `
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">Colaboradores</h2>
                         <button class="btn btn-primary" onclick="abrirModalColaborador()">
-                            âž• Novo Colaborador
+                            ➕ Novo Colaborador
                         </button>
                     </div>
                     <div id="colaboradoresContainer">
@@ -2221,7 +2281,7 @@
                 if (snapshot.empty) {
                     container.innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-state-icon">ðŸ‘¥</div>
+                            <div class="empty-state-icon">👥</div>
                             <p class="empty-state-text">Nenhum colaborador registado</p>
                         </div>
                     `;
@@ -2235,10 +2295,10 @@
                                 <tr>
                                     <th>Nome</th>
                                     <th>Email</th>
-                                    <th>FunÃ§Ã£o</th>
+                                    <th>Função</th>
                                     <th>Role</th>
                                     <th>Estado</th>
-                                    <th>AÃ§Ãµes</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2260,9 +2320,9 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <button class="btn btn-secondary btn-icon" onclick="editarColaborador('${doc.id}')" title="Editar">âœï¸</button>
-                                                <button class="btn btn-primary btn-icon" onclick="loadColaboradorDetail('${doc.id}')" title="Ver histÃ³rico" style="margin-left: 4px;">ðŸ“‹</button>
-                                                <button class="btn btn-danger btn-icon" onclick="eliminarColaborador('${doc.id}')" title="Eliminar" style="margin-left: 4px;">ðŸ—‘ï¸</button>
+                                                <button class="btn btn-secondary btn-icon" onclick="editarColaborador('${doc.id}')" title="Editar">✏️</button>
+                                                <button class="btn btn-primary btn-icon" onclick="loadColaboradorDetail('${doc.id}')" title="Ver histórico" style="margin-left: 4px;">📋</button>
+                                                <button class="btn btn-danger btn-icon" onclick="eliminarColaborador('${doc.id}')" title="Eliminar" style="margin-left: 4px;">🗑️</button>
                                             </td>
                                         </tr>
                                     `;
@@ -2289,7 +2349,7 @@
             try {
                 const doc = await db.collection('users').doc(userId).get();
                 if (!doc.exists) {
-                    showToast('Colaborador nÃ£o encontrado', 'error');
+                    showToast('Colaborador não encontrado', 'error');
                     return;
                 }
 
@@ -2328,7 +2388,7 @@
             const ativo = document.getElementById('colabAtivo').value === 'true';
 
             if (!nome || !email) {
-                showToast('Nome e email sÃ£o obrigatÃ³rios', 'error');
+                showToast('Nome e email são obrigatórios', 'error');
                 return;
             }
 
@@ -2347,12 +2407,12 @@
                                 .get();
 
                             if (snap.empty) {
-                                showToast('Email jÃ¡ existe no Auth mas nÃ£o estÃ¡ registado como utilizador', 'error');
+                                showToast('Email já existe no Auth mas não está registado como utilizador', 'error');
                                 return;
                             }
 
                             uid = snap.docs[0].id;
-                            showToast('Email jÃ¡ existe. A atualizar dados...', 'info');
+                            showToast('Email já existe. A atualizar dados...', 'info');
                         } else {
                             throw error;
                         }
@@ -2395,12 +2455,12 @@
         }
 
         function loadNecessidadesGestor() {
-            document.getElementById('pageTitle').textContent = 'Necessidades de FormaÃ§Ã£o';
+            document.getElementById('pageTitle').textContent = 'Necessidades de Formação';
 
             const content = `
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">Pedidos de Necessidades de FormaÃ§Ã£o</h2>
+                        <h2 class="card-title">Pedidos de Necessidades de Formação</h2>
                     </div>
                     <div id="necessidadesGestorContainer">
                         <div class="loading active">
@@ -2426,8 +2486,8 @@
                 if (snapshot.empty) {
                     container.innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-state-icon">ðŸ“</div>
-                            <p class="empty-state-text">Nenhum pedido de formaÃ§Ã£o</p>
+                            <div class="empty-state-icon">📝</div>
+                            <p class="empty-state-text">Nenhum pedido de formação</p>
                         </div>
                     `;
                     return;
@@ -2441,10 +2501,10 @@
                                     <th>Data</th>
                                     <th>Colaborador</th>
                                     <th>Tema</th>
-                                    <th>UrgÃªncia</th>
-                                    <th>LaboratÃ³rio</th>
+                                    <th>Urgência</th>
+                                    <th>Laboratório</th>
                                     <th>Estado</th>
-                                    <th>AÃ§Ãµes</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2462,7 +2522,7 @@
                                             <td>
                                                 <select class="form-control" style="width: 150px; padding: 6px;" onchange="atualizarEstadoNecessidade('${doc.id}', this.value)">
                                                     <option value="">Alterar estado...</option>
-                                                    <option value="Em anÃ¡lise">Em anÃ¡lise</option>
+                                                    <option value="Em análise">Em análise</option>
                                                     <option value="Planeada">Planeada</option>
                                                     <option value="Rejeitada">Rejeitada</option>
                                                 </select>
@@ -2497,12 +2557,12 @@
         }
 
         function loadRelatorios() {
-            document.getElementById('pageTitle').textContent = 'RelatÃ³rios e ExportaÃ§Ã£o';
+            document.getElementById('pageTitle').textContent = 'Relatórios e Exportação';
 
             const content = `
                 <div class="stats-grid">
                     <div class="stat-card blue">
-                        <div class="stat-label">Total FormaÃ§Ãµes</div>
+                        <div class="stat-label">Total Formações</div>
                         <div class="stat-value" id="statTotalFormacoes">-</div>
                     </div>
                     <div class="stat-card green">
@@ -2510,11 +2570,11 @@
                         <div class="stat-value" id="statColaboradores">-</div>
                     </div>
                     <div class="stat-card warning">
-                        <div class="stat-label">Horas FormaÃ§Ã£o Total</div>
+                        <div class="stat-label">Horas Formação Total</div>
                         <div class="stat-value" id="statHorasTotal">-</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">AvaliaÃ§Ãµes Submetidas</div>
+                        <div class="stat-label">Avaliações Submetidas</div>
                         <div class="stat-value" id="statAvaliacoes">-</div>
                     </div>
                 </div>
@@ -2523,10 +2583,10 @@
                     <div class="card-header">
                         <h2 class="card-title">Exportar Dados</h2>
                     </div>
-                    <p style="margin-bottom: 16px;">Exporte os dados do sistema com filtros avanÃ§ados.</p>
+                    <p style="margin-bottom: 16px;">Exporte os dados do sistema com filtros avançados.</p>
                     <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
                         <div class="form-group" style="flex:1;min-width:160px;">
-                            <label class="form-label">Data InÃ­cio</label>
+                            <label class="form-label">Data Início</label>
                             <input type="date" id="exportDataInicio" class="form-control">
                         </div>
                         <div class="form-group" style="flex:1;min-width:160px;">
@@ -2539,8 +2599,8 @@
                         </div>
                     </div>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                        <button class="btn btn-primary" onclick="exportarPlanoFormacoes()">ðŸ“Š Exportar Plano (CSV/Excel)</button>
-                        <button class="btn btn-secondary" onclick="exportarTodosDados()">ðŸ“¥ Exportar Tudo (CSV)</button>
+                        <button class="btn btn-primary" onclick="exportarPlanoFormacoes()">📊 Exportar Plano (CSV/Excel)</button>
+                        <button class="btn btn-secondary" onclick="exportarTodosDados()">📥 Exportar Tudo (CSV)</button>
                     </div>
                 </div>
             `;
@@ -2562,12 +2622,12 @@
                 document.getElementById('statHorasTotal').textContent = totalHoras;
                 document.getElementById('statAvaliacoes').textContent = evaluationsSnap.size;
             } catch (error) {
-                console.error('Erro ao carregar estatÃ­sticas:', error);
+                console.error('Erro ao carregar estatísticas:', error);
             }
         }
 
         async function exportarTodosDados() {
-            showToast('A preparar exportaÃ§Ã£o...', 'info');
+            showToast('A preparar exportação...', 'info');
 
             try {
                 const trainingsSnap = await db.collection('trainings').orderBy('data', 'desc').get();
@@ -2575,27 +2635,27 @@
                 const evaluationsSnap = await db.collection('evaluations').get();
                 const needsSnap = await db.collection('trainingNeeds').orderBy('createdAt', 'desc').get();
 
-                let csvFormacoes = 'Data,Tema,Formador,DuraÃ§Ã£o (h),LaboratÃ³rio,Local,Estado\n';
+                let csvFormacoes = 'Data,Tema,Formador,Duração (h),Laboratório,Local,Estado\n';
                 for (const doc of trainingsSnap.docs) {
                     const t = doc.data();
                     const date = t.data ? new Date(t.data.seconds * 1000).toLocaleDateString('pt-PT') : '';
                     csvFormacoes += `${date},${t.tema},${t.formador},${t.duracaoHoras},${t.laboratorioMarca || ''},${t.local || ''},${t.estado}\n`;
                 }
 
-                let csvColaboradores = 'Nome,Email,FunÃ§Ã£o,Role,Estado\n';
+                let csvColaboradores = 'Nome,Email,Função,Role,Estado\n';
                 usersSnap.docs.forEach(doc => {
                     const u = doc.data();
                     csvColaboradores += `${u.nome},${u.email},${u.funcao || ''},${u.role},${u.ativo ? 'Ativo' : 'Inativo'}\n`;
                 });
 
-                let csvAvaliacoes = 'Data,FormaÃ§Ã£o ID,User ID,DuraÃ§Ã£o,PedagÃ³gica,DomÃ­nio,RelevÃ¢ncia,Global,Afasta PrÃ¡tica\n';
+                let csvAvaliacoes = 'Data,Formação ID,User ID,Duração,Pedagógica,Domínio,Relevância,Global,Afasta Prática\n';
                 evaluationsSnap.docs.forEach(doc => {
                     const e = doc.data();
                     const date = e.dataSubmissao ? new Date(e.dataSubmissao.seconds * 1000).toLocaleDateString('pt-PT') : '';
-                    csvAvaliacoes += `${date},${e.trainingId},${e.userId},${e.duracaoAcao},${e.capacidadePedagogicaFormador},${e.dominioTemaFormador},${e.relevanciaParaTarefas},${e.avaliacaoGlobal},${e.afastaDaPratica ? 'Sim' : 'NÃ£o'}\n`;
+                    csvAvaliacoes += `${date},${e.trainingId},${e.userId},${e.duracaoAcao},${e.capacidadePedagogicaFormador},${e.dominioTemaFormador},${e.relevanciaParaTarefas},${e.avaliacaoGlobal},${e.afastaDaPratica ? 'Sim' : 'Não'}\n`;
                 });
 
-                let csvNecessidades = 'Data,Colaborador,Tema,UrgÃªncia,LaboratÃ³rio,Estado\n';
+                let csvNecessidades = 'Data,Colaborador,Tema,Urgência,Laboratório,Estado\n';
                 needsSnap.docs.forEach(doc => {
                     const n = doc.data();
                     const date = n.createdAt ? new Date(n.createdAt.seconds * 1000).toLocaleDateString('pt-PT') : '';
@@ -2628,7 +2688,7 @@
 
         // Utility Functions
     
-    // â”€â”€ EdiÃ§Ã£o de formaÃ§Ãµes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Edição de formações ──────────────────────────────────────────────────
     const _origCriarFormacao = loadCriarFormacao;
     async function loadCriarFormacaoWithEdit(editId = null) {
       _origCriarFormacao();
@@ -2639,8 +2699,8 @@
         const doc = await db.collection('trainings').doc(editId).get();
         if (!doc.exists) return;
         const t = doc.data();
-        document.querySelector('.card-title') && (document.querySelector('.card-title').textContent = 'Editar FormaÃ§Ã£o');
-        document.querySelector('button[type="submit"]') && (document.querySelector('button[type="submit"]').textContent = 'Guardar AlteraÃ§Ãµes');
+        document.querySelector('.card-title') && (document.querySelector('.card-title').textContent = 'Editar Formação');
+        document.querySelector('button[type="submit"]') && (document.querySelector('button[type="submit"]').textContent = 'Guardar Alterações');
         const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
         set('tema', t.tema);
         set('formador', t.formador);
@@ -2673,7 +2733,7 @@
                 descricao: document.getElementById('descricao').value,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
               });
-              showToast('FormaÃ§Ã£o atualizada com sucesso!', 'success');
+              showToast('Formação atualizada com sucesso!', 'success');
               navigateTo('todasFormacoes');
             } catch(err) { showToast('Erro ao guardar: ' + err.message, 'error'); }
           };
@@ -2701,9 +2761,9 @@
             toast.className = 'toast active';
             if (type === 'error') {
                 toast.classList.add('error');
-                icon.textContent = 'âœ•';
+                icon.textContent = '✕';
             } else {
-                icon.textContent = 'âœ“';
+                icon.textContent = '✓';
             }
 
             messageEl.textContent = message;
@@ -2752,9 +2812,9 @@
         }
         return 0;
     }
-    function trainingTitle(t){ return t.tema || t.titulo || t.nome || 'FormaÃ§Ã£o sem tÃ­tulo'; }
-    function trainingTrainer(t){ return t.formador || t.formadorNome || t.orador || 'â€”'; }
-    function trainingType(t){ return t.tipo || t.modalidade || 'â€”'; }
+    function trainingTitle(t){ return t.tema || t.titulo || t.nome || 'Formação sem título'; }
+    function trainingTrainer(t){ return t.formador || t.formadorNome || t.orador || '—'; }
+    function trainingType(t){ return t.tipo || t.modalidade || '—'; }
     function trainingDate(t){ return asDate(t.data || t.date || t.dataFormacao || t.scheduledAt); }
     function participantIds(t){
         const arr = t.participantes || t.participants || t.inscritos || [];
@@ -2857,7 +2917,7 @@
             const d = existingAttDoc.data();
             const confirmed = asDate(d.confirmedAt);
             if (confirmed && (Date.now() - confirmed.getTime()) > 24 * 60 * 60 * 1000) {
-                return showToast('O prazo de 24h para alterar a presenÃ§a jÃ¡ terminou.', 'error');
+                return showToast('O prazo de 24h para alterar a presença já terminou.', 'error');
             }
         }
         const firstConfirm = (existingAttDoc.exists && existingAttDoc.data().confirmedAt)
@@ -2871,7 +2931,7 @@
             confirmedAt: firstConfirm,
             confirmedByUser: true
         }, { merge: true });
-        showToast(status === 'present' ? 'PresenÃ§a confirmada. Tem 24h para avaliar e alterar a presenÃ§a.' : 'Falta registada.', 'success');
+        showToast(status === 'present' ? 'Presença confirmada. Tem 24h para avaliar e alterar a presença.' : 'Falta registada.', 'success');
         loadMinhasFormacoes();
     }
     window.setAttendance = setAttendance;
@@ -2906,10 +2966,10 @@
         if (!form || document.getElementById('proofUploadField')) return;
         const html = `
             <div class="form-group" id="proofUploadField">
-                <label class="form-label">Comprovativo da formaÃ§Ã£o (facultativo)</label>
+                <label class="form-label">Comprovativo da formação (facultativo)</label>
                 <div class="proof-upload-box">
                     <input type="file" id="comprovativoFile" class="form-control" accept="application/pdf,image/*" capture="environment">
-                    <div class="small-text" style="margin-top:8px;">No telemÃ³vel pode tirar fotografia; em desktop pode anexar PDF ou imagem. O ficheiro fica associado Ã  formaÃ§Ã£o.</div>
+                    <div class="small-text" style="margin-top:8px;">No telemóvel pode tirar fotografia; em desktop pode anexar PDF ou imagem. O ficheiro fica associado à formação.</div>
                 </div>
             </div>`;
         form.insertAdjacentHTML('beforeend', html);
@@ -2954,18 +3014,18 @@
         event.preventDefault();
         const trainingId = document.getElementById('evalTrainingId').value;
         const trainingDoc = await db.collection('trainings').doc(trainingId).get();
-        if (!trainingDoc.exists) return showToast('FormaÃ§Ã£o nÃ£o encontrada.', 'error');
+        if (!trainingDoc.exists) return showToast('Formação não encontrada.', 'error');
         const training = { id: trainingDoc.id, ...trainingDoc.data() };
-        if (!isParticipant(training, currentUser.uid)) return showToast('SÃ³ pode avaliar formaÃ§Ãµes onde estÃ¡ inscrito.', 'error');
-        if (resolvedStatus(training) !== 'realizada') return showToast('A avaliaÃ§Ã£o sÃ³ fica disponÃ­vel apÃ³s a formaÃ§Ã£o ser realizada.', 'error');
+        if (!isParticipant(training, currentUser.uid)) return showToast('Só pode avaliar formações onde está inscrito.', 'error');
+        if (resolvedStatus(training) !== 'realizada') return showToast('A avaliação só fica disponível após a formação ser realizada.', 'error');
 
         const attendanceDoc = await db.collection('attendance').doc(`${trainingId}_${currentUser.uid}`).get();
         const attendance = attendanceDoc.exists ? attendanceDoc.data() : null;
-        if (attendance && attendance.status === 'absent') return showToast('NÃ£o pode avaliar uma formaÃ§Ã£o em que nÃ£o compareceu.', 'error');
+        if (attendance && attendance.status === 'absent') return showToast('Não pode avaliar uma formação em que não compareceu.', 'error');
 
         const existingSnap = await db.collection('evaluations').where('trainingId','==',trainingId).where('userId','==',currentUser.uid).limit(1).get();
         const existing = existingSnap.empty ? null : { id: existingSnap.docs[0].id, ...existingSnap.docs[0].data() };
-        if (existing && !canEditEvaluation(existing)) return showToast('O prazo de ediÃ§Ã£o de 24h terminou.', 'error');
+        if (existing && !canEditEvaluation(existing)) return showToast('O prazo de edição de 24h terminou.', 'error');
 
         const file = document.getElementById('comprovativoFile')?.files?.[0] || null;
         let proof = null;
@@ -2989,7 +3049,7 @@
         const ref = existing ? db.collection('evaluations').doc(existing.id) : db.collection('evaluations').doc(`${trainingId}_${currentUser.uid}`);
         await ref.set(payload, { merge: true });
         closeModal('avaliacaoModal');
-        showToast(existing ? 'AvaliaÃ§Ã£o atualizada.' : 'AvaliaÃ§Ã£o registada.', 'success');
+        showToast(existing ? 'Avaliação atualizada.' : 'Avaliação registada.', 'success');
         loadMinhasFormacoes();
     };
 
@@ -2997,23 +3057,23 @@
         const menu = document.getElementById('sidebarMenu');
         const isGestor = currentUserData && currentUserData.role === 'gestorformacao';
         const items = isGestor ? [
-            ['dashboardGestao', 'Dashboard GestÃ£o', 'ðŸ '],
-            ['todasFormacoes', 'Todas as FormaÃ§Ãµes', 'ðŸ“š'],
-            ['criarFormacao', 'Criar FormaÃ§Ã£o', 'âž•'],
-            ['colaboradores', 'Colaboradores', 'ðŸ‘¥'],
-            ['necessidadesFormacao', 'Necessidades de FormaÃ§Ã£o', 'ðŸ“'],
-            ['relatorios', 'RelatÃ³rios e ExportaÃ§Ã£o', 'ðŸ“Š'],
-            ['formacoesMes', 'FormaÃ§Ãµes por MÃªs', 'ðŸ“…'],
-            ['objetivosPlano', 'Objetivos do Plano', 'ðŸŽ¯'],
-            ['sep', 'Ãrea Pessoal', ''],
-            ['minhasFormacoes', 'As Minhas FormaÃ§Ãµes', 'ðŸ“–'],
-            ['manifestarNecessidade', 'Necessidade de FormaÃ§Ã£o', 'âœï¸'],
-            ['historicoAvaliacoes', 'HistÃ³rico de AvaliaÃ§Ãµes', 'â­']
+            ['dashboardGestao', 'Dashboard Gestão', '🏠'],
+            ['todasFormacoes', 'Todas as Formações', '📚'],
+            ['criarFormacao', 'Criar Formação', '➕'],
+            ['colaboradores', 'Colaboradores', '👥'],
+            ['necessidadesFormacao', 'Necessidades de Formação', '📝'],
+            ['relatorios', 'Relatórios e Exportação', '📊'],
+            ['formacoesMes', 'Formações por Mês', '📅'],
+            ['objetivosPlano', 'Objetivos do Plano', '🎯'],
+            ['sep', 'Área Pessoal', ''],
+            ['minhasFormacoes', 'As Minhas Formações', '📖'],
+            ['manifestarNecessidade', 'Necessidade de Formação', '✍️'],
+            ['historicoAvaliacoes', 'Histórico de Avaliações', '⭐']
         ] : [
-            ['minhasFormacoes', 'As Minhas FormaÃ§Ãµes', 'ðŸ“–'],
-            ['manifestarNecessidade', 'Necessidade de FormaÃ§Ã£o', 'âœï¸'],
-            ['historicoAvaliacoes', 'HistÃ³rico de AvaliaÃ§Ãµes', 'â­'],
-            ...(currentUserData?.funcao === 'FarmacÃªutico' ? [['meusCreditos', 'Os Meus CrÃ©ditos OF', 'ðŸ…']] : [])
+            ['minhasFormacoes', 'As Minhas Formações', '📖'],
+            ['manifestarNecessidade', 'Necessidade de Formação', '✍️'],
+            ['historicoAvaliacoes', 'Histórico de Avaliações', '⭐'],
+            ...(currentUserData?.funcao === 'Farmacêutico' ? [['meusCreditos', 'Os Meus Créditos OF', '🏅']] : [])
         ];
         menu.innerHTML = items.map(([id, label, icon]) => id === 'sep'
             ? `<div style="padding:8px 20px; margin:8px 0; border-bottom:1px solid var(--color-border);"><small style="color: var(--color-text-secondary); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${label}</small></div>`
@@ -3054,25 +3114,25 @@
     };
 
     window.loadDashboardGestao = async function(){
-        document.getElementById('pageTitle').textContent = 'Dashboard GestÃ£o';
+        document.getElementById('pageTitle').textContent = 'Dashboard Gestão';
         document.getElementById('contentArea').innerHTML = `
             <div style="background:linear-gradient(135deg,var(--color-accent-blue),var(--color-accent-green));border-radius:12px;padding:20px 24px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow-md);">
                 <div>
-                    <h3 style="font-size:18px;font-weight:700;color:var(--color-text-primary);">ðŸ“‹ Plano de FormaÃ§Ãµes Anual</h3>
+                    <h3 style="font-size:18px;font-weight:700;color:var(--color-text-primary);">📋 Plano de Formações Anual</h3>
                     <p style="color:var(--color-text-secondary);font-size:13px;margin-top:4px;">Visualize e imprima o plano completo com todos os dados</p>
                 </div>
                 <button class="btn btn-primary" onclick="verPlanoFormacoes()">Ver Plano</button>
             </div>
             <div class="stats-grid">
-                <div class="stat-card blue"><div class="stat-label">FormaÃ§Ãµes este ano</div><div class="stat-value" id="kpiFormacoesAno">-</div></div>
+                <div class="stat-card blue"><div class="stat-label">Formações este ano</div><div class="stat-value" id="kpiFormacoesAno">-</div></div>
                 <div class="stat-card green"><div class="stat-label">Horas frequentadas</div><div class="stat-value" id="kpiHorasAno">-</div></div>
-                <div class="stat-card warning"><div class="stat-label">AvaliaÃ§Ãµes pendentes</div><div class="stat-value" id="kpiPendentes">-</div></div>
+                <div class="stat-card warning"><div class="stat-label">Avaliações pendentes</div><div class="stat-value" id="kpiPendentes">-</div></div>
                 <div class="stat-card"><div class="stat-label">Colaboradores ativos</div><div class="stat-value" id="kpiColabsAtivos">-</div></div>
             </div>
             <div class="dashboard-split">
                 <div class="card">
-                    <div class="card-header"><h2 class="card-title">Formandos com formaÃ§Ãµes por avaliar</h2></div>
-                    <div class="section-subtitle">SÃ³ entram colaboradores inscritos, com presenÃ§a confirmada e sem avaliaÃ§Ã£o submetida.</div>
+                    <div class="card-header"><h2 class="card-title">Formandos com formações por avaliar</h2></div>
+                    <div class="section-subtitle">Só entram colaboradores inscritos, com presença confirmada e sem avaliação submetida.</div>
                     <div id="pendingEvalList" class="alert-list"></div>
                 </div>
                 <div class="card">
@@ -3081,15 +3141,15 @@
                 </div>
             </div>
             <div class="card">
-                <div class="card-header"><h2 class="card-title">AutomaÃ§Ã£o e controlo</h2></div>
+                <div class="card-header"><h2 class="card-title">Automação e controlo</h2></div>
                 <div class="muted-box">
                     <div class="kpi-row">
-                        <span class="kpi-pill">Estados automÃ¡ticos ativos</span>
+                        <span class="kpi-pill">Estados automáticos ativos</span>
                         <span class="kpi-pill">Tempo registado em minutos</span>
-                        <span class="kpi-pill">Horas visÃ­veis por colaborador</span>
-                        <span class="kpi-pill">Backup semanal configurÃ¡vel para ${PRO.backupEmail}</span>
+                        <span class="kpi-pill">Horas visíveis por colaborador</span>
+                        <span class="kpi-pill">Backup semanal configurável para ${PRO.backupEmail}</span>
                     </div>
-                    <div class="small-text" style="margin-top:12px;">A automaÃ§Ã£o de backup semanal por email e a sincronizaÃ§Ã£o direta para a pasta Drive exigem uma Cloud Function ou Google Apps Script. A interface jÃ¡ fica preparada para essa integraÃ§Ã£o.</div>
+                    <div class="small-text" style="margin-top:12px;">A automação de backup semanal por email e a sincronização direta para a pasta Drive exigem uma Cloud Function ou Google Apps Script. A interface já fica preparada para essa integração.</div>
                 </div>
             </div>`;
 
@@ -3122,10 +3182,10 @@
             document.getElementById('kpiColabsAtivos').textContent = Object.values(usersMap).filter(u => u.ativo !== false).length;
 
             const pendingList = document.getElementById('pendingEvalList');
-            if (!pendingRows.length) pendingList.innerHTML = `<div class="empty-state"><div class="empty-state-icon">âœ…</div><div class="empty-state-text">NÃ£o existem avaliaÃ§Ãµes pendentes com presenÃ§a confirmada.</div></div>`;
+            if (!pendingRows.length) pendingList.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">Não existem avaliações pendentes com presença confirmada.</div></div>`;
             else pendingList.innerHTML = pendingRows
                 .sort((a,b) => (a.date?.getTime()||0) - (b.date?.getTime()||0))
-                .map(r => `<div class="alert-item"><strong>${usersMap[r.uid]?.nome || 'Colaborador'}</strong><div class="small-text">${r.training} Â· ${dateText(r.date)}</div></div>`)
+                .map(r => `<div class="alert-item"><strong>${usersMap[r.uid]?.nome || 'Colaborador'}</strong><div class="small-text">${r.training} · ${dateText(r.date)}</div></div>`)
                 .join('');
 
             const ranked = Object.entries(hoursByUser)
@@ -3141,7 +3201,7 @@
 
     window.loadCriarFormacao = async function(editId = null){
         const isEdit = !!editId;
-        document.getElementById('pageTitle').textContent = isEdit ? 'Editar FormaÃ§Ã£o' : 'Criar Nova FormaÃ§Ã£o';
+        document.getElementById('pageTitle').textContent = isEdit ? 'Editar Formação' : 'Criar Nova Formação';
         const usersMap = await getUsersMap();
         let record = null;
         if (isEdit) {
@@ -3157,11 +3217,11 @@
         })();
         document.getElementById('contentArea').innerHTML = `
             <div class="card">
-                <div class="card-header"><h2 class="card-title">${isEdit ? 'Editar formaÃ§Ã£o' : 'Nova FormaÃ§Ã£o'}</h2></div>
+                <div class="card-header"><h2 class="card-title">${isEdit ? 'Editar formação' : 'Nova Formação'}</h2></div>
                 <form id="formacaoFormPro">
-                    <div class="form-group"><label class="form-label">Tema da FormaÃ§Ã£o</label><input id="temaPro" class="form-control" required value="${record ? (trainingTitle(record).replace(/"/g,'&quot;')) : ''}"></div>
+                    <div class="form-group"><label class="form-label">Tema da Formação</label><input id="temaPro" class="form-control" required value="${record ? (trainingTitle(record).replace(/"/g,'&quot;')) : ''}"></div>
                     <div class="form-group"><label class="form-label">Data e hora</label><input id="dataPro" type="datetime-local" class="form-control" required value="${dateValue}"></div>
-                    <div class="form-group"><label class="form-label">DuraÃ§Ã£o (minutos)</label><input id="duracaoMinutosPro" type="number" min="1" class="form-control" required value="${record ? normalizeDurationMinutes(record) : 60}"></div>
+                    <div class="form-group"><label class="form-label">Duração (minutos)</label><input id="duracaoMinutosPro" type="number" min="1" class="form-control" required value="${record ? normalizeDurationMinutes(record) : 60}"></div>
                     <div class="form-group"><label class="form-label">Formador</label><input id="formadorPro" class="form-control" value="${record ? ((trainingTrainer(record) || '').replace(/"/g,'&quot;')) : ''}"></div>
                     <div class="form-group"><label class="form-label">Tipo / modalidade</label><input id="tipoPro" class="form-control" value="${record ? ((trainingType(record) || '').replace(/"/g,'&quot;')) : ''}"></div>
                     <div class="form-group"><label class="form-label">Estado</label>
@@ -3169,13 +3229,13 @@
                             ${['agendada','realizada','adiada','cancelada'].map(s => `<option value="${s}" ${record && resolvedStatus(record)===s?'selected':''}>${s}</option>`).join('')}
                         </select>
                     </div>
-                    <div class="form-group"><label class="form-label">DescriÃ§Ã£o / notas</label><textarea id="descricaoPro" class="form-control">${record ? ((record.descricao || record.notas || '').replace(/</g,'&lt;')) : ''}</textarea></div>
-                    <div class="form-group"><label class="form-label">Objetivos da FormaÃ§Ã£o</label><textarea id="objetivosPro" class="form-control" rows="3" placeholder="Descreva os objetivos desta formaÃ§Ã£o...">${record ? ((record.objetivos || '').replace(/</g,'&lt;')) : ''}</textarea></div>
-                    <div class="form-group"><label class="form-label">Entidade Formadora</label><input id="entidadeFormadoraPro" class="form-control" placeholder="Ex: Ordem dos FarmacÃªuticos, ANF..." value="${record ? ((record.entidadeFormadora || '').replace(/\"/g,'&quot;')) : ''}"></div>
-                    <div class="form-group"><label class="form-label">CrÃ©ditos OF <small style="color:var(--color-text-secondary)">(atribuÃ­dos automaticamente a FarmacÃªuticos apÃ³s confirmaÃ§Ã£o de presenÃ§a)</small></label><input id="creditosOFPro" type="number" min="0" step="0.5" class="form-control" placeholder="Ex: 2.5" value="${record ? (record.creditosOF || 0) : 0}"></div>
-                    <div class="form-group"><label class="form-label">Participantes inscritos</label><div class="participants-grid">${Object.values(usersMap).filter(u => u.ativo !== false).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'', 'pt')).map(u => `<label class="checkbox-item"><input type="checkbox" value="${u.id}" ${selected.has(u.id)?'checked':''}><span><strong>${u.nome || u.email}</strong><br><small>${u.funcao || ''}${u.role === 'gestorformacao' ? ' Â· Gestor de FormaÃ§Ã£o' : ''}</small></span></label>`).join('')}</div></div>
+                    <div class="form-group"><label class="form-label">Descrição / notas</label><textarea id="descricaoPro" class="form-control">${record ? ((record.descricao || record.notas || '').replace(/</g,'&lt;')) : ''}</textarea></div>
+                    <div class="form-group"><label class="form-label">Objetivos da Formação</label><textarea id="objetivosPro" class="form-control" rows="3" placeholder="Descreva os objetivos desta formação...">${record ? ((record.objetivos || '').replace(/</g,'&lt;')) : ''}</textarea></div>
+                    <div class="form-group"><label class="form-label">Entidade Formadora</label><input id="entidadeFormadoraPro" class="form-control" placeholder="Ex: Ordem dos Farmacêuticos, ANF..." value="${record ? ((record.entidadeFormadora || '').replace(/\"/g,'&quot;')) : ''}"></div>
+                    <div class="form-group"><label class="form-label">Créditos OF <small style="color:var(--color-text-secondary)">(atribuídos automaticamente a Farmacêuticos após confirmação de presença)</small></label><input id="creditosOFPro" type="number" min="0" step="0.5" class="form-control" placeholder="Ex: 2.5" value="${record ? (record.creditosOF || 0) : 0}"></div>
+                    <div class="form-group"><label class="form-label">Participantes inscritos</label><div class="participants-grid">${Object.values(usersMap).filter(u => u.ativo !== false).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'', 'pt')).map(u => `<label class="checkbox-item"><input type="checkbox" value="${u.id}" ${selected.has(u.id)?'checked':''}><span><strong>${u.nome || u.email}</strong><br><small>${u.funcao || ''}${u.role === 'gestorformacao' ? ' · Gestor de Formação' : ''}</small></span></label>`).join('')}</div></div>
                     <div class="actions-row">
-                        <button class="btn btn-primary" type="submit">${isEdit ? 'Guardar AlteraÃ§Ãµes' : 'Criar FormaÃ§Ã£o'}</button>
+                        <button class="btn btn-primary" type="submit">${isEdit ? 'Guardar Alterações' : 'Criar Formação'}</button>
                         <button class="btn btn-secondary" type="button" onclick="navigateTo('todasFormacoes')">Cancelar</button>
                     </div>
                 </form>
@@ -3206,7 +3266,7 @@
             }
             const ref = isEdit ? db.collection('trainings').doc(editId) : db.collection('trainings').doc();
             await ref.set(payload, { merge: true });
-            showToast(isEdit ? 'FormaÃ§Ã£o atualizada.' : 'FormaÃ§Ã£o criada.', 'success');
+            showToast(isEdit ? 'Formação atualizada.' : 'Formação criada.', 'success');
             navigateTo('todasFormacoes');
         });
     };
@@ -3214,10 +3274,10 @@
     window.editTraining = function(trainingId){ loadCriarFormacao(trainingId); };
 
     window.loadTodasFormacoes = async function(){
-        document.getElementById('pageTitle').textContent = 'GestÃ£o de FormaÃ§Ãµes';
+        document.getElementById('pageTitle').textContent = 'Gestão de Formações';
         document.getElementById('contentArea').innerHTML = `
             <div class="card" style="margin-bottom:24px;">
-                <div class="card-header"><h2 class="card-title">Todas as FormaÃ§Ãµes</h2><button class="btn btn-primary" onclick="navigateTo('criarFormacao')">âž• Nova FormaÃ§Ã£o</button></div>
+                <div class="card-header"><h2 class="card-title">Todas as Formações</h2><button class="btn btn-primary" onclick="navigateTo('criarFormacao')">➕ Nova Formação</button></div>
                 <div id="todasFormacoesContainer"></div>
             </div>`;
         await ensureAutoStatus();
@@ -3235,12 +3295,12 @@
                             <div>
                                 <div class="training-title">${trainingTitle(t)}</div>
                                 <div class="training-meta">
-                                    <div class="training-meta-item">ðŸ“… ${dateText(trainingDate(t))}</div>
-                                    <div class="training-meta-item">â±ï¸ ${normalizeDurationMinutes(t)} min</div>
-                                    <div class="training-meta-item">ðŸŽ“ ${trainingTrainer(t)}</div>
-                                    <div class="training-meta-item">ðŸ‘¥ ${ids.length} inscritos</div>
-                                    ${t.entidadeFormadora ? `<div class="training-meta-item">ðŸ¢ ${t.entidadeFormadora}</div>` : ''}
-                                    ${t.creditosOF ? `<div class="training-meta-item">ðŸ… ${t.creditosOF} crÃ©ditos OF</div>` : ''}
+                                    <div class="training-meta-item">📅 ${dateText(trainingDate(t))}</div>
+                                    <div class="training-meta-item">⏱️ ${normalizeDurationMinutes(t)} min</div>
+                                    <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
+                                    <div class="training-meta-item">👥 ${ids.length} inscritos</div>
+                                    ${t.entidadeFormadora ? `<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>` : ''}
+                                    ${t.creditosOF ? `<div class="training-meta-item">🏅 ${t.creditosOF} créditos OF</div>` : ''}
                                 </div>
                             </div>
                             <div>${statusBadge(resolvedStatus(t))}</div>
@@ -3248,30 +3308,30 @@
                         <div class="kpi-row">
                             <span class="kpi-pill">Presentes: ${presentCount}</span>
                             <span class="kpi-pill">Faltas: ${absentCount}</span>
-                            <span class="kpi-pill">AvaliaÃ§Ãµes: ${evalCount}</span>
+                            <span class="kpi-pill">Avaliações: ${evalCount}</span>
                         </div>
                         <div class="small-text" style="margin-top:10px;">${ids.map(uid => usersMap[uid]?.nome || uid).join(', ') || 'Sem participantes.'}</div>
                         <div class="actions-row">
-                            <button class="btn btn-secondary" onclick="editTraining('${t.id}')">âœï¸ Editar</button>
-                            <button class="btn btn-danger btn-icon" onclick="anularFormacao('${t.id}')" title="Anular FormaÃ§Ã£o">ðŸš«</button>
+                            <button class="btn btn-secondary" onclick="editTraining('${t.id}')">✏️ Editar</button>
+                            <button class="btn btn-danger btn-icon" onclick="anularFormacao('${t.id}')" title="Anular Formação">🚫</button>
                         </div>
                     </div>`;
             }).join('');
-            container.innerHTML = cards || `<div class="empty-state"><div class="empty-state-icon">ðŸ“š</div><div class="empty-state-text">Ainda nÃ£o existem formaÃ§Ãµes.</div></div>`;
+            container.innerHTML = cards || `<div class="empty-state"><div class="empty-state-icon">📚</div><div class="empty-state-text">Ainda não existem formações.</div></div>`;
         };
         await render();
         activeUnsubscribe = db.collection('trainings').onSnapshot(render);
     };
 
     window.loadMinhasFormacoes = async function(){
-        document.getElementById('pageTitle').textContent = 'As Minhas FormaÃ§Ãµes';
+        document.getElementById('pageTitle').textContent = 'As Minhas Formações';
         document.getElementById('contentArea').innerHTML = `
             <div class="stats-grid">
-                <div class="stat-card blue"><div class="stat-label">FormaÃ§Ãµes Futuras</div><div class="stat-value" id="statFuturas">-</div></div>
+                <div class="stat-card blue"><div class="stat-label">Formações Futuras</div><div class="stat-value" id="statFuturas">-</div></div>
                 <div class="stat-card green"><div class="stat-label">Horas frequentadas</div><div class="stat-value" id="statHoras">-</div></div>
                 <div class="stat-card warning"><div class="stat-label">Por avaliar</div><div class="stat-value" id="statAvaliar">-</div></div>
             </div>
-            <div class="card"><div class="card-header"><h2 class="card-title">FormaÃ§Ãµes organizadas por mÃªs</h2></div><div id="minhasFormacoesContainer"></div></div>`;
+            <div class="card"><div class="card-header"><h2 class="card-title">Formações organizadas por mês</h2></div><div id="minhasFormacoesContainer"></div></div>`;
 
         const render = async () => {
             const [trainings, attendanceMap, evalMap] = await Promise.all([getAllTrainings(), getAttendanceMap(), getEvaluationsMap()]);
@@ -3305,9 +3365,9 @@
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         <div>
                             <h3 style="font-size:16px;font-weight:700;">${month}</h3>
-                            <p style="color:var(--color-text-secondary);font-size:12px;margin-top:2px;">${rows.length} formaÃ§Ã£o(Ãµes) Â· clique para ${isCurrentMonth?'ver':'expandir'}</p>
+                            <p style="color:var(--color-text-secondary);font-size:12px;margin-top:2px;">${rows.length} formação(ões) · clique para ${isCurrentMonth?'ver':'expandir'}</p>
                         </div>
-                        <span id="${monthId}-arrow" style="font-size:20px;transition:transform 0.2s;">${isCurrentMonth?'ðŸ”½':'â–¶ï¸'}</span>
+                        <span id="${monthId}-arrow" style="font-size:20px;transition:transform 0.2s;">${isCurrentMonth?'🔽':'▶️'}</span>
                     </div>
                     <div id="${monthId}" style="display:${isCurrentMonth?'block':'none'};margin-top:14px;border-top:1px solid var(--color-border);padding-top:12px;" onclick="event.stopPropagation()">
                         ${rows.map(({ t, dt, att, ev, status }) => {
@@ -3320,27 +3380,27 @@
                                     <div style="flex:1;">
                                         <div class="training-title" style="font-size:15px;">${trainingTitle(t)}</div>
                                         <div class="training-meta" style="margin-top:6px;">
-                                            <div class="training-meta-item">ðŸ“… ${dateText(dt)}</div>
-                                            <div class="training-meta-item">â±ï¸ ${hoursLabelFromMinutes(mins)}</div>
-                                            <div class="training-meta-item">ðŸŽ“ ${trainingTrainer(t)}</div>
-                                            ${t.entidadeFormadora ? `<div class="training-meta-item">ðŸ¢ ${t.entidadeFormadora}</div>` : ''}
+                                            <div class="training-meta-item">📅 ${dateText(dt)}</div>
+                                            <div class="training-meta-item">⏱️ ${hoursLabelFromMinutes(mins)}</div>
+                                            <div class="training-meta-item">🎓 ${trainingTrainer(t)}</div>
+                                            ${t.entidadeFormadora ? `<div class="training-meta-item">🏢 ${t.entidadeFormadora}</div>` : ''}
                                         </div>
                                     </div>
                                     <div>${statusBadge(status)}</div>
                                 </div>
                                 <div class="kpi-row">
-                                    <span class="kpi-pill ${att?.status==='present'?'':''}">PresenÃ§a: ${att?.status === 'present' ? 'âœ“ Confirmada' : att?.status === 'absent' ? 'âœ— NÃ£o compareceu' : 'â³ Pendente'}</span>
-                                    <span class="kpi-pill">AvaliaÃ§Ã£o: ${ev ? 'âœ“ Submetida' : 'Por fazer'}</span>
-                                    ${t.creditosOF ? `<span class="kpi-pill">ðŸ… ${t.creditosOF} crÃ©d. OF</span>` : ''}
+                                    <span class="kpi-pill ${att?.status==='present'?'':''}">Presença: ${att?.status === 'present' ? '✓ Confirmada' : att?.status === 'absent' ? '✗ Não compareceu' : '⏳ Pendente'}</span>
+                                    <span class="kpi-pill">Avaliação: ${ev ? '✓ Submetida' : 'Por fazer'}</span>
+                                    ${t.creditosOF ? `<span class="kpi-pill">🏅 ${t.creditosOF} créd. OF</span>` : ''}
                                 </div>
                                 <div class="actions-row" onclick="event.stopPropagation()">
-                                    ${status === 'realizada' && att?.status !== 'absent' && att?.status !== 'present' ? `<button class="btn btn-danger" onclick="setAttendance('${t.id}','absent')" style="font-size:13px;">âœ— NÃ£o compareci</button>` : ''}
-                                    ${att?.status === 'absent' ? `<span class="badge badge-error">âœ— NÃ£o compareceu</span>` : ''}
-                                    ${att?.status === 'present' ? `<span class="badge badge-success">âœ“ PresenÃ§a confirmada pelo gestor</span>` : ''}
-                                    ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${t.id}')">${ev ? 'Editar AvaliaÃ§Ã£o' : 'â­ Avaliar FormaÃ§Ã£o'}</button>` : ''}
-                                    ${ev && !canEditEval ? `<span class="small-text">Janela de ediÃ§Ã£o da avaliaÃ§Ã£o encerrada.</span>` : ''}
-                                    <label class="btn btn-secondary" style="cursor:pointer;">ðŸ“Ž Comprovativo<input type="file" style="display:none" accept="application/pdf,image/*" capture="environment" onchange="window.quickProofUpload('${t.id}', this)"></label>
-                                    <button class="btn btn-secondary" style="font-size:12px;" onclick="abrirDetalheFormacao('${t.id}')">ðŸ” Ver detalhes</button>
+                                    ${status === 'realizada' && att?.status !== 'absent' && att?.status !== 'present' ? `<button class="btn btn-danger" onclick="setAttendance('${t.id}','absent')" style="font-size:13px;">✗ Não compareci</button>` : ''}
+                                    ${att?.status === 'absent' ? `<span class="badge badge-error">✗ Não compareceu</span>` : ''}
+                                    ${att?.status === 'present' ? `<span class="badge badge-success">✓ Presença confirmada pelo gestor</span>` : ''}
+                                    ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${t.id}')">${ev ? 'Editar Avaliação' : '⭐ Avaliar Formação'}</button>` : ''}
+                                    ${ev && !canEditEval ? `<span class="small-text">Janela de edição da avaliação encerrada.</span>` : ''}
+                                    <label class="btn btn-secondary" style="cursor:pointer;">📎 Comprovativo<input type="file" style="display:none" accept="application/pdf,image/*" capture="environment" onchange="window.quickProofUpload('${t.id}', this)"></label>
+                                    <button class="btn btn-secondary" style="font-size:12px;" onclick="abrirDetalheFormacao('${t.id}')">🔍 Ver detalhes</button>
                                 </div>
                             </div>`;
                         }).join('')}
@@ -3348,7 +3408,7 @@
                 </div>`;
             }).join('');
 
-container.innerHTML = html || `<div class="empty-state"><div class="empty-state-icon">ðŸ“–</div><div class="empty-state-text">Ainda nÃ£o estÃ¡ inscrito em formaÃ§Ãµes.</div></div>`;
+container.innerHTML = html || `<div class="empty-state"><div class="empty-state-icon">📖</div><div class="empty-state-text">Ainda não está inscrito em formações.</div></div>`;
         };
         window.quickProofUpload = async function(trainingId, input){
             const file = input.files?.[0];
@@ -3361,20 +3421,20 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
     };
 
     window.loadRelatorios = function(){
-        document.getElementById('pageTitle').textContent = 'RelatÃ³rios e ExportaÃ§Ã£o';
+        document.getElementById('pageTitle').textContent = 'Relatórios e Exportação';
         document.getElementById('contentArea').innerHTML = `
             <div class="card">
-                <div class="card-header"><h2 class="card-title">ExportaÃ§Ã£o com intervalo temporal</h2></div>
+                <div class="card-header"><h2 class="card-title">Exportação com intervalo temporal</h2></div>
                 <div class="filters-bar">
                     <div class="filter-item"><label class="form-label">Data inicial</label><input id="reportStart" type="date" class="form-control"></div>
                     <div class="filter-item"><label class="form-label">Data final</label><input id="reportEnd" type="date" class="form-control"></div>
                 </div>
                 <div class="actions-row">
                     <button class="btn btn-primary" onclick="exportCollaboratorHours()">1) Exportar por colaborador</button>
-                    <button class="btn btn-secondary" onclick="exportAllEvaluations()">2) Exportar avaliaÃ§Ãµes</button>
-                    <button class="btn btn-success" onclick="exportTrainingSummary()">3) Exportar resumo das formaÃ§Ãµes</button>
+                    <button class="btn btn-secondary" onclick="exportAllEvaluations()">2) Exportar avaliações</button>
+                    <button class="btn btn-success" onclick="exportTrainingSummary()">3) Exportar resumo das formações</button>
                 </div>
-                <div class="small-text" style="margin-top:14px;">Os totais por colaborador sÃ£o calculados em horas frequentadas, mas a formaÃ§Ã£o continua a ser registada em minutos.</div>
+                <div class="small-text" style="margin-top:14px;">Os totais por colaborador são calculados em horas frequentadas, mas a formação continua a ser registada em minutos.</div>
             </div>`;
     };
 
@@ -3387,7 +3447,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
 
 
     window.loadColaboradorDetail = async function(uid){
-        document.getElementById('pageTitle').textContent = 'HistÃ³rico do Colaborador';
+        document.getElementById('pageTitle').textContent = 'Histórico do Colaborador';
         document.getElementById('contentArea').innerHTML = `<div class="card"><div class="loading active"><div class="spinner"></div><p>A carregar...</p></div></div>`;
         const [usersMap, trainings, attendanceMap, evalMap] = await Promise.all([
             getUsersMap(), getAllTrainings(), getAttendanceMap(), getEvaluationsMap()
@@ -3404,49 +3464,49 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
             const mins = att?.status === 'present' ? normalizeDurationMinutes(t) : 0;
             totalMins += mins;
             const presenca = att?.status === 'present'
-                ? '<span class="badge badge-success">âœ… Presente</span>'
+                ? '<span class="badge badge-success">✅ Presente</span>'
                 : att?.status === 'absent'
-                ? '<span class="badge badge-error">âŒ Falta</span>'
-                : '<span class="badge badge-warning">â³ Pendente</span>';
+                ? '<span class="badge badge-error">❌ Falta</span>'
+                : '<span class="badge badge-warning">⏳ Pendente</span>';
             const aval = ev
-                ? `<span class="badge badge-success">â­ ${ev.avaliacaoGlobal||'?'}/5</span>`
+                ? `<span class="badge badge-success">⭐ ${ev.avaliacaoGlobal||'?'}/5</span>`
                 : '<span class="badge badge-warning">Por fazer</span>';
             return `<tr>
                 <td><strong>${trainingTitle(t)}</strong></td>
                 <td>${dateText(trainingDate(t))}</td>
                 <td>${statusBadge(resolvedStatus(t))}</td>
                 <td>${presenca}</td>
-                <td>${mins ? hoursLabelFromMinutes(mins) : 'â€”'}</td>
+                <td>${mins ? hoursLabelFromMinutes(mins) : '—'}</td>
                 <td>${aval}</td>
-                <td style="font-size:12px;max-width:200px;">${ev?.observacoesPropostasImplementacao || 'â€”'}</td>
+                <td style="font-size:12px;max-width:200px;">${ev?.observacoesPropostasImplementacao || '—'}</td>
             </tr>`;
         }).join('');
         document.getElementById('contentArea').innerHTML = `
             <div class="card">
                 <div class="card-header">
                     <div>
-                        <h2 class="card-title">ðŸ“‹ ${u.nome || u.email}</h2>
-                        <div class="section-subtitle">${u.funcao || ''} Â· ${u.role === 'gestorformacao' ? 'Gestor de FormaÃ§Ã£o' : 'Colaborador'} Â· ${u.email || ''}</div>
+                        <h2 class="card-title">📋 ${u.nome || u.email}</h2>
+                        <div class="section-subtitle">${u.funcao || ''} · ${u.role === 'gestorformacao' ? 'Gestor de Formação' : 'Colaborador'} · ${u.email || ''}</div>
                     </div>
-                    <button class="btn btn-secondary" onclick="navigateTo('colaboradores')">â† Voltar Ã  lista</button>
+                    <button class="btn btn-secondary" onclick="navigateTo('colaboradores')">← Voltar à lista</button>
                 </div>
                 <div class="kpi-row" style="margin-bottom:20px;">
-                    <span class="kpi-pill">ðŸ• Total horas frequentadas: ${hoursLabelFromMinutes(totalMins)}</span>
-                    <span class="kpi-pill">ðŸ“š FormaÃ§Ãµes inscritas: ${myT.length}</span>
-                    <span class="kpi-pill">âœ… Com presenÃ§a: ${myT.filter(t => attendanceMap[t.id+'_'+uid]?.status === 'present').length}</span>
-                    <span class="kpi-pill">â­ AvaliaÃ§Ãµes: ${Object.values(evalMap).filter(e => e.userId === uid).length}</span>
+                    <span class="kpi-pill">🕐 Total horas frequentadas: ${hoursLabelFromMinutes(totalMins)}</span>
+                    <span class="kpi-pill">📚 Formações inscritas: ${myT.length}</span>
+                    <span class="kpi-pill">✅ Com presença: ${myT.filter(t => attendanceMap[t.id+'_'+uid]?.status === 'present').length}</span>
+                    <span class="kpi-pill">⭐ Avaliações: ${Object.values(evalMap).filter(e => e.userId === uid).length}</span>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead><tr>
-                            <th>FormaÃ§Ã£o</th><th>Data</th><th>Estado</th>
-                            <th>PresenÃ§a</th><th>Horas</th><th>AvaliaÃ§Ã£o</th><th>ObservaÃ§Ãµes</th>
+                            <th>Formação</th><th>Data</th><th>Estado</th>
+                            <th>Presença</th><th>Horas</th><th>Avaliação</th><th>Observações</th>
                         </tr></thead>
-                        <tbody>${rows || '<tr><td colspan="7" style="text-align:center;padding:32px;color:#999;">Nenhuma formaÃ§Ã£o encontrada.</td></tr>'}</tbody>
+                        <tbody>${rows || '<tr><td colspan="7" style="text-align:center;padding:32px;color:#999;">Nenhuma formação encontrada.</td></tr>'}</tbody>
                     </table>
                 </div>
                 <div class="actions-row" style="margin-top:20px;">
-                    <button class="btn btn-primary" onclick="exportColabSingle('${uid}')">ðŸ“¥ Exportar CSV deste colaborador</button>
+                    <button class="btn btn-primary" onclick="exportColabSingle('${uid}')">📥 Exportar CSV deste colaborador</button>
                 </div>
             </div>`;
     };
@@ -3458,7 +3518,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
         const u = usersMap[uid] || { nome: uid };
         const myT = trainings.filter(t => participantIds(t).includes(uid))
             .sort((a,b) => (trainingDate(b)?.getTime()||0) - (trainingDate(a)?.getTime()||0));
-        const rows = [['FormaÃ§Ã£o','Data','Estado','PresenÃ§a','Horas frequentadas','AvaliaÃ§Ã£o Global','PedagÃ³gica','DomÃ­nio','RelevÃ¢ncia','ObservaÃ§Ãµes']];
+        const rows = [['Formação','Data','Estado','Presença','Horas frequentadas','Avaliação Global','Pedagógica','Domínio','Relevância','Observações']];
         myT.forEach(t => {
             const att = attendanceMap[`${t.id}_${uid}`];
             const ev = evalMap[`${t.id}_${uid}`];
@@ -3477,7 +3537,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
 
     window.exportCollaboratorHours = async function(){
         const { start, end, usersMap, trainings, attendanceMap } = await reportDataset();
-        const rows = [['Colaborador','Email','FunÃ§Ã£o','Horas frequentadas','Minutos frequentados','FormaÃ§Ãµes frequentadas']];
+        const rows = [['Colaborador','Email','Função','Horas frequentadas','Minutos frequentados','Formações frequentadas']];
         Object.values(usersMap).filter(u => u.ativo !== false).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'', 'pt')).forEach(u => {
             let mins = 0, count = 0;
             trainings.forEach(t => {
@@ -3497,7 +3557,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
     window.exportAllEvaluations = async function(){
         const { start, end, usersMap, trainings, evalMap } = await reportDataset();
         const trainMap = Object.fromEntries(trainings.map(t => [t.id, t]));
-        const rows = [['Colaborador','FormaÃ§Ã£o','Data FormaÃ§Ã£o','AvaliaÃ§Ã£o Global','DuraÃ§Ã£o','PedagÃ³gica','DomÃ­nio','RelevÃ¢ncia','ObservaÃ§Ãµes']];
+        const rows = [['Colaborador','Formação','Data Formação','Avaliação Global','Duração','Pedagógica','Domínio','Relevância','Observações']];
         Object.values(evalMap).forEach(ev => {
             const t = trainMap[ev.trainingId];
             const dt = t ? trainingDate(t) : null;
@@ -3519,7 +3579,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
 
     window.exportTrainingSummary = async function(){
         const { start, end, usersMap, trainings, attendanceMap, evalMap } = await reportDataset();
-        const rows = [['FormaÃ§Ã£o','Data','Estado','Formador','Tipo','DuraÃ§Ã£o minutos','DuraÃ§Ã£o horas','Inscritos','Presentes','Faltas','MÃ©dia avaliaÃ§Ã£o']];
+        const rows = [['Formação','Data','Estado','Formador','Tipo','Duração minutos','Duração horas','Inscritos','Presentes','Faltas','Média avaliação']];
         trainings.filter(t => rangeFilter(trainingDate(t), start, end)).forEach(t => {
             const ids = participantIds(t);
             const present = ids.filter(uid => attendanceMap[`${t.id}_${uid}`]?.status === 'present').length;
@@ -3549,13 +3609,13 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
 })();
 
     // ============================================================
-    // NOVAS FUNÃ‡Ã•ES v3
+    // NOVAS FUNÇÕES v3
     // ============================================================
 
-    // FormaÃ§Ãµes por MÃªs (cards clicÃ¡veis)
+    // Formações por Mês (cards clicáveis)
     window.loadFormacoesMes = async function() {
-        document.getElementById('pageTitle').textContent = 'FormaÃ§Ãµes por MÃªs';
-        document.getElementById('contentArea').innerHTML = `<div class="card"><div class="card-header"><h2 class="card-title">ðŸ“… FormaÃ§Ãµes por MÃªs</h2></div><div id="formacoesMesContainer"><div class="loading active"><div class="spinner"></div><p>A carregar...</p></div></div></div>`;
+        document.getElementById('pageTitle').textContent = 'Formações por Mês';
+        document.getElementById('contentArea').innerHTML = `<div class="card"><div class="card-header"><h2 class="card-title">📅 Formações por Mês</h2></div><div id="formacoesMesContainer"><div class="loading active"><div class="spinner"></div><p>A carregar...</p></div></div></div>`;
         try {
             const snap = await db.collection('trainings').orderBy('data','asc').get();
             const byMonth = {};
@@ -3570,7 +3630,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
             });
             const sorted = Object.entries(byMonth).sort((a,b) => b[0].localeCompare(a[0]));
             if (!sorted.length) {
-                document.getElementById('formacoesMesContainer').innerHTML = `<div class="empty-state"><div class="empty-state-icon">ðŸ“…</div><p class="empty-state-text">Nenhuma formaÃ§Ã£o encontrada</p></div>`;
+                document.getElementById('formacoesMesContainer').innerHTML = `<div class="empty-state"><div class="empty-state-icon">📅</div><p class="empty-state-text">Nenhuma formação encontrada</p></div>`;
                 return;
             }
             const estadoColor = { 'realizada':'badge-success','agendada':'badge-info','adiada':'badge-warning','cancelada':'badge-error' };
@@ -3579,9 +3639,9 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         <div>
                             <h3 style="font-size:17px;font-weight:700;text-transform:capitalize;">${val.label}</h3>
-                            <p style="color:var(--color-text-secondary);font-size:13px;margin-top:2px;">${val.trainings.length} formaÃ§Ã£o(Ãµes)</p>
+                            <p style="color:var(--color-text-secondary);font-size:13px;margin-top:2px;">${val.trainings.length} formação(ões)</p>
                         </div>
-                        <span style="font-size:22px;">ðŸ“…</span>
+                        <span style="font-size:22px;">📅</span>
                     </div>
                     <div id="mes-${key}" style="display:none;margin-top:14px;border-top:1px solid var(--color-border);padding-top:12px;">
                         ${val.trainings.map(t => {
@@ -3589,8 +3649,8 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                             const dtStr = t._dt ? t._dt.toLocaleDateString('pt-PT') : '-';
                             return `<div style="padding:10px 0;border-bottom:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <div>
-                                    <strong>${t.tema || 'Sem tÃ­tulo'}</strong>
-                                    <div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;">${dtStr} Â· ${t.formador||'-'} Â· ${t.entidadeFormadora||'-'} Â· ${t.durationMinutes||t.duracaoHoras*60||0} min${t.creditosOF ? ' Â· ðŸ… '+t.creditosOF+' crÃ©d.' : ''}</div>
+                                    <strong>${t.tema || 'Sem título'}</strong>
+                                    <div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;">${dtStr} · ${t.formador||'-'} · ${t.entidadeFormadora||'-'} · ${t.durationMinutes||t.duracaoHoras*60||0} min${t.creditosOF ? ' · 🏅 '+t.creditosOF+' créd.' : ''}</div>
                                 </div>
                                 <span class="badge ${estadoColor[estado]||'badge-info'}">${estado}</span>
                             </div>`;
@@ -3599,7 +3659,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                 </div>`).join('');
         } catch(e) {
             console.error(e);
-            showToast('Erro ao carregar formaÃ§Ãµes por mÃªs','error');
+            showToast('Erro ao carregar formações por mês','error');
         }
     };
 
@@ -3609,7 +3669,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
         const isOpen = el.style.display !== 'none';
         el.style.display = isOpen ? 'none' : 'block';
         const arrow = document.getElementById(id + '-arrow');
-        if (arrow) arrow.textContent = isOpen ? 'â–¶ï¸' : 'ðŸ”½';
+        if (arrow) arrow.textContent = isOpen ? '▶️' : '🔽';
     };
 
     // Objetivos Gerais do Plano
@@ -3623,16 +3683,24 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
         document.getElementById('contentArea').innerHTML = `
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">ðŸŽ¯ Objetivos Gerais do Plano Anual</h2>
-                    <button class="btn btn-secondary" onclick="imprimirObjetivos()">ðŸ–¨ï¸ Imprimir</button>
+                    <h2 class="card-title">🎯 Objetivos Gerais do Plano Anual</h2>
+                    <button class="btn btn-secondary" onclick="imprimirObjetivos()">🖨️ Imprimir</button>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Defina os objetivos gerais do plano de formaÃ§Ã£o anual <strong>${new Date().getFullYear()}</strong>:</label>
-                    <textarea id="objetivosTexto" class="form-control" rows="12" style="font-size:14px;line-height:1.8;" placeholder="Ex: 1. Garantir a formaÃ§Ã£o contÃ­nua de todos os colaboradores&#10;2. Atingir 40h de formaÃ§Ã£o por colaborador&#10;3. ...">${texto}</textarea>
+                    <label class="form-label">Defina os objetivos gerais do plano de formação anual <strong>${new Date().getFullYear()}</strong>:</label>
+                    <textarea id="objetivosTexto" class="form-control" rows="12" style="font-size:14px;line-height:1.8;" placeholder="Ex: 1. Garantir a formação contínua de todos os colaboradores&#10;2. Atingir 40h de formação por colaborador&#10;3. ...">${texto}</textarea>
                 </div>
-                <button class="btn btn-primary" onclick="guardarObjetivosPlano('${docId}')">ðŸ’¾ Guardar Objetivos</button>
+                <button class="btn btn-primary" onclick="guardarObjetivosPlano('${docId}')">💾 Guardar Objetivos</button>
             </div>`;
     };
+        window.imprimirPlano = async function() {
+            const snap = await db.collection('trainings').orderBy('data','asc').get();
+            let objTexto = '';
+            try { const os = await db.collection('objetivosPlano').orderBy('createdAt','desc').limit(1).get(); if (!os.empty) objTexto = os.docs[0].data().texto||''; } catch(e){}
+            const rows = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const w = window.open('','_blank');
+            w.document.write(`<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8"><title>Plano de Formações</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#222}h1,h2{color:#142033}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#eaf2ff}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#eaf2ff} .section{margin:18px 0} .obj{background:#f7f9fb;border:1px solid #e2e8f0;border-radius:10px;padding:12px;white-space:pre-wrap}</style></head><body><h1>Plano de Formações</h1><div style="color:#666;margin-bottom:12px;">Gerado em ${new Date().toLocaleString('pt-PT')}</div>${objTexto ? `<div class="section"><h2>Objetivos do Plano</h2><div class="obj">${objTexto.replace(/</g,'&lt;')}</div></div>` : ''}<div class="section"><h2>Registo completo</h2><table><thead><tr><th>Data</th><th>Tema</th><th>Formador</th><th>Local</th><th>Duração</th><th>Estado</th><th>Créditos</th></tr></thead><tbody>${rows.map(t => { const d = t.data ? (t.data.toDate ? t.data.toDate() : new Date(t.data.seconds*1000)) : null; const st = (t.estadoManual || t.estado || '—'); return `<tr><td>${d ? d.toLocaleDateString('pt-PT') : '—'}</td><td><strong>${(t.tema||'—').replace(/</g,'&lt;')}</strong></td><td>${(t.formador||'—').replace(/</g,'&lt;')}</td><td>${(t.local||'—').replace(/</g,'&lt;')}</td><td>${t.duracaoHoras||'—'}h</td><td>${st}</td><td>${t.creditosOF||0}</td></tr>`; }).join('')}</tbody></table></div><script>window.onload=()=>window.print()<\/script></body></html>`); w.document.close(); };
+
 
     window.guardarObjetivosPlano = async function(docId) {
         const texto = document.getElementById('objetivosTexto').value;
@@ -3656,18 +3724,18 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
         pre{white-space:pre-wrap;font-size:14px;line-height:2;margin-top:24px;}
         .footer{margin-top:48px;font-size:11px;color:#aaa;text-align:center;}
         @media print{button{display:none!important;}}</style></head>
-        <body><h1>ðŸ’Š FarmÃ¡cia da Liga<br><span style="font-size:16px;font-weight:400;">Objetivos Gerais do Plano de FormaÃ§Ã£o ${new Date().getFullYear()}</span></h1>
+        <body><h1>💊 Farmácia da Liga<br><span style="font-size:16px;font-weight:400;">Objetivos Gerais do Plano de Formação ${new Date().getFullYear()}</span></h1>
         <pre>${texto.replace(/</g,'&lt;')}</pre>
-        <div class="footer">Gerado em ${new Date().toLocaleString('pt-PT')} â€” FarmÃ¡cia da Liga, Vila Nova de Gaia</div>
-        <br><button onclick="window.print()" style="padding:10px 24px;background:#4A6572;color:white;border:none;border-radius:8px;cursor:pointer;">ðŸ–¨ï¸ Imprimir / Guardar PDF</button>
+        <div class="footer">Gerado em ${new Date().toLocaleString('pt-PT')} — Farmácia da Liga, Vila Nova de Gaia</div>
+        <br><button onclick="window.print()" style="padding:10px 24px;background:#4A6572;color:white;border:none;border-radius:8px;cursor:pointer;">🖨️ Imprimir / Guardar PDF</button>
         </body></html>`);
         w.document.close();
     };
 
-    // Os Meus CrÃ©ditos OF (apenas FarmacÃªuticos)
+    // Os Meus Créditos OF (apenas Farmacêuticos)
     window.loadMeusCreditos = async function() {
-        document.getElementById('pageTitle').textContent = 'Os Meus CrÃ©ditos OF';
-        document.getElementById('contentArea').innerHTML = `<div class="card"><div class="card-header"><h2 class="card-title">ðŸ… Os Meus CrÃ©ditos OF</h2></div><div id="creditosContainer"><div class="loading active"><div class="spinner"></div><p>A carregar...</p></div></div></div>`;
+        document.getElementById('pageTitle').textContent = 'Os Meus Créditos OF';
+        document.getElementById('contentArea').innerHTML = `<div class="card"><div class="card-header"><h2 class="card-title">🏅 Os Meus Créditos OF</h2></div><div id="creditosContainer"><div class="loading active"><div class="spinner"></div><p>A carregar...</p></div></div></div>`;
         try {
             const snap = await db.collection('creditosOF').where('userId','==',currentUser.uid).orderBy('atribuidoEm','desc').get();
             const total = snap.docs.reduce((s,d) => s+(d.data().creditos||0), 0);
@@ -3679,13 +3747,13 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
             document.getElementById('creditosContainer').innerHTML = `
                 <div style="background:linear-gradient(135deg,var(--color-accent-blue),var(--color-accent-green));border-radius:12px;padding:24px;margin-bottom:24px;text-align:center;">
                     <div style="font-size:48px;font-weight:700;color:var(--color-text-primary);">${total}</div>
-                    <div style="color:var(--color-text-secondary);font-size:14px;">CrÃ©ditos OF acumulados</div>
+                    <div style="color:var(--color-text-secondary);font-size:14px;">Créditos OF acumulados</div>
                 </div>
-                ${rows ? `<div class="table-container"><table><thead><tr><th>Data</th><th>FormaÃ§Ã£o</th><th>Entidade</th><th style="text-align:center;">CrÃ©ditos</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty-state"><div class="empty-state-icon">ðŸ…</div><p class="empty-state-text">Ainda nÃ£o tem crÃ©ditos OF atribuÃ­dos.</p></div>'}`;
-        } catch(e) { console.error(e); showToast('Erro ao carregar crÃ©ditos','error'); }
+                ${rows ? `<div class="table-container"><table><thead><tr><th>Data</th><th>Formação</th><th>Entidade</th><th style="text-align:center;">Créditos</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="empty-state"><div class="empty-state-icon">🏅</div><p class="empty-state-text">Ainda não tem créditos OF atribuídos.</p></div>'}`;
+        } catch(e) { console.error(e); showToast('Erro ao carregar créditos','error'); }
     };
 
-    // Confirmar presenÃ§as com atribuiÃ§Ã£o de crÃ©ditos (gestor)
+    // Confirmar presenças com atribuição de créditos (gestor)
     window.abrirConfirmarPresencas = async function(trainingId) {
         try {
             const tDoc = await db.collection('trainings').doc(trainingId).get();
@@ -3701,24 +3769,24 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                     <label for="pres-${p.uid}" style="flex:1;cursor:pointer;">
                         <strong>${p.nome}</strong>
                         <small style="color:var(--color-text-secondary);margin-left:8px;">${p.funcao}</small>
-                        ${p.funcao==='FarmacÃªutico' && t.creditosOF ? `<span class="badge badge-info" style="margin-left:6px;">ðŸ… ${t.creditosOF} crÃ©d. OF</span>` : ''}
+                        ${p.funcao==='Farmacêutico' && t.creditosOF ? `<span class="badge badge-info" style="margin-left:6px;">🏅 ${t.creditosOF} créd. OF</span>` : ''}
                     </label>
                 </div>`).join('');
 
             document.getElementById('contentArea').innerHTML = `
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">âœ“ Confirmar PresenÃ§as â€” ${t.tema||'FormaÃ§Ã£o'}</h2>
-                        <button class="btn btn-secondary" onclick="navigateTo('todasFormacoes')">â† Voltar</button>
+                        <h2 class="card-title">✓ Confirmar Presenças — ${t.tema||'Formação'}</h2>
+                        <button class="btn btn-secondary" onclick="navigateTo('todasFormacoes')">← Voltar</button>
                     </div>
-                    ${t.creditosOF ? `<div class="alert-item" style="margin-bottom:16px;">ðŸ… Esta formaÃ§Ã£o atribui <strong>${t.creditosOF} crÃ©ditos OF</strong> a todos os FarmacÃªuticos com presenÃ§a confirmada.</div>` : ''}
+                    ${t.creditosOF ? `<div class="alert-item" style="margin-bottom:16px;">🏅 Esta formação atribui <strong>${t.creditosOF} créditos OF</strong> a todos os Farmacêuticos com presença confirmada.</div>` : ''}
                     <div style="display:flex;gap:8px;margin-bottom:16px;">
-                        <button class="btn btn-success btn-icon" onclick="document.querySelectorAll('[id^=pres-]').forEach(c=>c.checked=true)">âœ“ Todos</button>
-                        <button class="btn btn-secondary btn-icon" onclick="document.querySelectorAll('[id^=pres-]').forEach(c=>c.checked=false)">âœ— Nenhum</button>
+                        <button class="btn btn-success btn-icon" onclick="document.querySelectorAll('[id^=pres-]').forEach(c=>c.checked=true)">✓ Todos</button>
+                        <button class="btn btn-secondary btn-icon" onclick="document.querySelectorAll('[id^=pres-]').forEach(c=>c.checked=false)">✗ Nenhum</button>
                     </div>
                     <div class="participants-grid">${listHtml}</div>
                     <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--color-border);">
-                        <button class="btn btn-primary" onclick="gravarPresencas('${trainingId}',${t.creditosOF||0})">ðŸ’¾ Confirmar e Guardar PresenÃ§as</button>
+                        <button class="btn btn-primary" onclick="gravarPresencas('${trainingId}',${t.creditosOF||0})">💾 Confirmar e Guardar Presenças</button>
                     </div>
                 </div>`;
         } catch(e) { console.error(e); showToast('Erro ao carregar participantes','error'); }
@@ -3735,7 +3803,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                 const ref = db.collection('attendance').doc(`${trainingId}_${uid}`);
                 if (cb.checked) {
                     await ref.set({ trainingId, userId: uid, status: 'present', confirmedAt: firebase.firestore.FieldValue.serverTimestamp(), confirmedByGestor: true }, { merge: true });
-                    if (creditosOF > 0 && usersMap[uid]?.funcao === 'FarmacÃªutico') {
+                    if (creditosOF > 0 && usersMap[uid]?.funcao === 'Farmacêutico') {
                         const existing = await db.collection('creditosOF').where('trainingId','==',trainingId).where('userId','==',uid).get();
                         if (existing.empty) {
                             await db.collection('creditosOF').add({ userId: uid, trainingId, tema: tData.tema||'', entidadeFormadora: tData.entidadeFormadora||'', creditos: creditosOF, data: tData.data||null, atribuidoEm: firebase.firestore.FieldValue.serverTimestamp() });
@@ -3745,21 +3813,21 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                     await ref.set({ trainingId, userId: uid, status: 'absent', confirmedAt: firebase.firestore.FieldValue.serverTimestamp(), confirmedByGestor: true }, { merge: true });
                 }
             }));
-            showToast('PresenÃ§as confirmadas com sucesso!','success');
+            showToast('Presenças confirmadas com sucesso!','success');
             navigateTo('todasFormacoes');
-        } catch(e) { console.error(e); showToast('Erro ao guardar presenÃ§as','error'); }
+        } catch(e) { console.error(e); showToast('Erro ao guardar presenças','error'); }
     };
 
-    // Exportar Plano de FormaÃ§Ãµes com filtros
+    // Exportar Plano de Formações com filtros
     window.exportarPlanoFormacoes = async function() {
-        showToast('A preparar exportaÃ§Ã£o...','info');
+        showToast('A preparar exportação...','info');
         try {
             const dataInicio = document.getElementById('exportDataInicio')?.value;
             const dataFim = document.getElementById('exportDataFim')?.value;
             const entidade = (document.getElementById('exportEntidade')?.value||'').toLowerCase().trim();
             const snap = await db.collection('trainings').orderBy('data','asc').get();
             const usersMap = await getUsersMap();
-            const rows = [['Data','Tema','Entidade Formadora','Formador','Local','DuraÃ§Ã£o (min)','Objetivos','CrÃ©ditos OF','Estado','MÃ©dia AvaliaÃ§Ã£o Global','Presentes','Ausentes','Por Avaliar']];
+            const rows = [['Data','Tema','Entidade Formadora','Formador','Local','Duração (min)','Objetivos','Créditos OF','Estado','Média Avaliação Global','Presentes','Ausentes','Por Avaliar']];
             for (const doc of snap.docs) {
                 const t = doc.data();
                 let dt = t.data ? (t.data.toDate ? t.data.toDate() : new Date(t.data.seconds*1000)) : null;
@@ -3805,7 +3873,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
         } catch(e) { console.error(e); showToast('Erro ao exportar plano','error'); }
     };
 
-    // Ver Plano de FormaÃ§Ãµes (janela imprimÃ­vel) - FIXED v3
+    // Ver Plano de Formações (janela imprimível) - FIXED v3
     window.verPlanoFormacoes = async function() {
         showToast('A gerar plano...','info');
         try {
@@ -3829,7 +3897,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
             const estadoTexto = { 'realizada':'Realizada','agendada':'Agendada','adiada':'Adiada','cancelada':'Cancelada' };
             const w = window.open('','_blank');
             w.document.write(`<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8">
-            <title>Plano de FormaÃ§Ãµes ${new Date().getFullYear()}</title>
+            <title>Plano de Formações ${new Date().getFullYear()}</title>
             <style>
                 body{font-family:Arial,sans-serif;padding:40px;color:#333;max-width:1100px;margin:0 auto;}
                 h1{color:#4A6572;margin-bottom:4px;} .sub{color:#888;font-size:15px;}
@@ -3843,16 +3911,16 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                 @media print{.no-print{display:none!important;}}
             </style></head><body>
             <div style="text-align:center;margin-bottom:32px;">
-                <div style="font-size:40px;">ðŸ’Š</div>
-                <h1>FarmÃ¡cia da Liga</h1>
-                <div class="sub">Plano de FormaÃ§Ãµes ${new Date().getFullYear()}</div>
+                <div style="font-size:40px;">💊</div>
+                <h1>Farmácia da Liga</h1>
+                <div class="sub">Plano de Formações ${new Date().getFullYear()}</div>
                 <div style="font-size:11px;color:#bbb;margin-top:4px;">Gerado em ${new Date().toLocaleString('pt-PT')}</div>
             </div>
-            ${objTexto ? `<h2>ðŸŽ¯ Objetivos Gerais do Plano</h2><div class="obj">${objTexto.replace(/</g,'&lt;').replace(/\n/g,'\n')}</div>` : ''}
-            <h2>ðŸ“š FormaÃ§Ãµes (${rows.length} total)</h2>
+            ${objTexto ? `<h2>🎯 Objetivos Gerais do Plano</h2><div class="obj">${objTexto.replace(/</g,'&lt;').replace(/\n/g,'\n')}</div>` : ''}
+            <h2>📚 Formações (${rows.length} total)</h2>
             <table><thead><tr>
                 <th>Data</th><th>Tema</th><th>Entidade Formadora</th><th>Formador</th>
-                <th>Local</th><th>DuraÃ§Ã£o</th><th>CrÃ©d. OF</th><th>Estado</th>
+                <th>Local</th><th>Duração</th><th>Créd. OF</th><th>Estado</th>
                 <th>Objetivos</th><th>Inscritos/Presentes</th>
             </tr></thead><tbody>
             ${rows.map(t => {
@@ -3874,20 +3942,20 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                 </tr>`;
             }).join('')}
             </tbody></table>
-            <div class="footer">FarmÃ¡cia da Liga Â· Vila Nova de Gaia Â· ${new Date().getFullYear()}</div>
+            <div class="footer">Farmácia da Liga · Vila Nova de Gaia · ${new Date().getFullYear()}</div>
             <br class="no-print">
-            <button class="no-print" onclick="window.print()" style="margin-top:16px;padding:12px 28px;background:#4A6572;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;">ðŸ–¨ï¸ Imprimir / Guardar PDF</button>
+            <button class="no-print" onclick="window.print()" style="margin-top:16px;padding:12px 28px;background:#4A6572;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;">🖨️ Imprimir / Guardar PDF</button>
             </body></html>`);
             w.document.close();
         } catch(e) { console.error('verPlanoFormacoes error:', e); showToast('Erro ao gerar plano: ' + e.message,'error'); }
     };
 
 
-    // Abrir detalhe de formaÃ§Ã£o (colaborador)
+    // Abrir detalhe de formação (colaborador)
     window.abrirDetalheFormacao = async function(trainingId) {
         try {
             const tDoc = await db.collection('trainings').doc(trainingId).get();
-            if (!tDoc.exists) { showToast('FormaÃ§Ã£o nÃ£o encontrada','error'); return; }
+            if (!tDoc.exists) { showToast('Formação não encontrada','error'); return; }
             const t = { id: tDoc.id, ...tDoc.data() };
             let dt = t.data ? (t.data.toDate ? t.data.toDate() : new Date(t.data.seconds*1000)) : null;
             const mins = t.durationMinutes || ((t.duracaoHoras||0)*60) || 0;
@@ -3899,31 +3967,31 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
             const status = t.estadoManual || t.estado || 'agendada';
             const canEvaluate = status === 'realizada' && attStatus !== 'absent';
 
-            document.getElementById('detalheModalTitulo').textContent = t.tema || 'FormaÃ§Ã£o';
+            document.getElementById('detalheModalTitulo').textContent = t.tema || 'Formação';
             document.getElementById('detalheModalBody').innerHTML = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
                     <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Data</div><div style="font-weight:600;">${dt ? dt.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : '-'}</div></div>
-                    <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">DuraÃ§Ã£o</div><div style="font-weight:600;">${hLabel}</div></div>
+                    <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Duração</div><div style="font-weight:600;">${hLabel}</div></div>
                     <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Formador</div><div style="font-weight:600;">${t.formador || '-'}</div></div>
                     <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Entidade Formadora</div><div style="font-weight:600;">${t.entidadeFormadora || '-'}</div></div>
                     <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Local</div><div style="font-weight:600;">${t.local || '-'}</div></div>
                     <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Tipo / Modalidade</div><div style="font-weight:600;">${t.tipo || '-'}</div></div>
-                    ${t.creditosOF ? `<div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">CrÃ©ditos OF</div><div style="font-weight:600;">ðŸ… ${t.creditosOF}</div></div>` : ''}
+                    ${t.creditosOF ? `<div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Créditos OF</div><div style="font-weight:600;">🏅 ${t.creditosOF}</div></div>` : ''}
                     <div><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Estado</div><div>${statusBadge(status)}</div></div>
                 </div>
-                ${t.objetivos ? `<div style="margin-bottom:16px;"><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:6px;">Objetivos da FormaÃ§Ã£o</div><div style="background:var(--color-accent-blue);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;">${t.objetivos.replace(/\n/g,'<br>')}</div></div>` : ''}
-                ${t.descricao ? `<div style="margin-bottom:16px;"><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:6px;">DescriÃ§Ã£o / Notas</div><div style="background:var(--color-accent-green);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;">${t.descricao.replace(/\n/g,'<br>')}</div></div>` : ''}
+                ${t.objetivos ? `<div style="margin-bottom:16px;"><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:6px;">Objetivos da Formação</div><div style="background:var(--color-accent-blue);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;">${t.objetivos.replace(/\n/g,'<br>')}</div></div>` : ''}
+                ${t.descricao ? `<div style="margin-bottom:16px;"><div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:6px;">Descrição / Notas</div><div style="background:var(--color-accent-green);border-radius:8px;padding:12px;font-size:13px;line-height:1.7;">${t.descricao.replace(/\n/g,'<br>')}</div></div>` : ''}
                 <div style="background:var(--color-bg-primary);border-radius:10px;padding:16px;margin-bottom:16px;">
-                    <div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:10px;">A minha participaÃ§Ã£o</div>
+                    <div style="font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:10px;">A minha participação</div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <span class="kpi-pill">PresenÃ§a: ${attStatus === 'present' ? 'âœ“ Confirmada' : attStatus === 'absent' ? 'âœ— NÃ£o compareceu' : 'â³ Pendente'}</span>
-                        <span class="kpi-pill">AvaliaÃ§Ã£o: ${hasEval ? 'âœ“ Submetida' : 'Por fazer'}</span>
-                        ${t.creditosOF && attStatus === 'present' && currentUserData?.funcao === 'FarmacÃªutico' ? `<span class="kpi-pill">ðŸ… ${t.creditosOF} crÃ©ditos OF atribuÃ­dos</span>` : ''}
+                        <span class="kpi-pill">Presença: ${attStatus === 'present' ? '✓ Confirmada' : attStatus === 'absent' ? '✗ Não compareceu' : '⏳ Pendente'}</span>
+                        <span class="kpi-pill">Avaliação: ${hasEval ? '✓ Submetida' : 'Por fazer'}</span>
+                        ${t.creditosOF && attStatus === 'present' && currentUserData?.funcao === 'Farmacêutico' ? `<span class="kpi-pill">🏅 ${t.creditosOF} créditos OF atribuídos</span>` : ''}
                     </div>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    ${status === 'realizada' && !attStatus ? `<button class="btn btn-danger" onclick="setAttendance('${trainingId}','absent');closeModal('detalheFormacaoModal')">âœ— NÃ£o compareci</button>` : ''}
-                    ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${trainingId}');closeModal('detalheFormacaoModal')">${hasEval ? 'âœï¸ Editar AvaliaÃ§Ã£o' : 'â­ Avaliar FormaÃ§Ã£o'}</button>` : ''}
+                    ${status === 'realizada' && !attStatus ? `<button class="btn btn-danger" onclick="setAttendance('${trainingId}','absent');closeModal('detalheFormacaoModal')">✗ Não compareci</button>` : ''}
+                    ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${trainingId}');closeModal('detalheFormacaoModal')">${hasEval ? '✏️ Editar Avaliação' : '⭐ Avaliar Formação'}</button>` : ''}
                     <button class="btn btn-secondary" onclick="closeModal('detalheFormacaoModal')">Fechar</button>
                 </div>`;
             openModal('detalheFormacaoModal');
@@ -3931,9 +3999,9 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
     };
 
 
-    // Anular formaÃ§Ã£o (gestor)
+    // Anular formação (gestor)
     window.anularFormacao = async function(trainingId) {
-        if (!confirm('Tem a certeza que pretende anular esta formaÃ§Ã£o? O estado serÃ¡ alterado para "cancelada".')) return;
+        if (!confirm('Tem a certeza que pretende anular esta formação? O estado será alterado para "cancelada".')) return;
         try {
             await db.collection('trainings').doc(trainingId).update({
                 estado: 'cancelada',
@@ -3941,9 +4009,9 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedBy: currentUser.uid
             });
-            showToast('FormaÃ§Ã£o anulada com sucesso.','success');
+            showToast('Formação anulada com sucesso.','success');
             if (typeof loadTodasFormacoes === 'function') loadTodasFormacoes();
-        } catch(e) { console.error(e); showToast('Erro ao anular formaÃ§Ã£o','error'); }
+        } catch(e) { console.error(e); showToast('Erro ao anular formação','error'); }
     };
 
 </script>
