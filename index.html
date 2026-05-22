@@ -1508,6 +1508,15 @@
                     return;
                 }
             }
+                if (!document.getElementById('afastamentoPratica').value) {
+        showToast('Por favor indique se os temas se afastam da prática da Farmácia.', 'error');
+        return;
+    }
+    if (document.getElementById('afastamentoPratica').value === 'sim' &&
+        !document.getElementById('detalheAfastamento').value.trim()) {
+        showToast('Por favor justifique o afastamento da prática.', 'error');
+        return;
+    }
             const afastaPratica = document.getElementById('afastamentoPratica').value === 'sim';
 
             try {
@@ -2867,15 +2876,42 @@
         });
         if (count) await batch.commit();
     }
-    async function setAttendance(trainingId, status){
-        const existingAttDoc = await db.collection('attendance').doc(`${trainingId}_${currentUser.uid}`).get();
-        if (existingAttDoc.exists) {
-            const d = existingAttDoc.data();
-            const confirmed = asDate(d.confirmedAt);
-            if (confirmed && (Date.now() - confirmed.getTime()) > 24 * 60 * 60 * 1000) {
-                return showToast('O prazo de 24h para alterar a presença já terminou.', 'error');
-            }
+async function setAttendance(trainingId, status){
+    try {
+        const ref = db.collection('attendance').doc(`${trainingId}_${currentUser.uid}`);
+        await ref.set({
+            trainingId,
+            userId: currentUser.uid,
+            status,
+            confirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            confirmedByUser: true
+        }, { merge: true });
+
+        // Se marcou falta, anular avaliação existente
+        if (status === 'absent') {
+            const evalSnap = await db.collection('evaluations')
+                .where('trainingId', '==', trainingId)
+                .where('userId', '==', currentUser.uid)
+                .get();
+            const batch = db.batch();
+            evalSnap.forEach(doc => batch.delete(doc.ref));
+            // Marcar enrollment como não avaliado
+            const enrollSnap = await db.collection('enrollments')
+                .where('trainingId', '==', trainingId)
+                .where('userId', '==', currentUser.uid)
+                .get();
+            enrollSnap.forEach(doc => batch.update(doc.ref, { avaliado: false }));
+            await batch.commit();
+            showToast('Falta registada. A avaliação anterior foi anulada.', 'success');
+        } else {
+            showToast('Presença confirmada.', 'success');
         }
+        if (typeof window.loadMinhasFormacoes === 'function') window.loadMinhasFormacoes();
+    } catch(e) {
+        console.error(e);
+        showToast('Erro ao registar presença', 'error');
+    }
+}
         const firstConfirm = (existingAttDoc.exists && existingAttDoc.data().confirmedAt)
             ? existingAttDoc.data().confirmedAt
             : firebase.firestore.FieldValue.serverTimestamp();
@@ -3157,7 +3193,12 @@ if (!pendingMais15.length) {
         await render();
         activeUnsubscribe = db.collection('trainings').onSnapshot(render);
     };
-
+async function getUsersMap() {
+    const snap = await db.collection('users').orderBy('nome').get();
+    const map = {};
+    snap.docs.forEach(d => { map[d.id] = { id: d.id, ...d.data() }; });
+    return map;
+}
     window.loadCriarFormacao = async function(editId = null){
         const isEdit = !!editId;
         document.getElementById('pageTitle').textContent = isEdit ? 'Editar Formação' : 'Criar Nova Formação';
@@ -3353,7 +3394,7 @@ if (!pendingMais15.length) {
                                     ${t.creditosOF ? `<span class="kpi-pill">🏅 ${t.creditosOF} créd. OF</span>` : ''}
                                 </div>
                                 <div class="actions-row" onclick="event.stopPropagation()">
-                                    ${status === 'realizada' && att?.status !== 'absent' && att?.status !== 'present' ? `<button class="btn btn-danger" onclick="setAttendance('${t.id}','absent')" style="font-size:13px;">✗ Não compareci</button>` : ''}
+                                    ${status === 'realizada' && att?.status !== 'absent' ? `<button class="btn btn-danger" onclick="setAttendance('${t.id}','absent')" style="font-size:13px;">✗ Não compareci</button>` : ''}
                                     ${att?.status === 'absent' ? `<span class="badge badge-error">✗ Não compareceu</span>` : ''}
                                     ${att?.status === 'present' ? `<span class="badge badge-success">✓ Presença confirmada pelo gestor</span>` : ''}
                                     ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${t.id}')">${ev ? 'Editar Avaliação' : '⭐ Avaliar Formação'}</button>` : ''}
@@ -3911,8 +3952,10 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
 
 
     // Abrir detalhe de formação (colaborador)
-    window.abrirDetalheFormacao = async function(trainingId) {
-        try {
+  window.abrirDetalheFormacao = async function(trainingId) {
+    // ADICIONAR esta linha no início da função:
+    const statusBadge = window.statusBadge || function(s){ return `<span class="badge badge-info">${s}</span>`; };
+    try {
             const tDoc = await db.collection('trainings').doc(trainingId).get();
             if (!tDoc.exists) { showToast('Formação não encontrada','error'); return; }
             const t = { id: tDoc.id, ...tDoc.data() };
@@ -3949,7 +3992,7 @@ container.innerHTML = html || `<div class="empty-state"><div class="empty-state-
                     </div>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    ${status === 'realizada' && !attStatus ? `<button class="btn btn-danger" onclick="setAttendance('${trainingId}','absent');closeModal('detalheFormacaoModal')">✗ Não compareci</button>` : ''}
+          ${status === 'realizada' && attStatus !== 'absent' ? `<button class="btn btn-danger" onclick="setAttendance('${trainingId}','absent');closeModal('detalheFormacaoModal')">✗ Não compareci</button>` : ''}
                     ${canEvaluate ? `<button class="btn btn-primary" onclick="openEvaluationForTraining('${trainingId}');closeModal('detalheFormacaoModal')">${hasEval ? '✏️ Editar Avaliação' : '⭐ Avaliar Formação'}</button>` : ''}
                     <button class="btn btn-secondary" onclick="closeModal('detalheFormacaoModal')">Fechar</button>
                 </div>`;
