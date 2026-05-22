@@ -1840,8 +1840,8 @@
                 const date = e.dataSubmissao ? new Date(e.dataSubmissao.seconds * 1000).toLocaleDateString('pt-PT') : '';
                 rows.push([date, e._nomeColab, e.training?.tema || '', e.training?.formador || '', e.avaliacaoGlobal || '', e.capacidadePedagogicaFormador || '', e.dominioTemaFormador || '', e.relevanciaParaTarefas || e.relevanciaTarefasDesempenha || '', e.duracaoAcao || '', e.afastaDaPratica ? 'Sim' : 'Não', e.observacoesPropostas || e.observacoesPropostasImplementacao || '']);
             });
-            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('
-');
+            const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+
             const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'avaliacoes.csv'; a.click();
         };
