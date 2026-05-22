@@ -1765,17 +1765,17 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                ${evaluations.map(eval => {
-                                    const date = eval.dataSubmissao ? new Date(eval.dataSubmissao.seconds * 1000) : new Date();
-                                    return `
-                                        <tr>
-                                            <td>${date.toLocaleDateString('pt-PT')}</td>
-                                            <td>${eval.training.tema || 'N/A'}</td>
-                                            <td>${eval.training.formador || 'N/A'}</td>
-                                            <td>${'★'.repeat(eval.avaliacaoGlobal || 0)}${'☆'.repeat(5 - (eval.avaliacaoGlobal || 0))}</td>
-                                        </tr>
-                                    `;
-                                }).join('')}
+                               ${evaluations.map(ev => {
+    const date = ev.dataSubmissao ? new Date(ev.dataSubmissao.seconds * 1000) : new Date();
+    return `
+        <tr>
+            <td>${date.toLocaleDateString('pt-PT')}</td>
+            <td>${ev.training.tema || 'N/A'}</td>
+            <td>${ev.training.formador || 'N/A'}</td>
+            <td>${'★'.repeat(ev.avaliacaoGlobal || 0)}${'☆'.repeat(5 - (ev.avaliacaoGlobal || 0))}</td>
+        </tr>
+    `;
+}).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -3020,7 +3020,7 @@
             ['necessidadesFormacao', 'Necessidades de Formação', '📝'],
             ['relatorios', 'Relatórios e Exportação', '📊'],
             ['formacoesMes', 'Formações por Mês', '📅'],
-            ['objetivosPlano', 'Objetivos do Plano', '🎯'],
+            ['planoFormacao', 'Plano de Formação', '🗓️'],
             ['sep', 'Área Pessoal', ''],
             ['minhasFormacoes', 'As Minhas Formações', '📖'],
             ['manifestarNecessidade', 'Necessidade de Formação', '✍️'],
@@ -3087,8 +3087,8 @@
             </div>
             <div class="dashboard-split">
                 <div class="card">
-                    <div class="card-header"><h2 class="card-title">Formandos com formações por avaliar</h2></div>
-                    <div class="section-subtitle">Só entram colaboradores inscritos, com presença confirmada e sem avaliação submetida.</div>
+<h2 class="card-title">⚠️ Por avaliar há +15 dias</h2>
+<div class="section-subtitle">Colaboradores com formação concluída há mais de 15 dias e avaliação ainda não submetida.</div>
                     <div id="pendingEvalList" class="alert-list"></div>
                 </div>
                 <div class="card">
@@ -3096,17 +3096,6 @@
                     <div id="hoursByUserList" class="rank-list"></div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">Automação e controlo</h2></div>
-                <div class="muted-box">
-                    <div class="kpi-row">
-                        <span class="kpi-pill">Estados automáticos ativos</span>
-                        <span class="kpi-pill">Tempo registado em minutos</span>
-                        <span class="kpi-pill">Horas visíveis por colaborador</span>
-                        <span class="kpi-pill">Backup semanal configurável para ${PRO.backupEmail}</span>
-                    </div>
-                    <div class="small-text" style="margin-top:12px;">A automação de backup semanal por email e a sincronização direta para a pasta Drive exigem uma Cloud Function ou Google Apps Script. A interface já fica preparada para essa integração.</div>
-                </div>
             </div>`;
 
         await ensureAutoStatus();
@@ -3137,12 +3126,26 @@
             document.getElementById('kpiPendentes').textContent = pendingRows.length;
             document.getElementById('kpiColabsAtivos').textContent = Object.values(usersMap).filter(u => u.ativo !== false).length;
 
-            const pendingList = document.getElementById('pendingEvalList');
-            if (!pendingRows.length) pendingList.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">Não existem avaliações pendentes com presença confirmada.</div></div>`;
-            else pendingList.innerHTML = pendingRows
-                .sort((a,b) => (a.date?.getTime()||0) - (b.date?.getTime()||0))
-                .map(r => `<div class="alert-item"><strong>${usersMap[r.uid]?.nome || 'Colaborador'}</strong><div class="small-text">${r.training} · ${dateText(r.date)}</div></div>`)
-                .join('');
+           const pendingList = document.getElementById('pendingEvalList');
+const hoje = new Date();
+const quinzeDiasAtras = new Date(hoje.getTime() - 15 * 24 * 60 * 60 * 1000);
+const pendingMais15 = pendingRows.filter(r => r.date && r.date < quinzeDiasAtras);
+
+if (!pendingMais15.length) {
+    pendingList.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-text">Sem avaliações pendentes há mais de 15 dias.</div></div>`;
+} else {
+    pendingList.innerHTML = pendingMais15
+        .sort((a,b) => (a.date?.getTime()||0) - (b.date?.getTime()||0))
+        .map(r => {
+            const diasAtraso = Math.floor((hoje - r.date) / (1000 * 60 * 60 * 24));
+            return `<div class="alert-item">
+                <strong>${usersMap[r.uid]?.nome || 'Colaborador'}</strong>
+                <div class="small-text">${r.training} · ${dateText(r.date)}</div>
+                <span class="badge badge-error" style="margin-top:4px;">⏰ Há ${diasAtraso} dias sem avaliar</span>
+            </div>`;
+        })
+        .join('');
+}
 
             const ranked = Object.entries(hoursByUser)
                 .map(([uid, mins]) => ({ uid, mins, nome: usersMap[uid]?.nome || uid }))
