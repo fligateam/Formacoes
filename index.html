@@ -7,9 +7,10 @@
 
     <meta name="theme-color" content="#4A6572">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="FormaLiga">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.webmanifest">
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234A6572'/><rect x='28' y='18' width='44' height='64' rx='8' fill='%23FFFFFF'/><rect x='36' y='32' width='28' height='4' rx='2' fill='%23D8EFFF'/><rect x='36' y='42' width='20' height='4' rx='2' fill='%23D8EFFF'/><rect x='36' y='52' width='24' height='4' rx='2' fill='%23DFF3E3'/><circle cx='68' cy='72' r='14' fill='%237BC97F'/><rect x='64' y='66' width='8' height='12' rx='2' fill='white'/><rect x='62' y='70' width='12' height='4' rx='2' fill='white'/></svg>">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -847,51 +848,6 @@
     }
 
     
-    /* ── Professional Override Theme ── */
-    :root {
-      --color-bg-primary: #f0f4f8;
-      --color-bg-secondary: #ffffff;
-      --color-accent-blue: #eaf2ff;
-      --color-accent-green: #ecfdf5;
-      --color-text-primary: #172033;
-      --color-text-secondary: #5f6b7a;
-      --color-border: #d7e0ea;
-      --color-success: #0f7b55;
-      --color-warning: #a46b00;
-      --color-error: #b42318;
-      --color-info: #2563eb;
-      --shadow-sm: 0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
-      --shadow-md: 0 4px 12px rgba(15,23,42,.08);
-      --shadow-lg: 0 10px 30px rgba(15,23,42,.10);
-    }
-    .sidebar { background: #142033 !important; }
-    .sidebar-header { background: linear-gradient(160deg,#1a2c45,#142033) !important; border-bottom: 1px solid rgba(255,255,255,.08) !important; }
-    .sidebar-header h1 { color: #fff !important; font-size: 17px !important; }
-    .sidebar-header p { color: rgba(255,255,255,.55) !important; }
-    .menu-item { color: #b8c9db !important; border-radius: 8px; margin: 2px 10px; }
-    .menu-item:hover, .menu-item.active { background: #eaf2ff !important; color: #172033 !important; border-left-color: #2563eb !important; }
-    .topbar { background: rgba(255,255,255,.95) !important; backdrop-filter: blur(8px); border-bottom: 1px solid var(--color-border) !important; }
-    .btn-primary { background: #2563eb !important; }
-    .btn-primary:hover { background: #1d54d6 !important; }
-    .stat-card { border-radius: 12px !important; }
-    .stat-card.blue { border-left-color: #2563eb !important; }
-    .stat-card.green { border-left-color: #0f7b55 !important; }
-    .stat-card.warning { border-left-color: #a46b00 !important; }
-    .badge-success { background: #ecfdf5 !important; color: #0f7b55 !important; }
-    .badge-warning { background: #fff7e6 !important; color: #a46b00 !important; }
-    .badge-info { background: #eaf2ff !important; color: #2563eb !important; }
-    .badge-error { background: #fef2f2 !important; color: #b42318 !important; }
-    .card { border: 1px solid var(--color-border); }
-    .login-card { border: 1px solid var(--color-border); }
-    table thead { background: #eaf2ff !important; }
-    .alert-item { background: #fffbe8 !important; border: 1px solid #fde58a !important; }
-    .user-avatar { background: linear-gradient(135deg,#2563eb,#1a2c45) !important; color: #fff !important; }
-    @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); transition: transform .3s; z-index: 200; }
-      .sidebar.mobile-open { transform: translateX(0); }
-      .main-content { margin-left: 0 !important; }
-    }
-
     </style>
 </head>
 <body>
